@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ingresar — Presupuestos de Aberturas</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <h1>Presupuestos de Aberturas</h1>
+    <p class="login-sub">Ingresá tus credenciales para continuar</p>
+    <form id="login-form" autocomplete="off">
+      <label for="usuario">Usuario</label>
+      <input type="text" id="usuario" name="usuario" autocomplete="username" required />
+
+      <label for="clave">Contraseña</label>
+      <input type="password" id="clave" name="clave" autocomplete="current-password" required />
+
+      <button type="submit" id="login-btn">Ingresar</button>
+      <p id="login-error" class="error-msg" hidden></p>
+    </form>
+  </main>
+  <script src="js/login.js"></script>
+</body>
+</html>

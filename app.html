@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Presupuestos de Aberturas</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="auth-loading" class="auth-loading">Verificando sesión...</div>
+
+  <div id="app-root" class="app-root" hidden>
+    <header class="topbar">
+      <h1>Presupuestos de Aberturas</h1>
+      <div class="topbar-actions">
+        <button type="button" id="btn-guardados" class="btn btn-ghost">Presupuestos guardados</button>
+        <button type="button" id="btn-logout" class="btn btn-ghost">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <main id="editor-view" class="editor-grid">
+      <!-- PANEL 1: Datos generales -->
+      <section class="panel panel-general" aria-label="Datos generales del presupuesto">
+        <h2>1. Datos generales</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label for="p1-nombre">Nombre del cliente *</label>
+            <input type="text" id="p1-nombre" />
+          </div>
+          <div class="field">
+            <label for="p1-telefono">Teléfono</label>
+            <input type="text" id="p1-telefono" />
+          </div>
+          <div class="field">
+            <label for="p1-direccion">Dirección</label>
+            <input type="text" id="p1-direccion" />
+          </div>
+          <div class="field">
+            <label for="p1-localidad">Localidad</label>
+            <input type="text" id="p1-localidad" />
+          </div>
+          <div class="field">
+            <label for="p1-arquitecto">Arquitecto / referente</label>
+            <input type="text" id="p1-arquitecto" />
+          </div>
+          <div class="field">
+            <label for="p1-numero">Número de presupuesto *</label>
+            <input type="text" id="p1-numero" />
+          </div>
+          <div class="field">
+            <label for="p1-validez">Validez (días)</label>
+            <input type="number" id="p1-validez" min="1" value="15" />
+          </div>
+          <div class="field">
+            <label for="p1-fecha">Fecha</label>
+            <input type="date" id="p1-fecha" />
+          </div>
+          <div class="field field-full">
+            <label for="p1-extra">Extra (opcional)</label>
+            <textarea id="p1-extra" rows="2"></textarea>
+          </div>
+        </div>
+      </section>
+
+      <!-- PANEL 2: Configuración de la abertura -->
+      <section class="panel panel-config" aria-label="Configuración de la abertura">
+        <h2 id="panel2-titulo">2. Agregar abertura</h2>
+        <div class="field-grid">
+          <div class="field">
+            <label for="p2-tipo">Tipo de abertura *</label>
+            <select id="p2-tipo"></select>
+          </div>
+          <div class="field">
+            <label for="p2-cierre">Tipo de cierre *</label>
+            <select id="p2-cierre"></select>
+          </div>
+          <div class="field">
+            <label for="p2-cajon">¿Lleva cajón?</label>
+            <select id="p2-cajon">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="p2-mosquitero">¿Lleva mosquitero?</label>
+            <select id="p2-mosquitero">
+              <option value="no">No</option>
+              <option value="si">Sí</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="p2-ancho">Ancho (cm) *</label>
+            <input type="number" id="p2-ancho" min="1" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="p2-alto">Alto (cm) *</label>
+            <input type="number" id="p2-alto" min="1" step="0.1" />
+          </div>
+          <div class="field">
+            <label for="p2-cantidad">Cantidad *</label>
+            <input type="number" id="p2-cantidad" min="1" step="1" value="1" />
+          </div>
+        </div>
+
+        <div class="field field-full">
+          <label>Imagen</label>
+          <div id="p2-galeria" class="galeria-grid"></div>
+        </div>
+
+        <p id="p2-error" class="error-msg" hidden></p>
+
+        <div class="panel-actions">
+          <button type="button" id="btn-agregar-item" class="btn btn-primary">Agregar al presupuesto</button>
+          <button type="button" id="btn-cancelar-edicion" class="btn btn-ghost" hidden>Cancelar edición</button>
+        </div>
+      </section>
+
+      <!-- PANEL 3: Lista de ítems -->
+      <section class="panel panel-items" aria-label="Ítems del presupuesto">
+        <h2>3. Ítems agregados</h2>
+        <div id="lista-items" class="lista-items">
+          <p class="empty-msg" id="items-empty">Todavía no agregaste ítems.</p>
+        </div>
+        <div class="panel-actions">
+          <button type="button" id="btn-generar" class="btn btn-primary btn-lg">Generar presupuesto</button>
+        </div>
+        <p id="generar-error" class="error-msg" hidden></p>
+      </section>
+    </main>
+
+    <!-- VISTA DE PRESUPUESTO -->
+    <section id="vista-presupuesto" class="vista-presupuesto" hidden>
+      <div class="vp-actions no-print">
+        <button type="button" id="btn-volver-editar" class="btn btn-ghost">Volver a editar</button>
+        <button type="button" id="btn-guardar-presupuesto" class="btn btn-primary">Guardar presupuesto</button>
+        <button type="button" id="btn-imprimir" class="btn btn-primary">Imprimir / Guardar PDF</button>
+      </div>
+
+      <div class="hoja">
+        <header class="vp-header">
+          <div class="vp-empresa">
+            <h2>Presupuesto</h2>
+            <p id="vp-numero" class="vp-numero"></p>
+          </div>
+          <div class="vp-meta">
+            <p><strong>Fecha:</strong> <span id="vp-fecha"></span></p>
+            <p><strong>Validez:</strong> <span id="vp-validez"></span></p>
+          </div>
+        </header>
+
+        <section class="vp-datos-cliente">
+          <p><strong>Cliente:</strong> <span id="vp-cliente"></span></p>
+          <p id="vp-fila-telefono"><strong>Teléfono:</strong> <span id="vp-telefono"></span></p>
+          <p id="vp-fila-direccion"><strong>Dirección:</strong> <span id="vp-direccion"></span></p>
+          <p id="vp-fila-localidad"><strong>Localidad:</strong> <span id="vp-localidad"></span></p>
+          <p id="vp-fila-arquitecto"><strong>Arquitecto / referente:</strong> <span id="vp-arquitecto"></span></p>
+          <p id="vp-fila-extra"><strong>Observaciones:</strong> <span id="vp-extra"></span></p>
+        </section>
+
+        <section class="vp-items">
+          <h3>Detalle de aberturas</h3>
+          <div id="vp-lista-items" class="vp-lista-items"></div>
+        </section>
+
+        <section class="vp-precio">
+          <h3>Precio</h3>
+          <textarea id="vp-precio-texto" rows="4" placeholder="Escribí aquí el precio / condiciones de pago..."></textarea>
+        </section>
+      </div>
+    </section>
+  </div>
+
+  <!-- MODAL: presupuestos guardados -->
+  <div id="modal-guardados" class="modal-overlay" hidden>
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Presupuestos guardados</h3>
+        <button type="button" id="btn-cerrar-modal" class="btn btn-ghost">Cerrar</button>
+      </div>
+      <div id="lista-guardados" class="lista-guardados">
+        <p class="empty-msg">No hay presupuestos guardados.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/gallery-data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

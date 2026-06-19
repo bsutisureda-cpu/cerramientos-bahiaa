@@ -1,0 +1,9 @@
+{
+  "name": "presupuestos-aberturas",
+  "version": "1.0.0",
+  "private": true,
+  "description": "App para generar presupuestos de aberturas de aluminio (HTML/CSS/JS + funciones serverless de Vercel)",
+  "scripts": {
+    "dev": "node dev-server.js"
+  }
+}
