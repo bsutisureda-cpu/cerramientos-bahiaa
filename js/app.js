@@ -5,6 +5,7 @@
   const state = {
     items: [],
     editingItemId: null,
+    config: cargarConfig(),
   };
 
   // ---------------------------------------------------------------------
@@ -32,7 +33,7 @@
   });
 
   // ---------------------------------------------------------------------
-  // Helpers
+  // Helpers generales
   // ---------------------------------------------------------------------
   function uid() {
     return 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -66,20 +67,41 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
 
+  function populateSelect(id, values, placeholder) {
+    const select = document.getElementById(id);
+    const valorActual = select.value;
+    select.innerHTML = '';
+    if (placeholder) {
+      const opt = document.createElement('option');
+      opt.value = '';
+      opt.textContent = placeholder;
+      select.appendChild(opt);
+    }
+    values.forEach((v) => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      select.appendChild(opt);
+    });
+    if (valorActual && values.includes(valorActual)) select.value = valorActual;
+  }
+
   // ---------------------------------------------------------------------
   // Init
   // ---------------------------------------------------------------------
   function initApp() {
-    populateSelect('p2-tipo', TIPOS_ABERTURA);
-    populateSelect('p2-cierre', TIPOS_CIERRE);
+    refrescarSelectsPanel2();
 
     document.getElementById('p1-numero').value = nextNumero();
     document.getElementById('p1-fecha').value = todayISO();
 
-    renderGaleria();
+    actualizarPreviewImagenes();
     renderListaItems();
 
-    document.getElementById('p2-tipo').addEventListener('change', () => renderGaleria());
+    ['p2-tipo', 'p2-color', 'p2-manija', 'p2-vidrio'].forEach((id) =>
+      document.getElementById(id).addEventListener('change', actualizarPreviewImagenes)
+    );
+
     document.getElementById('btn-agregar-item').addEventListener('click', onAgregarOActualizarItem);
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicion);
     document.getElementById('btn-generar').addEventListener('click', onGenerarPresupuesto);
@@ -88,46 +110,47 @@
     document.getElementById('btn-imprimir').addEventListener('click', () => window.print());
     document.getElementById('btn-guardados').addEventListener('click', abrirModalGuardados);
     document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalGuardados);
+
+    document.getElementById('btn-config').addEventListener('click', abrirConfig);
+    document.getElementById('btn-cerrar-config').addEventListener('click', cerrarConfig);
+    initConfigEvents();
   }
 
-  function populateSelect(id, values) {
-    const select = document.getElementById(id);
-    select.innerHTML = '';
-    values.forEach((v) => {
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = v;
-      select.appendChild(opt);
-    });
+  function refrescarSelectsPanel2() {
+    populateSelect('p2-tipo', state.config.tiposAbertura);
+    populateSelect('p2-color', state.config.colores);
+    populateSelect('p2-linea', state.config.lineas);
+    populateSelect('p2-cierre', state.config.tiposCierre);
+    populateSelect('p2-manija', state.config.tiposManija, 'Ninguna');
+    populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
   }
 
   // ---------------------------------------------------------------------
-  // Panel 2: galería de imágenes
+  // Panel 2: imágenes automáticas según tipo/manija/vidrio + color
   // ---------------------------------------------------------------------
-  let imagenSeleccionadaId = null;
-
-  function renderGaleria(preselectId) {
+  function actualizarPreviewImagenes() {
     const tipo = document.getElementById('p2-tipo').value;
-    const contenedor = document.getElementById('p2-galeria');
-    const imagenes = imagenesPorTipo(tipo);
+    const color = document.getElementById('p2-color').value;
+    const manija = document.getElementById('p2-manija').value;
+    const vidrio = document.getElementById('p2-vidrio').value;
 
-    if (!preselectId || !imagenes.some((i) => i.id === preselectId)) {
-      preselectId = imagenes.length ? imagenes[0].id : null;
+    document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color);
+
+    const manijaBox = document.getElementById('p2-img-manija-box');
+    if (manija) {
+      manijaBox.hidden = false;
+      document.getElementById('p2-img-manija').src = imagenManija(state.config, manija, color);
+    } else {
+      manijaBox.hidden = true;
     }
-    imagenSeleccionadaId = preselectId;
 
-    contenedor.innerHTML = '';
-    imagenes.forEach((img) => {
-      const div = document.createElement('div');
-      div.className = 'galeria-item' + (img.id === imagenSeleccionadaId ? ' selected' : '');
-      div.innerHTML = `<img src="${img.file}" alt="${img.label}" /><span>${img.label}</span>`;
-      div.addEventListener('click', () => {
-        imagenSeleccionadaId = img.id;
-        contenedor.querySelectorAll('.galeria-item').forEach((el) => el.classList.remove('selected'));
-        div.classList.add('selected');
-      });
-      contenedor.appendChild(div);
-    });
+    const vidrioBox = document.getElementById('p2-img-vidrio-box');
+    if (vidrio) {
+      vidrioBox.hidden = false;
+      document.getElementById('p2-img-vidrio').src = imagenVidrio(state.config, vidrio);
+    } else {
+      vidrioBox.hidden = true;
+    }
   }
 
   // ---------------------------------------------------------------------
@@ -136,22 +159,26 @@
   function leerFormularioItem() {
     return {
       tipo: document.getElementById('p2-tipo').value,
+      color: document.getElementById('p2-color').value,
+      linea: document.getElementById('p2-linea').value,
       cierre: document.getElementById('p2-cierre').value,
+      manija: document.getElementById('p2-manija').value,
+      vidrio: document.getElementById('p2-vidrio').value,
       cajon: document.getElementById('p2-cajon').value,
       mosquitero: document.getElementById('p2-mosquitero').value,
       ancho: parseFloat(document.getElementById('p2-ancho').value),
       alto: parseFloat(document.getElementById('p2-alto').value),
       cantidad: parseInt(document.getElementById('p2-cantidad').value, 10),
-      imagenId: imagenSeleccionadaId,
     };
   }
 
   function validarFormularioItem(data) {
-    if (!data.tipo || !data.cierre) return 'Elegí tipo de abertura y de cierre.';
+    if (!data.tipo) return 'Elegí el tipo de abertura.';
+    if (!data.color) return 'Elegí un color.';
+    if (!data.cierre) return 'Elegí el tipo de cierre.';
     if (!data.ancho || data.ancho <= 0) return 'Ingresá un ancho válido.';
     if (!data.alto || data.alto <= 0) return 'Ingresá un alto válido.';
     if (!data.cantidad || data.cantidad <= 0) return 'Ingresá una cantidad válida.';
-    if (!data.imagenId) return 'Seleccioná una imagen.';
     return null;
   }
 
@@ -185,6 +212,9 @@
     document.getElementById('p2-cantidad').value = '1';
     document.getElementById('p2-cajon').value = 'no';
     document.getElementById('p2-mosquitero').value = 'no';
+    document.getElementById('p2-manija').value = '';
+    document.getElementById('p2-vidrio').value = '';
+    actualizarPreviewImagenes();
   }
 
   function cancelarEdicion() {
@@ -192,6 +222,16 @@
     document.getElementById('panel2-titulo').textContent = '2. Agregar abertura';
     document.getElementById('btn-agregar-item').textContent = 'Agregar al presupuesto';
     document.getElementById('btn-cancelar-edicion').hidden = true;
+  }
+
+  function descripcionItem(item) {
+    const partes = [`${item.ancho}cm x ${item.alto}cm`, `Cant: ${item.cantidad}`];
+    if (item.linea) partes.push(`Línea: ${item.linea}`);
+    partes.push(`Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}`);
+    partes.push(`Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}`);
+    if (item.manija) partes.push(`Manija: ${item.manija}`);
+    if (item.vidrio) partes.push(`Vidrio: ${item.vidrio}`);
+    return partes.join(' · ');
   }
 
   function renderListaItems() {
@@ -207,18 +247,14 @@
 
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenPorId(item.imagenId);
+      const img = imagenAbertura(state.config, item.tipo, item.color);
       const div = document.createElement('div');
       div.className = 'item-card';
       div.innerHTML = `
-        <img src="${img ? img.file : ''}" alt="${item.tipo}" />
+        <img src="${img}" alt="${item.tipo}" />
         <div class="item-info">
-          <strong>${item.tipo} · ${item.cierre}</strong>
-          <span class="item-detalles">
-            ${item.ancho}cm x ${item.alto}cm · Cant: ${item.cantidad} ·
-            Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'} ·
-            Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}
-          </span>
+          <strong>${item.tipo} · ${item.color} · ${item.cierre}</strong>
+          <span class="item-detalles">${descripcionItem(item)}</span>
         </div>
         <div class="item-card-actions">
           <button type="button" data-action="editar" data-id="${item.id}">Editar</button>
@@ -242,13 +278,17 @@
 
     state.editingItemId = id;
     document.getElementById('p2-tipo').value = item.tipo;
+    document.getElementById('p2-color').value = item.color;
+    document.getElementById('p2-linea').value = item.linea || '';
     document.getElementById('p2-cierre').value = item.cierre;
+    document.getElementById('p2-manija').value = item.manija || '';
+    document.getElementById('p2-vidrio').value = item.vidrio || '';
     document.getElementById('p2-cajon').value = item.cajon;
     document.getElementById('p2-mosquitero').value = item.mosquitero;
     document.getElementById('p2-ancho').value = item.ancho;
     document.getElementById('p2-alto').value = item.alto;
     document.getElementById('p2-cantidad').value = item.cantidad;
-    renderGaleria(item.imagenId);
+    actualizarPreviewImagenes();
 
     document.getElementById('panel2-titulo').textContent = 'Editar abertura';
     document.getElementById('btn-agregar-item').textContent = 'Guardar cambios';
@@ -327,15 +367,15 @@
     const cont = document.getElementById('vp-lista-items');
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenPorId(item.imagenId);
+      const img = imagenAbertura(state.config, item.tipo, item.color);
       const row = document.createElement('div');
       row.className = 'vp-item-row';
       row.innerHTML = `
-        <img src="${img ? img.file : ''}" alt="${item.tipo}" />
+        <img src="${img}" alt="${item.tipo}" />
         <div class="vp-item-info">
-          <strong>${item.tipo} · Cierre: ${item.cierre}</strong>
+          <strong>${item.tipo} · ${item.color} · Cierre: ${item.cierre}</strong>
           <span>Medidas: ${item.ancho}cm x ${item.alto}cm — Cantidad: ${item.cantidad}</span><br/>
-          <span>Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'} — Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}</span>
+          <span>${descripcionItem(item)}</span>
         </div>
       `;
       cont.appendChild(row);
@@ -449,6 +489,248 @@
     const lista = getSavedList().filter((p) => p.numero !== numero);
     setSavedList(lista);
     abrirModalGuardados();
+  }
+
+  // ---------------------------------------------------------------------
+  // Configuración: tipos, colores, líneas, imágenes
+  // ---------------------------------------------------------------------
+  function abrirConfig() {
+    renderConfig();
+    document.getElementById('config-view').hidden = false;
+    document.getElementById('editor-view').hidden = true;
+  }
+
+  function cerrarConfig() {
+    document.getElementById('config-view').hidden = true;
+    document.getElementById('editor-view').hidden = false;
+    refrescarSelectsPanel2();
+    actualizarPreviewImagenes();
+    renderListaItems();
+  }
+
+  function guardarYRenderConfig() {
+    guardarConfig(state.config);
+    renderConfig();
+  }
+
+  function renderListaChips(contId, valores, onEliminar) {
+    const cont = document.getElementById(contId);
+    cont.innerHTML = '';
+    if (!valores.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste ninguno.</p>';
+      return;
+    }
+    valores.forEach((valor) => {
+      const chip = document.createElement('span');
+      chip.className = 'config-chip';
+      chip.innerHTML = `${valor} <button type="button" aria-label="Eliminar">×</button>`;
+      chip.querySelector('button').addEventListener('click', () => onEliminar(valor));
+      cont.appendChild(chip);
+    });
+  }
+
+  function agregarSimple(lista, valor) {
+    const limpio = (valor || '').trim();
+    if (!limpio || lista.includes(limpio)) return false;
+    lista.push(limpio);
+    return true;
+  }
+
+  function renderConfig() {
+    const c = state.config;
+
+    renderListaChips('config-lista-colores', c.colores, (v) => {
+      c.colores = c.colores.filter((x) => x !== v);
+      guardarYRenderConfig();
+    });
+    renderListaChips('config-lista-lineas', c.lineas, (v) => {
+      c.lineas = c.lineas.filter((x) => x !== v);
+      guardarYRenderConfig();
+    });
+    renderListaChips('config-lista-cierres', c.tiposCierre, (v) => {
+      c.tiposCierre = c.tiposCierre.filter((x) => x !== v);
+      guardarYRenderConfig();
+    });
+    renderListaChips('config-lista-aberturas', c.tiposAbertura, (v) => {
+      c.tiposAbertura = c.tiposAbertura.filter((x) => x !== v);
+      guardarYRenderConfig();
+    });
+    renderListaChips('config-lista-manijas', c.tiposManija, (v) => {
+      c.tiposManija = c.tiposManija.filter((x) => x !== v);
+      guardarYRenderConfig();
+    });
+    renderListaChips('config-lista-vidrios', c.tiposVidrio, (v) => {
+      c.tiposVidrio = c.tiposVidrio.filter((x) => x !== v);
+      guardarYRenderConfig();
+    });
+
+    populateSelect('config-img-tipo', c.tiposAbertura);
+    populateSelect('config-img-color', c.colores);
+    populateSelect('config-img-manija', c.tiposManija);
+    populateSelect('config-img-color-manija', c.colores);
+    populateSelect('config-img-vidrio', c.tiposVidrio);
+
+    renderPreviewImg('config-preview-abertura', c.tiposAbertura.length && c.colores.length
+      ? imagenAbertura(c, document.getElementById('config-img-tipo').value, document.getElementById('config-img-color').value)
+      : null);
+    renderPreviewImg('config-preview-manija', c.tiposManija.length && c.colores.length
+      ? imagenManija(c, document.getElementById('config-img-manija').value, document.getElementById('config-img-color-manija').value)
+      : null);
+    renderPreviewImg('config-preview-vidrio', c.tiposVidrio.length
+      ? imagenVidrio(c, document.getElementById('config-img-vidrio').value)
+      : null);
+
+    renderGaleriaAsignadas('config-galeria-abertura', c.imagenesAbertura, (clave) => {
+      delete c.imagenesAbertura[clave];
+      guardarYRenderConfig();
+    });
+    renderGaleriaAsignadas('config-galeria-manija', c.imagenesManija, (clave) => {
+      delete c.imagenesManija[clave];
+      guardarYRenderConfig();
+    });
+    renderGaleriaAsignadas('config-galeria-vidrio', c.imagenesVidrio, (clave) => {
+      delete c.imagenesVidrio[clave];
+      guardarYRenderConfig();
+    });
+  }
+
+  function renderPreviewImg(contId, src) {
+    const cont = document.getElementById(contId);
+    cont.innerHTML = src ? `<img src="${src}" alt="preview" />` : '';
+  }
+
+  function renderGaleriaAsignadas(contId, mapa, onEliminar) {
+    const cont = document.getElementById(contId);
+    cont.innerHTML = '';
+    const claves = Object.keys(mapa);
+    if (!claves.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no asignaste imágenes.</p>';
+      return;
+    }
+    claves.forEach((clave) => {
+      const div = document.createElement('div');
+      div.className = 'config-galeria-item';
+      const etiqueta = clave.replace('||', ' · ');
+      div.innerHTML = `
+        <button type="button" aria-label="Eliminar">×</button>
+        <img src="${mapa[clave]}" alt="${etiqueta}" />
+        <span>${etiqueta}</span>
+      `;
+      div.querySelector('button').addEventListener('click', () => onEliminar(clave));
+      cont.appendChild(div);
+    });
+  }
+
+  function leerArchivoComoDataURL(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function initConfigEvents() {
+    document.getElementById('btn-add-color').addEventListener('click', () => {
+      const input = document.getElementById('config-nuevo-color');
+      if (agregarSimple(state.config.colores, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
+    document.getElementById('btn-add-linea').addEventListener('click', () => {
+      const input = document.getElementById('config-nueva-linea');
+      if (agregarSimple(state.config.lineas, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
+    document.getElementById('btn-add-cierre').addEventListener('click', () => {
+      const input = document.getElementById('config-nuevo-cierre');
+      if (agregarSimple(state.config.tiposCierre, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
+    document.getElementById('btn-add-tipo').addEventListener('click', () => {
+      const input = document.getElementById('config-nuevo-tipo');
+      if (agregarSimple(state.config.tiposAbertura, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
+    document.getElementById('btn-add-manija').addEventListener('click', () => {
+      const input = document.getElementById('config-nueva-manija');
+      if (agregarSimple(state.config.tiposManija, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
+    document.getElementById('btn-add-vidrio').addEventListener('click', () => {
+      const input = document.getElementById('config-nuevo-vidrio');
+      if (agregarSimple(state.config.tiposVidrio, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
+
+    ['config-img-tipo', 'config-img-color'].forEach((id) =>
+      document.getElementById(id).addEventListener('change', () => {
+        renderPreviewImg(
+          'config-preview-abertura',
+          imagenAbertura(state.config, document.getElementById('config-img-tipo').value, document.getElementById('config-img-color').value)
+        );
+      })
+    );
+    ['config-img-manija', 'config-img-color-manija'].forEach((id) =>
+      document.getElementById(id).addEventListener('change', () => {
+        const manija = document.getElementById('config-img-manija').value;
+        const color = document.getElementById('config-img-color-manija').value;
+        renderPreviewImg('config-preview-manija', manija ? imagenManija(state.config, manija, color) : null);
+      })
+    );
+    document.getElementById('config-img-vidrio').addEventListener('change', () => {
+      const vidrio = document.getElementById('config-img-vidrio').value;
+      renderPreviewImg('config-preview-vidrio', vidrio ? imagenVidrio(state.config, vidrio) : null);
+    });
+
+    document.getElementById('btn-guardar-img-abertura').addEventListener('click', async () => {
+      const tipo = document.getElementById('config-img-tipo').value;
+      const color = document.getElementById('config-img-color').value;
+      const file = document.getElementById('config-img-file').files[0];
+      if (!tipo || !color || !file) {
+        alert('Elegí tipo, color y un archivo de imagen.');
+        return;
+      }
+      state.config.imagenesAbertura[claveAbertura(tipo, color)] = await leerArchivoComoDataURL(file);
+      document.getElementById('config-img-file').value = '';
+      guardarYRenderConfig();
+    });
+
+    document.getElementById('btn-guardar-img-manija').addEventListener('click', async () => {
+      const manija = document.getElementById('config-img-manija').value;
+      const color = document.getElementById('config-img-color-manija').value;
+      const file = document.getElementById('config-img-file-manija').files[0];
+      if (!manija || !color || !file) {
+        alert('Elegí manija, color y un archivo de imagen.');
+        return;
+      }
+      state.config.imagenesManija[claveManija(manija, color)] = await leerArchivoComoDataURL(file);
+      document.getElementById('config-img-file-manija').value = '';
+      guardarYRenderConfig();
+    });
+
+    document.getElementById('btn-guardar-img-vidrio').addEventListener('click', async () => {
+      const vidrio = document.getElementById('config-img-vidrio').value;
+      const file = document.getElementById('config-img-file-vidrio').files[0];
+      if (!vidrio || !file) {
+        alert('Elegí un tipo de vidrio y un archivo de imagen.');
+        return;
+      }
+      state.config.imagenesVidrio[vidrio] = await leerArchivoComoDataURL(file);
+      document.getElementById('config-img-file-vidrio').value = '';
+      guardarYRenderConfig();
+    });
   }
 
   // ---------------------------------------------------------------------

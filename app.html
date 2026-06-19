@@ -13,6 +13,7 @@
     <header class="topbar">
       <h1>Presupuestos de Aberturas</h1>
       <div class="topbar-actions">
+        <button type="button" id="btn-config" class="btn btn-ghost">Configuración</button>
         <button type="button" id="btn-guardados" class="btn btn-ghost">Presupuestos guardados</button>
         <button type="button" id="btn-logout" class="btn btn-ghost">Cerrar sesión</button>
       </div>
@@ -71,8 +72,28 @@
             <select id="p2-tipo"></select>
           </div>
           <div class="field">
+            <label for="p2-color">Color *</label>
+            <select id="p2-color"></select>
+          </div>
+          <div class="field">
+            <label for="p2-linea">Línea</label>
+            <select id="p2-linea"></select>
+          </div>
+          <div class="field">
             <label for="p2-cierre">Tipo de cierre *</label>
             <select id="p2-cierre"></select>
+          </div>
+          <div class="field">
+            <label for="p2-manija">Tipo de manija</label>
+            <select id="p2-manija">
+              <option value="">Ninguna</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="p2-vidrio">Tipo de vidrio</label>
+            <select id="p2-vidrio">
+              <option value="">Ninguno</option>
+            </select>
           </div>
           <div class="field">
             <label for="p2-cajon">¿Lleva cajón?</label>
@@ -103,8 +124,21 @@
         </div>
 
         <div class="field field-full">
-          <label>Imagen</label>
-          <div id="p2-galeria" class="galeria-grid"></div>
+          <label>Imágenes (asignadas en Configuración según tipo/manija/vidrio + color)</label>
+          <div class="preview-imagenes">
+            <div class="preview-img-box">
+              <img id="p2-img-abertura" alt="Imagen abertura" />
+              <span>Abertura</span>
+            </div>
+            <div class="preview-img-box" id="p2-img-manija-box" hidden>
+              <img id="p2-img-manija" alt="Imagen manija" />
+              <span>Manija</span>
+            </div>
+            <div class="preview-img-box" id="p2-img-vidrio-box" hidden>
+              <img id="p2-img-vidrio" alt="Imagen vidrio" />
+              <span>Vidrio</span>
+            </div>
+          </div>
         </div>
 
         <p id="p2-error" class="error-msg" hidden></p>
@@ -170,6 +204,105 @@
     </section>
   </div>
 
+  <!-- PANTALLA: Configuración -->
+  <section id="config-view" class="config-view" hidden>
+    <div class="config-header">
+      <h2>Configuración</h2>
+      <button type="button" id="btn-cerrar-config" class="btn btn-ghost">Cerrar</button>
+    </div>
+
+    <div class="config-grid">
+      <!-- Colores -->
+      <section class="panel">
+        <h3>Colores</h3>
+        <div class="config-lista-simple" id="config-lista-colores"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nuevo-color" placeholder="Nuevo color..." />
+          <button type="button" id="btn-add-color" class="btn btn-ghost">Agregar</button>
+        </div>
+      </section>
+
+      <!-- Líneas -->
+      <section class="panel">
+        <h3>Líneas</h3>
+        <div class="config-lista-simple" id="config-lista-lineas"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nueva-linea" placeholder="Nueva línea..." />
+          <button type="button" id="btn-add-linea" class="btn btn-ghost">Agregar</button>
+        </div>
+      </section>
+
+      <!-- Tipos de cierre -->
+      <section class="panel">
+        <h3>Tipos de cierre</h3>
+        <div class="config-lista-simple" id="config-lista-cierres"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nuevo-cierre" placeholder="Nuevo tipo de cierre..." />
+          <button type="button" id="btn-add-cierre" class="btn btn-ghost">Agregar</button>
+        </div>
+      </section>
+
+      <!-- Tipos de abertura + imagen por tipo+color -->
+      <section class="panel panel-full">
+        <h3>Tipos de abertura</h3>
+        <div class="config-lista-simple" id="config-lista-aberturas"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nuevo-tipo" placeholder="Nuevo tipo de abertura..." />
+          <button type="button" id="btn-add-tipo" class="btn btn-ghost">Agregar</button>
+        </div>
+
+        <h4>Asignar imagen (tipo + color)</h4>
+        <div class="config-img-form">
+          <select id="config-img-tipo"></select>
+          <select id="config-img-color"></select>
+          <input type="file" id="config-img-file" accept="image/*" />
+          <button type="button" id="btn-guardar-img-abertura" class="btn btn-primary">Guardar imagen</button>
+        </div>
+        <div id="config-preview-abertura" class="config-preview"></div>
+        <div id="config-galeria-abertura" class="config-galeria-asignadas"></div>
+      </section>
+
+      <!-- Tipos de manija + imagen por manija+color -->
+      <section class="panel panel-full">
+        <h3>Tipos de manija</h3>
+        <div class="config-lista-simple" id="config-lista-manijas"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nueva-manija" placeholder="Nuevo tipo de manija..." />
+          <button type="button" id="btn-add-manija" class="btn btn-ghost">Agregar</button>
+        </div>
+
+        <h4>Asignar imagen (manija + color)</h4>
+        <div class="config-img-form">
+          <select id="config-img-manija"></select>
+          <select id="config-img-color-manija"></select>
+          <input type="file" id="config-img-file-manija" accept="image/*" />
+          <button type="button" id="btn-guardar-img-manija" class="btn btn-primary">Guardar imagen</button>
+        </div>
+        <div id="config-preview-manija" class="config-preview"></div>
+        <div id="config-galeria-manija" class="config-galeria-asignadas"></div>
+      </section>
+
+      <!-- Tipos de vidrio + imagen propia -->
+      <section class="panel panel-full">
+        <h3>Tipos de vidrio</h3>
+        <div class="config-lista-simple" id="config-lista-vidrios"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nuevo-vidrio" placeholder="Nuevo tipo de vidrio..." />
+          <button type="button" id="btn-add-vidrio" class="btn btn-ghost">Agregar</button>
+        </div>
+
+        <h4>Asignar imagen (vidrio)</h4>
+        <div class="config-img-form">
+          <select id="config-img-vidrio"></select>
+          <input type="file" id="config-img-file-vidrio" accept="image/*" />
+          <button type="button" id="btn-guardar-img-vidrio" class="btn btn-primary">Guardar imagen</button>
+        </div>
+        <div id="config-preview-vidrio" class="config-preview"></div>
+        <div id="config-galeria-vidrio" class="config-galeria-asignadas"></div>
+      </section>
+    </div>
+  </section>
+
   <!-- MODAL: presupuestos guardados -->
   <div id="modal-guardados" class="modal-overlay" hidden>
     <div class="modal-box">
@@ -183,7 +316,7 @@
     </div>
   </div>
 
-  <script src="js/gallery-data.js"></script>
+  <script src="js/config-data.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

@@ -6,28 +6,30 @@ App web para generar presupuestos de aberturas de aluminio (ventanas y puertas).
 
 ```
 index.html          → pantalla de login
-app.html             → app principal (3 paneles + vista de presupuesto)
+app.html             → app principal (3 paneles + vista de presupuesto + Configuración)
 css/style.css        → estilos (incluye hoja @media print para el PDF)
 js/login.js          → lógica del formulario de login
-js/gallery-data.js   → listas editables: tipos de abertura, tipos de cierre, galería de imágenes
-js/app.js            → lógica principal de la app (paneles, ítems, presupuesto, localStorage)
-img/tipologias/       → galería fija de imágenes (SVG) por tipo de abertura
+js/config-data.js    → modelo de configuración (tipos, colores, líneas, imágenes) + acceso a localStorage
+js/app.js            → lógica principal de la app (paneles, ítems, presupuesto, configuración)
 api/login.js         → función serverless: valida usuario/clave contra variables de entorno
 api/check.js         → función serverless: valida la cookie de sesión
 api/logout.js        → función serverless: borra la cookie de sesión
 ```
 
-No hay backend de datos: todo lo que el usuario carga (presupuestos, ítems) se guarda en `localStorage` del navegador.
+No hay backend de datos: todo lo que se carga (presupuestos, ítems, tipos, imágenes) se guarda en `localStorage` del navegador.
 
-## Cómo editar las listas (tipos de abertura, cierres, imágenes)
+## Cómo administrar tipos, colores, líneas e imágenes
 
-Todo está centralizado en [`js/gallery-data.js`](js/gallery-data.js):
+Desde la app, botón **"Configuración"** en la barra superior (no se edita código):
 
-- `TIPOS_ABERTURA`: lista de tipos que aparecen en el select del Panel 2.
-- `TIPOS_CIERRE`: lista de tipos de cierre.
-- `GALERIA`: array de imágenes disponibles, cada una con `tipo` (debe coincidir con un valor de `TIPOS_ABERTURA`), `file` (ruta del SVG/PNG) y `label`.
+- **Colores**, **Líneas** y **Tipos de cierre**: listas simples, solo agregar/eliminar.
+- **Tipos de abertura**: lista editable + subís una imagen para cada combinación tipo+color.
+- **Tipos de manija**: lista editable + subís una imagen para cada combinación manija+color.
+- **Tipos de vidrio**: lista editable + subís una imagen por tipo de vidrio.
 
-Para agregar una imagen nueva: copiá el archivo a `img/tipologias/` y agregá una entrada en `GALERIA`.
+Las imágenes se suben como archivo (PNG/JPG/SVG) y se guardan codificadas en `localStorage` junto con el resto de la configuración. Si todavía no subiste una imagen para una combinación, se muestra un placeholder genérico hasta que la cargues.
+
+Importante: como todo queda en `localStorage` del navegador, la configuración (tipos, colores, imágenes) es por navegador/dispositivo — no se sincroniza automáticamente entre una computadora y otra.
 
 ## Login
 
@@ -75,7 +77,7 @@ Abrí `http://localhost:3344`. Este servidor es solo para pruebas locales, no se
 ## Uso de la app
 
 1. **Panel 1 — Datos generales**: completá cliente, contacto, número de presupuesto (autoincremental, editable), validez y fecha.
-2. **Panel 2 — Configuración de la abertura**: elegí tipo, cierre, cajón/mosquitero, medidas, cantidad e imagen (se autoselecciona según el tipo, pero podés elegir otra de la galería).
+2. **Panel 2 — Configuración de la abertura**: elegí tipo, color, línea, cierre, manija/vidrio (opcionales), cajón/mosquitero, medidas y cantidad. Las imágenes se muestran solas según lo que asignaste en Configuración.
 3. **Panel 3 — Lista de ítems**: cada "Agregar al presupuesto" suma una fila; se puede editar o eliminar cualquier ítem.
 4. **Generar presupuesto**: valida los campos obligatorios (cliente, número, al menos un ítem) y muestra la vista final, lista para completar el precio a mano y guardar/imprimir.
 5. **Guardar presupuesto**: lo persiste en `localStorage`. Podés recuperarlo después desde "Presupuestos guardados" en la barra superior.
