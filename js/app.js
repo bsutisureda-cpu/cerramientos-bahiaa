@@ -107,7 +107,9 @@
     document.getElementById('btn-generar').addEventListener('click', onGenerarPresupuesto);
     document.getElementById('btn-volver-editar').addEventListener('click', volverAEditar);
     document.getElementById('btn-guardar-presupuesto').addEventListener('click', onGuardarPresupuesto);
-    document.getElementById('btn-imprimir').addEventListener('click', () => window.print());
+    document.getElementById('btn-vista-previa-pdf').addEventListener('click', onVistaPreviaPDF);
+    document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
+    document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
     document.getElementById('btn-guardados').addEventListener('click', abrirModalGuardados);
     document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalGuardados);
 
@@ -354,6 +356,7 @@
   }
 
   function renderVistaPresupuesto(datos) {
+    state.datosActuales = datos;
     document.getElementById('vp-numero').textContent = `N.º ${datos.numero}`;
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
@@ -386,6 +389,75 @@
   function volverAEditar() {
     document.getElementById('vista-presupuesto').hidden = true;
     document.getElementById('editor-view').hidden = false;
+  }
+
+  // ---------------------------------------------------------------------
+  // Vista previa y descarga de PDF (jsPDF + html2canvas)
+  // ---------------------------------------------------------------------
+  async function generarPDFBlob() {
+    const hoja = document.getElementById('hoja-presupuesto');
+    const canvas = await html2canvas(hoja, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgWidth = pageWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+    pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    return pdf.output('blob');
+  }
+
+  async function onVistaPreviaPDF() {
+    const modal = document.getElementById('modal-pdf-preview');
+    const status = document.getElementById('pdf-preview-status');
+    const frame = document.getElementById('pdf-preview-frame');
+    const btnDescargar = document.getElementById('btn-descargar-pdf');
+
+    modal.hidden = false;
+    status.hidden = false;
+    status.textContent = 'Generando PDF...';
+    frame.hidden = true;
+    btnDescargar.disabled = true;
+
+    try {
+      const blob = await generarPDFBlob();
+      if (state.pdfBlobUrl) URL.revokeObjectURL(state.pdfBlobUrl);
+      state.pdfBlobUrl = URL.createObjectURL(blob);
+
+      frame.src = state.pdfBlobUrl;
+      frame.hidden = false;
+      status.hidden = true;
+      btnDescargar.disabled = false;
+    } catch (e) {
+      status.textContent = 'No se pudo generar el PDF. Intentá nuevamente.';
+    }
+  }
+
+  function cerrarVistaPreviaPDF() {
+    document.getElementById('modal-pdf-preview').hidden = true;
+  }
+
+  function descargarPDFActual() {
+    if (!state.pdfBlobUrl) return;
+    const numero = state.datosActuales ? state.datosActuales.numero : 'presupuesto';
+    const a = document.createElement('a');
+    a.href = state.pdfBlobUrl;
+    a.download = `presupuesto_${numero}.pdf`;
+    a.click();
   }
 
   // ---------------------------------------------------------------------

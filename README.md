@@ -7,7 +7,7 @@ App web para generar presupuestos de aberturas de aluminio (ventanas y puertas).
 ```
 index.html          → pantalla de login
 app.html             → app principal (3 paneles + vista de presupuesto + Configuración)
-css/style.css        → estilos (incluye hoja @media print para el PDF)
+css/style.css        → estilos
 js/login.js          → lógica del formulario de login
 js/config-data.js    → modelo de configuración (tipos, colores, líneas, imágenes) + acceso a localStorage
 js/app.js            → lógica principal de la app (paneles, ítems, presupuesto, configuración)
@@ -81,4 +81,4 @@ Abrí `http://localhost:3344`. Este servidor es solo para pruebas locales, no se
 3. **Panel 3 — Lista de ítems**: cada "Agregar al presupuesto" suma una fila; se puede editar o eliminar cualquier ítem.
 4. **Generar presupuesto**: valida los campos obligatorios (cliente, número, al menos un ítem) y muestra la vista final, lista para completar el precio a mano y guardar/imprimir.
 5. **Guardar presupuesto**: lo persiste en `localStorage`. Podés recuperarlo después desde "Presupuestos guardados" en la barra superior.
-6. **Imprimir / Guardar PDF**: usa `window.print()` con una hoja de estilos pensada para A4, ocultando toda la interfaz y dejando solo el presupuesto.
+6. **Vista previa / Descargar PDF**: genera el PDF en el navegador (con [jsPDF](https://github.com/parallax/jsPDF) + [html2canvas](https://github.com/niklasvh/html2canvas), cargados desde CDN) y lo muestra en una vista previa antes de descargarlo como archivo `.pdf`.
