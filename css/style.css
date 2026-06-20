@@ -482,7 +482,7 @@ label {
 }
 .vp-datos-cliente p { margin: 0.2rem 0; }
 
-.vp-items h3, .vp-precio h3 {
+.vp-items h3 {
   font-size: 0.95rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -522,8 +522,17 @@ label {
 }
 .vp-item-row .vp-item-info .vp-spec-linea { display: block; color: var(--color-text); }
 
-.vp-precio { margin-top: 1.6rem; }
-.vp-precio textarea { resize: vertical; }
+.vp-precio {
+  margin-top: 1.6rem;
+  display: flex;
+  justify-content: flex-end;
+}
+.vp-precio textarea {
+  resize: vertical;
+  width: 60%;
+  min-width: 220px;
+  text-align: right;
+}
 
 /* --- Modal de vista previa de PDF --- */
 .modal-pdf { max-width: 720px; width: 100%; display: flex; flex-direction: column; }

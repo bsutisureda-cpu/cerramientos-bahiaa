@@ -363,7 +363,6 @@
     document.getElementById('vp-empresa-email').textContent = state.config.empresaEmail || '';
     document.getElementById('vp-empresa-telefonos').textContent = state.config.empresaTelefonos || '';
 
-    document.getElementById('vp-numero').textContent = `N.º ${datos.numero}`;
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
 
