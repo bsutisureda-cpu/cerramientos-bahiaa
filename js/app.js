@@ -373,18 +373,42 @@
     const cont = document.getElementById('vp-lista-items');
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero);
-      const row = document.createElement('div');
-      row.className = 'vp-item-row';
-      row.innerHTML = `
-        <img src="${img}" alt="${item.tipo}" />
+      const unidades = Math.max(1, item.cantidad || 1);
+      for (let i = 0; i < unidades; i++) {
+        cont.appendChild(crearVentanaCard(item));
+      }
+    });
+  }
+
+  function crearVentanaCard(item) {
+    const imgAbertura = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero);
+    const imgManija = item.manija ? imagenManija(state.config, item.manija, item.color) : null;
+    const imgVidrio = item.vidrio ? imagenVidrio(state.config, item.vidrio) : null;
+
+    const card = document.createElement('div');
+    card.className = 'vp-ventana';
+    card.innerHTML = `
+      <div class="vp-item-row">
+        <img src="${imgAbertura}" alt="${item.tipo}" />
         <div class="vp-item-info">
           <strong>${item.tipo} (${item.ancho} x ${item.alto} mm)</strong>
           ${specsItem(item)}
         </div>
-      `;
-      cont.appendChild(row);
-    });
+      </div>
+      ${
+        imgManija || imgVidrio
+          ? `<div class="vp-extra-row">
+              <div class="vp-extra-col">
+                ${imgManija ? `<img src="${imgManija}" alt="${item.manija}" /><span>${item.manija}</span>` : ''}
+              </div>
+              <div class="vp-extra-col">
+                ${imgVidrio ? `<img src="${imgVidrio}" alt="${item.vidrio}" /><span>${item.vidrio}</span>` : ''}
+              </div>
+            </div>`
+          : ''
+      }
+    `;
+    return card;
   }
 
   function setFila(filaId, spanId, valor) {
@@ -404,7 +428,6 @@
     if (item.manija) lineas.push(`MANIJA: ${item.manija}`);
     if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
     if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
-    lineas.push(`CANTIDAD: ${item.cantidad}`);
     return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
   }
 
