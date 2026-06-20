@@ -9,6 +9,9 @@ const CONFIG_KEY = 'cerr_config';
 const DEFAULT_CONFIG = {
   empresaNombre: 'Cerramientos Bahía',
   empresaLogo: null, // data URL (base64) del logo subido en Configuración
+  empresaHandle: '@CERRAMIENTOS_BAHIA',
+  empresaEmail: 'admcerramientos@gmail.com',
+  empresaTelefonos: '291 4433628\n291 4405181\n291 4235443', // uno por línea
   tiposAbertura: ['Corrediza', 'Batiente', 'Banderola', 'Paño fijo', 'Oscilobatiente', 'Puerta'],
   tiposCierre: ['Cremona', 'Manija', 'Cerradura', 'Falleba'],
   tiposManija: [],

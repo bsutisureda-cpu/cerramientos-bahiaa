@@ -359,9 +359,17 @@
     } else {
       logo.hidden = true;
     }
+    document.getElementById('vp-empresa-handle').textContent = state.config.empresaHandle || '';
+    document.getElementById('vp-empresa-email').textContent = state.config.empresaEmail || '';
+    document.getElementById('vp-empresa-telefonos').textContent = state.config.empresaTelefonos || '';
+
     document.getElementById('vp-numero').textContent = `N.º ${datos.numero}`;
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
+
+    document.getElementById('vp-cliente').textContent = datos.nombre;
+    setFila('vp-fila-direccion', 'vp-direccion', datos.direccion);
+    setFila('vp-fila-arquitecto', 'vp-arquitecto', datos.arquitecto);
 
     const cont = document.getElementById('vp-lista-items');
     cont.innerHTML = '';
@@ -372,13 +380,33 @@
       row.innerHTML = `
         <img src="${img}" alt="${item.tipo}" />
         <div class="vp-item-info">
-          <strong>${item.tipo} · ${item.color} · Cierre: ${item.cierre}</strong>
-          <span>Medidas: ${item.ancho}cm x ${item.alto}cm — Cantidad: ${item.cantidad}</span><br/>
-          <span>${descripcionItem(item)}</span>
+          <strong>${item.tipo} (${item.ancho} x ${item.alto} mm)</strong>
+          ${specsItem(item)}
         </div>
       `;
       cont.appendChild(row);
     });
+  }
+
+  function setFila(filaId, spanId, valor) {
+    const fila = document.getElementById(filaId);
+    document.getElementById(spanId).textContent = valor || '';
+    fila.style.display = valor ? '' : 'none';
+  }
+
+  function specsItem(item) {
+    const lineas = [
+      `PRODUCTO: ${item.tipo}${item.linea ? ' LÍNEA ' + item.linea : ''}`,
+      `MEDIDAS: ${item.ancho} x ${item.alto} mm`,
+    ];
+    if (item.vidrio) lineas.push(`VIDRIO: ${item.vidrio}`);
+    lineas.push(`COLOR: ${item.color}`);
+    lineas.push(`CIERRE: ${item.cierre}`);
+    if (item.manija) lineas.push(`MANIJA: ${item.manija}`);
+    if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
+    if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
+    lineas.push(`CANTIDAD: ${item.cantidad}`);
+    return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
   }
 
   function volverAEditar() {
@@ -608,6 +636,9 @@
     const c = state.config;
 
     document.getElementById('config-empresa-nombre').value = c.empresaNombre || '';
+    document.getElementById('config-empresa-handle').value = c.empresaHandle || '';
+    document.getElementById('config-empresa-email').value = c.empresaEmail || '';
+    document.getElementById('config-empresa-telefonos').value = c.empresaTelefonos || '';
     renderPreviewImg('config-empresa-logo-preview', c.empresaLogo || null);
 
     renderListaChips('config-lista-colores', c.colores, (v) => {
@@ -713,6 +744,9 @@
   function initConfigEvents() {
     document.getElementById('btn-guardar-empresa').addEventListener('click', async () => {
       state.config.empresaNombre = document.getElementById('config-empresa-nombre').value.trim();
+      state.config.empresaHandle = document.getElementById('config-empresa-handle').value.trim();
+      state.config.empresaEmail = document.getElementById('config-empresa-email').value.trim();
+      state.config.empresaTelefonos = document.getElementById('config-empresa-telefonos').value;
       const file = document.getElementById('config-empresa-logo-file').files[0];
       if (file) {
         state.config.empresaLogo = await leerArchivoComoDataURL(file);

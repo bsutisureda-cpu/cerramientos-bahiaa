@@ -171,21 +171,35 @@
       </div>
 
       <div class="hoja" id="hoja-presupuesto">
-        <div class="vp-franja"></div>
-        <header class="vp-header">
-          <div class="vp-marca">
+        <header class="vp-band">
+          <div class="vp-logo-box">
             <img id="vp-logo" class="vp-logo" alt="Logo" hidden />
-            <div class="vp-empresa">
-              <p id="vp-empresa-nombre" class="vp-empresa-nombre"></p>
-              <h2>Presupuesto</h2>
-              <p id="vp-numero" class="vp-numero"></p>
-            </div>
+          </div>
+          <div class="vp-band-center">
+            <p id="vp-empresa-handle" class="vp-empresa-handle"></p>
+            <p id="vp-empresa-email" class="vp-empresa-email"></p>
+          </div>
+          <div class="vp-band-right" id="vp-empresa-telefonos"></div>
+        </header>
+
+        <div class="vp-body">
+        <div class="vp-subheader">
+          <div>
+            <p id="vp-empresa-nombre" class="vp-empresa-nombre"></p>
+            <h2>Presupuesto</h2>
+            <p id="vp-numero" class="vp-numero"></p>
           </div>
           <div class="vp-meta">
             <p><strong>Fecha:</strong> <span id="vp-fecha"></span></p>
             <p><strong>Validez:</strong> <span id="vp-validez"></span></p>
           </div>
-        </header>
+        </div>
+
+        <section class="vp-datos-cliente">
+          <p><strong>Sres.</strong> <span id="vp-cliente"></span></p>
+          <p id="vp-fila-direccion"><strong>Dir.</strong> <span id="vp-direccion"></span></p>
+          <p id="vp-fila-arquitecto"><strong>Ref.</strong> <span id="vp-arquitecto"></span></p>
+        </section>
 
         <section class="vp-items">
           <h3>Detalle de aberturas</h3>
@@ -196,6 +210,7 @@
           <h3>Precio</h3>
           <textarea id="vp-precio-texto" rows="4" placeholder="Escribí aquí el precio / condiciones de pago..."></textarea>
         </section>
+        </div>
       </div>
     </section>
   </div>
@@ -219,6 +234,18 @@
           <div class="field">
             <label for="config-empresa-logo-file">Logo (se muestra en el encabezado del presupuesto)</label>
             <input type="file" id="config-empresa-logo-file" accept="image/*" />
+          </div>
+          <div class="field">
+            <label for="config-empresa-handle">Usuario / Instagram</label>
+            <input type="text" id="config-empresa-handle" placeholder="@CERRAMIENTOS_BAHIA" />
+          </div>
+          <div class="field">
+            <label for="config-empresa-email">Email</label>
+            <input type="email" id="config-empresa-email" placeholder="admcerramientos@gmail.com" />
+          </div>
+          <div class="field field-full">
+            <label for="config-empresa-telefonos">Teléfonos (uno por línea)</label>
+            <textarea id="config-empresa-telefonos" rows="3" placeholder="291 4433628&#10;291 4405181"></textarea>
           </div>
         </div>
         <div id="config-empresa-logo-preview" class="config-preview"></div>
