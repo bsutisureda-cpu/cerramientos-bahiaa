@@ -14,7 +14,7 @@ const DEFAULT_CONFIG = {
   colores: ['Blanco', 'Negro', 'Símil madera', 'Anodizado negro', 'Anodizado gris'],
   lineas: ['M3', 'M5', 'M7'],
   // Imágenes subidas por el usuario (data URLs en base64), indexadas por clave.
-  imagenesAbertura: {}, // clave: `${tipo}||${color}`
+  imagenesAbertura: {}, // clave: `${tipo}||${color}||${mosquitero}` (mosquitero: "si" | "no")
   imagenesManija: {}, // clave: `${manija}||${color}`
   imagenesVidrio: {}, // clave: `${vidrio}`
 };
@@ -45,16 +45,20 @@ function placeholderImagen(texto) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-function claveAbertura(tipo, color) {
-  return `${tipo}||${color}`;
+function claveAbertura(tipo, color, mosquitero) {
+  return `${tipo}||${color}||${mosquitero === 'si' ? 'si' : 'no'}`;
 }
 
 function claveManija(manija, color) {
   return `${manija}||${color}`;
 }
 
-function imagenAbertura(config, tipo, color) {
-  return config.imagenesAbertura[claveAbertura(tipo, color)] || placeholderImagen(`${tipo} · ${color}`);
+function imagenAbertura(config, tipo, color, mosquitero) {
+  const etiquetaMosquitero = mosquitero === 'si' ? 'con mosquitero' : 'sin mosquitero';
+  return (
+    config.imagenesAbertura[claveAbertura(tipo, color, mosquitero)] ||
+    placeholderImagen(`${tipo} · ${color} · ${etiquetaMosquitero}`)
+  );
 }
 
 function imagenManija(config, manija, color) {

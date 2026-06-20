@@ -98,7 +98,7 @@
     actualizarPreviewImagenes();
     renderListaItems();
 
-    ['p2-tipo', 'p2-color', 'p2-manija', 'p2-vidrio'].forEach((id) =>
+    ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-manija', 'p2-vidrio'].forEach((id) =>
       document.getElementById(id).addEventListener('change', actualizarPreviewImagenes)
     );
 
@@ -131,10 +131,11 @@
   function actualizarPreviewImagenes() {
     const tipo = document.getElementById('p2-tipo').value;
     const color = document.getElementById('p2-color').value;
+    const mosquitero = document.getElementById('p2-mosquitero').value;
     const manija = document.getElementById('p2-manija').value;
     const vidrio = document.getElementById('p2-vidrio').value;
 
-    document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color);
+    document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color, mosquitero);
 
     const manijaBox = document.getElementById('p2-img-manija-box');
     if (manija) {
@@ -247,7 +248,7 @@
 
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenAbertura(state.config, item.tipo, item.color);
+      const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero);
       const div = document.createElement('div');
       div.className = 'item-card';
       div.innerHTML = `
@@ -367,7 +368,7 @@
     const cont = document.getElementById('vp-lista-items');
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenAbertura(state.config, item.tipo, item.color);
+      const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero);
       const row = document.createElement('div');
       row.className = 'vp-item-row';
       row.innerHTML = `
@@ -571,7 +572,12 @@
     populateSelect('config-img-vidrio', c.tiposVidrio);
 
     renderPreviewImg('config-preview-abertura', c.tiposAbertura.length && c.colores.length
-      ? imagenAbertura(c, document.getElementById('config-img-tipo').value, document.getElementById('config-img-color').value)
+      ? imagenAbertura(
+          c,
+          document.getElementById('config-img-tipo').value,
+          document.getElementById('config-img-color').value,
+          document.getElementById('config-img-mosquitero').value
+        )
       : null);
     renderPreviewImg('config-preview-manija', c.tiposManija.length && c.colores.length
       ? imagenManija(c, document.getElementById('config-img-manija').value, document.getElementById('config-img-color-manija').value)
@@ -610,7 +616,11 @@
     claves.forEach((clave) => {
       const div = document.createElement('div');
       div.className = 'config-galeria-item';
-      const etiqueta = clave.replace('||', ' · ');
+      const partes = clave.split('||');
+      if (partes.length === 3) {
+        partes[2] = partes[2] === 'si' ? 'Con mosquitero' : 'Sin mosquitero';
+      }
+      const etiqueta = partes.join(' · ');
       div.innerHTML = `
         <button type="button" aria-label="Eliminar">×</button>
         <img src="${mapa[clave]}" alt="${etiqueta}" />
@@ -674,11 +684,16 @@
       }
     });
 
-    ['config-img-tipo', 'config-img-color'].forEach((id) =>
+    ['config-img-tipo', 'config-img-color', 'config-img-mosquitero'].forEach((id) =>
       document.getElementById(id).addEventListener('change', () => {
         renderPreviewImg(
           'config-preview-abertura',
-          imagenAbertura(state.config, document.getElementById('config-img-tipo').value, document.getElementById('config-img-color').value)
+          imagenAbertura(
+            state.config,
+            document.getElementById('config-img-tipo').value,
+            document.getElementById('config-img-color').value,
+            document.getElementById('config-img-mosquitero').value
+          )
         );
       })
     );
@@ -697,12 +712,13 @@
     document.getElementById('btn-guardar-img-abertura').addEventListener('click', async () => {
       const tipo = document.getElementById('config-img-tipo').value;
       const color = document.getElementById('config-img-color').value;
+      const mosquitero = document.getElementById('config-img-mosquitero').value;
       const file = document.getElementById('config-img-file').files[0];
       if (!tipo || !color || !file) {
         alert('Elegí tipo, color y un archivo de imagen.');
         return;
       }
-      state.config.imagenesAbertura[claveAbertura(tipo, color)] = await leerArchivoComoDataURL(file);
+      state.config.imagenesAbertura[claveAbertura(tipo, color, mosquitero)] = await leerArchivoComoDataURL(file);
       document.getElementById('config-img-file').value = '';
       guardarYRenderConfig();
     });
