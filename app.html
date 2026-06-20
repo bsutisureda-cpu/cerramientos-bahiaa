@@ -173,24 +173,19 @@
       <div class="hoja" id="hoja-presupuesto">
         <div class="vp-franja"></div>
         <header class="vp-header">
-          <div class="vp-empresa">
-            <h2>Presupuesto</h2>
-            <p id="vp-numero" class="vp-numero"></p>
+          <div class="vp-marca">
+            <img id="vp-logo" class="vp-logo" alt="Logo" hidden />
+            <div class="vp-empresa">
+              <p id="vp-empresa-nombre" class="vp-empresa-nombre"></p>
+              <h2>Presupuesto</h2>
+              <p id="vp-numero" class="vp-numero"></p>
+            </div>
           </div>
           <div class="vp-meta">
             <p><strong>Fecha:</strong> <span id="vp-fecha"></span></p>
             <p><strong>Validez:</strong> <span id="vp-validez"></span></p>
           </div>
         </header>
-
-        <section class="vp-datos-cliente">
-          <p><strong>Cliente:</strong> <span id="vp-cliente"></span></p>
-          <p id="vp-fila-telefono"><strong>Teléfono:</strong> <span id="vp-telefono"></span></p>
-          <p id="vp-fila-direccion"><strong>Dirección:</strong> <span id="vp-direccion"></span></p>
-          <p id="vp-fila-localidad"><strong>Localidad:</strong> <span id="vp-localidad"></span></p>
-          <p id="vp-fila-arquitecto"><strong>Arquitecto / referente:</strong> <span id="vp-arquitecto"></span></p>
-          <p id="vp-fila-extra"><strong>Observaciones:</strong> <span id="vp-extra"></span></p>
-        </section>
 
         <section class="vp-items">
           <h3>Detalle de aberturas</h3>
@@ -213,6 +208,25 @@
     </div>
 
     <div class="config-grid">
+      <!-- Datos de la empresa -->
+      <section class="panel panel-full">
+        <h3>Datos de la empresa</h3>
+        <div class="field-grid">
+          <div class="field">
+            <label for="config-empresa-nombre">Nombre de la empresa</label>
+            <input type="text" id="config-empresa-nombre" />
+          </div>
+          <div class="field">
+            <label for="config-empresa-logo-file">Logo (se muestra en el encabezado del presupuesto)</label>
+            <input type="file" id="config-empresa-logo-file" accept="image/*" />
+          </div>
+        </div>
+        <div id="config-empresa-logo-preview" class="config-preview"></div>
+        <div class="panel-actions">
+          <button type="button" id="btn-guardar-empresa" class="btn btn-primary">Guardar datos de la empresa</button>
+        </div>
+      </section>
+
       <!-- Colores -->
       <section class="panel">
         <h3>Colores</h3>

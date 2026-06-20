@@ -349,24 +349,19 @@
     document.getElementById('vista-presupuesto').hidden = false;
   }
 
-  function setFila(filaId, spanId, valor) {
-    const fila = document.getElementById(filaId);
-    document.getElementById(spanId).textContent = valor || '';
-    fila.style.display = valor ? '' : 'none';
-  }
-
   function renderVistaPresupuesto(datos) {
     state.datosActuales = datos;
+    document.getElementById('vp-empresa-nombre').textContent = state.config.empresaNombre || '';
+    const logo = document.getElementById('vp-logo');
+    if (state.config.empresaLogo) {
+      logo.src = state.config.empresaLogo;
+      logo.hidden = false;
+    } else {
+      logo.hidden = true;
+    }
     document.getElementById('vp-numero').textContent = `N.º ${datos.numero}`;
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
-    document.getElementById('vp-cliente').textContent = datos.nombre;
-
-    setFila('vp-fila-telefono', 'vp-telefono', datos.telefono);
-    setFila('vp-fila-direccion', 'vp-direccion', datos.direccion);
-    setFila('vp-fila-localidad', 'vp-localidad', datos.localidad);
-    setFila('vp-fila-arquitecto', 'vp-arquitecto', datos.arquitecto);
-    setFila('vp-fila-extra', 'vp-extra', datos.extra);
 
     const cont = document.getElementById('vp-lista-items');
     cont.innerHTML = '';
@@ -612,6 +607,9 @@
   function renderConfig() {
     const c = state.config;
 
+    document.getElementById('config-empresa-nombre').value = c.empresaNombre || '';
+    renderPreviewImg('config-empresa-logo-preview', c.empresaLogo || null);
+
     renderListaChips('config-lista-colores', c.colores, (v) => {
       c.colores = c.colores.filter((x) => x !== v);
       guardarYRenderConfig();
@@ -713,6 +711,16 @@
   }
 
   function initConfigEvents() {
+    document.getElementById('btn-guardar-empresa').addEventListener('click', async () => {
+      state.config.empresaNombre = document.getElementById('config-empresa-nombre').value.trim();
+      const file = document.getElementById('config-empresa-logo-file').files[0];
+      if (file) {
+        state.config.empresaLogo = await leerArchivoComoDataURL(file);
+        document.getElementById('config-empresa-logo-file').value = '';
+      }
+      guardarYRenderConfig();
+    });
+
     document.getElementById('btn-add-color').addEventListener('click', () => {
       const input = document.getElementById('config-nuevo-color');
       if (agregarSimple(state.config.colores, input.value)) {

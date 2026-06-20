@@ -4,8 +4,8 @@
   --color-border: #d9dde2;
   --color-text: #232a31;
   --color-text-muted: #5b6570;
-  --color-primary: #2c5f6b;
-  --color-primary-dark: #1f4750;
+  --color-primary: #11305c;
+  --color-primary-dark: #050b18;
   --color-danger: #b3422f;
   --radius: 8px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -105,7 +105,7 @@ label {
   justify-content: center;
   min-height: 100vh;
   padding: 1rem;
-  background: linear-gradient(135deg, #1f4750, #2c5f6b);
+  background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
 }
 
 .login-card {
@@ -417,6 +417,27 @@ label {
   gap: 0.6rem;
 }
 
+.vp-marca {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.vp-logo {
+  max-height: 56px;
+  max-width: 110px;
+  object-fit: contain;
+}
+
+.vp-empresa-nombre {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-primary);
+  margin: 0 0 0.1rem;
+}
+
 .vp-header h2 {
   font-size: 1.6rem;
   letter-spacing: 0.02em;
@@ -435,16 +456,6 @@ label {
 
 .vp-meta { text-align: right; font-size: 0.9rem; }
 .vp-meta p { margin: 0.15rem 0; }
-
-.vp-datos-cliente {
-  margin-bottom: 1.4rem;
-  font-size: 0.95rem;
-  background: #f8fafa;
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 0.8rem 1rem;
-}
-.vp-datos-cliente p { margin: 0.25rem 0; }
 
 .vp-items h3, .vp-precio h3 {
   font-size: 0.95rem;

@@ -22,6 +22,7 @@ No hay backend de datos: todo lo que se carga (presupuestos, ítems, tipos, imá
 
 Desde la app, botón **"Configuración"** en la barra superior (no se edita código):
 
+- **Datos de la empresa**: nombre y logo, se muestran en el encabezado del presupuesto.
 - **Colores**, **Líneas** y **Tipos de cierre**: listas simples, solo agregar/eliminar.
 - **Tipos de abertura**: lista editable + subís una imagen para cada combinación tipo+color+mosquitero (con/sin).
 - **Tipos de manija**: lista editable + subís una imagen para cada combinación manija+color.
