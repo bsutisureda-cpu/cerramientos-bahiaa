@@ -1,42 +1,31 @@
 // ---------------------------------------------------------------------------
 // Configuración editable de la app: tipos de abertura, cierres, manijas,
-// vidrios, colores y líneas. Todo se guarda en localStorage y se administra
-// desde la pantalla "Configuración" dentro de la app (no se edita a mano).
+// vidrios, colores y líneas. Se guarda en el servidor (compartida entre
+// todos los navegadores) y se administra desde la pantalla "Configuración".
 // ---------------------------------------------------------------------------
 
-const CONFIG_KEY = 'cerr_config';
-
-const DEFAULT_CONFIG = {
-  empresaNombre: 'Cerramientos Bahía',
-  empresaLogo: null, // data URL (base64) del logo subido en Configuración
-  empresaHandle: '@CERRAMIENTOS_BAHIA',
-  empresaEmail: 'admcerramientos@gmail.com',
-  empresaTelefonos: '291 4433628\n291 4405181\n291 4235443', // uno por línea
-  tiposAbertura: ['Corrediza', 'Batiente', 'Banderola', 'Paño fijo', 'Oscilobatiente', 'Puerta'],
-  tiposCierre: ['Cremona', 'Manija', 'Cerradura', 'Falleba'],
-  tiposManija: [],
-  tiposVidrio: [],
-  colores: ['Blanco', 'Negro', 'Símil madera', 'Anodizado negro', 'Anodizado gris'],
-  lineas: ['M3', 'M5', 'M7'],
-  // Imágenes subidas por el usuario (data URLs en base64), indexadas por clave.
-  imagenesAbertura: {}, // clave: `${tipo}||${color}||${mosquitero}` (mosquitero: "si" | "no")
-  imagenesManija: {}, // clave: `${manija}||${color}`
-  imagenesVidrio: {}, // clave: `${vidrio}`
-};
-
-function cargarConfig() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null');
-    if (!raw) return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-    // merge con defaults para no romper si se agregan campos nuevos en el futuro
-    return Object.assign(JSON.parse(JSON.stringify(DEFAULT_CONFIG)), raw);
-  } catch (e) {
-    return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-  }
+async function cargarConfigRemota() {
+  const resp = await fetch('/api/config');
+  if (!resp.ok) throw new Error('No se pudo cargar la configuración.');
+  return resp.json();
 }
 
-function guardarConfig(config) {
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
+async function guardarConfigRemota(config) {
+  const resp = await fetch('/api/config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  });
+  if (!resp.ok) throw new Error('No se pudo guardar la configuración.');
+}
+
+async function subirImagen(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  const resp = await fetch('/api/upload', { method: 'POST', body: formData });
+  if (!resp.ok) throw new Error('No se pudo subir la imagen.');
+  const data = await resp.json();
+  return data.url;
 }
 
 // Placeholder neutro (SVG inline) para cuando todavía no se subió imagen.

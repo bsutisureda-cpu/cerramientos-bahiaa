@@ -5,7 +5,7 @@
   const state = {
     items: [],
     editingItemId: null,
-    config: cargarConfig(),
+    config: null,
   };
 
   // ---------------------------------------------------------------------
@@ -15,6 +15,7 @@
     try {
       const resp = await fetch('/api/check', { method: 'GET' });
       if (!resp.ok) throw new Error('no autorizado');
+      state.config = await cargarConfigRemota();
       document.getElementById('auth-loading').hidden = true;
       document.getElementById('app-root').hidden = false;
       initApp();
@@ -626,8 +627,12 @@
     renderListaItems();
   }
 
-  function guardarYRenderConfig() {
-    guardarConfig(state.config);
+  async function guardarYRenderConfig() {
+    try {
+      await guardarConfigRemota(state.config);
+    } catch (e) {
+      alert('No se pudo guardar la configuración. Probá nuevamente.');
+    }
     renderConfig();
   }
 
@@ -754,14 +759,6 @@
     });
   }
 
-  function leerArchivoComoDataURL(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  }
 
   function initConfigEvents() {
     document.getElementById('btn-guardar-empresa').addEventListener('click', async () => {
@@ -771,8 +768,13 @@
       state.config.empresaTelefonos = document.getElementById('config-empresa-telefonos').value;
       const file = document.getElementById('config-empresa-logo-file').files[0];
       if (file) {
-        state.config.empresaLogo = await leerArchivoComoDataURL(file);
-        document.getElementById('config-empresa-logo-file').value = '';
+        try {
+          state.config.empresaLogo = await subirImagen(file);
+          document.getElementById('config-empresa-logo-file').value = '';
+        } catch (e) {
+          alert('No se pudo subir el logo. Probá nuevamente.');
+          return;
+        }
       }
       guardarYRenderConfig();
     });
@@ -854,7 +856,12 @@
         alert('Elegí tipo, color y un archivo de imagen.');
         return;
       }
-      state.config.imagenesAbertura[claveAbertura(tipo, color, mosquitero)] = await leerArchivoComoDataURL(file);
+      try {
+        state.config.imagenesAbertura[claveAbertura(tipo, color, mosquitero)] = await subirImagen(file);
+      } catch (e) {
+        alert('No se pudo subir la imagen. Probá nuevamente.');
+        return;
+      }
       document.getElementById('config-img-file').value = '';
       guardarYRenderConfig();
     });
@@ -867,7 +874,12 @@
         alert('Elegí manija, color y un archivo de imagen.');
         return;
       }
-      state.config.imagenesManija[claveManija(manija, color)] = await leerArchivoComoDataURL(file);
+      try {
+        state.config.imagenesManija[claveManija(manija, color)] = await subirImagen(file);
+      } catch (e) {
+        alert('No se pudo subir la imagen. Probá nuevamente.');
+        return;
+      }
       document.getElementById('config-img-file-manija').value = '';
       guardarYRenderConfig();
     });
@@ -879,7 +891,12 @@
         alert('Elegí un tipo de vidrio y un archivo de imagen.');
         return;
       }
-      state.config.imagenesVidrio[vidrio] = await leerArchivoComoDataURL(file);
+      try {
+        state.config.imagenesVidrio[vidrio] = await subirImagen(file);
+      } catch (e) {
+        alert('No se pudo subir la imagen. Probá nuevamente.');
+        return;
+      }
       document.getElementById('config-img-file-vidrio').value = '';
       guardarYRenderConfig();
     });
