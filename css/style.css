@@ -154,13 +154,14 @@ label {
 .topbar .btn-ghost,
 .config-header .btn-ghost,
 .vp-actions .btn-ghost {
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.5);
+  background: #fff;
+  color: var(--color-primary-dark);
+  border-color: #fff;
 }
 .topbar .btn-ghost:hover,
 .config-header .btn-ghost:hover,
 .vp-actions .btn-ghost:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: #eef1f3;
 }
 
 .panel {
