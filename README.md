@@ -22,7 +22,7 @@ No hay base de datos relacional: la configuración se guarda como un archivo `co
 Desde la app, botón **"Configuración"** en la barra superior (no se edita código):
 
 - **Datos de la empresa**: nombre, logo, usuario/Instagram, email y teléfonos — se muestran en el encabezado del presupuesto.
-- **Colores**, **Líneas** y **Tipos de cierre**: listas simples, solo agregar/eliminar.
+- **Colores** y **Líneas**: listas simples, solo agregar/eliminar.
 - **Tipos de abertura**: lista editable + subís una imagen para cada combinación tipo+color+mosquitero (con/sin).
 - **Tipos de manija**: lista editable + subís una imagen para cada combinación manija+color.
 - **Tipos de vidrio**: lista editable + subís una imagen por tipo de vidrio.
@@ -68,7 +68,7 @@ Abrí `http://localhost:3344`. En local, si no definís `DATA_DIR`, los datos se
 ## Uso de la app
 
 1. **Panel 1 — Datos generales**: completá cliente, contacto, número de presupuesto (autoincremental, editable), validez y fecha.
-2. **Panel 2 — Configuración de la abertura**: elegí tipo, color, línea, cierre, manija/vidrio (opcionales), cajón/mosquitero, medidas y cantidad. Las imágenes se muestran solas según lo que asignaste en Configuración.
+2. **Panel 2 — Configuración de la abertura**: elegí tipo, color, línea, manija (con su color)/vidrio (opcionales), cajón/mosquitero, medidas y cantidad. Las imágenes se muestran solas según lo que asignaste en Configuración.
 3. **Panel 3 — Lista de ítems**: cada "Agregar al presupuesto" suma una fila; se puede editar o eliminar cualquier ítem.
 4. **Generar presupuesto**: valida los campos obligatorios (cliente, número, al menos un ítem) y muestra la vista final — cada unidad de cada ítem aparece en su propia tarjeta — lista para completar el precio a mano y guardar/descargar.
 5. **Guardar presupuesto**: lo persiste en `localStorage` del navegador (esto sí queda por dispositivo). Podés recuperarlo después desde "Presupuestos guardados" en la barra superior.

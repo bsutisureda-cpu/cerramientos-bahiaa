@@ -397,6 +397,13 @@ label {
   flex-wrap: wrap;
 }
 
+.vp-actions .btn-primary {
+  background: #fff;
+  color: var(--color-primary-dark);
+  border-color: #fff;
+}
+.vp-actions .btn-primary:hover { background: #eef1f3; }
+
 .hoja {
   background: #fff;
   border: 1px solid var(--color-border);

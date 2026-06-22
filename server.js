@@ -35,7 +35,6 @@ const DEFAULT_CONFIG = {
   empresaEmail: 'admcerramientos@gmail.com',
   empresaTelefonos: '291 4433628\n291 4405181\n291 4235443',
   tiposAbertura: ['Corrediza', 'Batiente', 'Banderola', 'Paño fijo', 'Oscilobatiente', 'Puerta'],
-  tiposCierre: ['Cremona', 'Manija', 'Cerradura', 'Falleba'],
   tiposManija: [],
   tiposVidrio: [],
   colores: ['Blanco', 'Negro', 'Símil madera', 'Anodizado negro', 'Anodizado gris'],

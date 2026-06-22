@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Configuración editable de la app: tipos de abertura, cierres, manijas,
+// Configuración editable de la app: tipos de abertura, manijas,
 // vidrios, colores y líneas. Se guarda en el servidor (compartida entre
 // todos los navegadores) y se administra desde la pantalla "Configuración".
 // ---------------------------------------------------------------------------

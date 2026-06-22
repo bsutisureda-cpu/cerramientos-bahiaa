@@ -99,7 +99,7 @@
     actualizarPreviewImagenes();
     renderListaItems();
 
-    ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-cajon', 'p2-manija', 'p2-vidrio'].forEach((id) =>
+    ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-cajon', 'p2-manija', 'p2-color-manija', 'p2-vidrio'].forEach((id) =>
       document.getElementById(id).addEventListener('change', actualizarPreviewImagenes)
     );
 
@@ -123,8 +123,8 @@
     populateSelect('p2-tipo', state.config.tiposAbertura);
     populateSelect('p2-color', state.config.colores);
     populateSelect('p2-linea', state.config.lineas);
-    populateSelect('p2-cierre', state.config.tiposCierre);
     populateSelect('p2-manija', state.config.tiposManija, 'Ninguna');
+    populateSelect('p2-color-manija', state.config.colores);
     populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
   }
 
@@ -137,6 +137,7 @@
     const mosquitero = document.getElementById('p2-mosquitero').value;
     const cajon = document.getElementById('p2-cajon').value;
     const manija = document.getElementById('p2-manija').value;
+    const colorManija = document.getElementById('p2-color-manija').value;
     const vidrio = document.getElementById('p2-vidrio').value;
 
     document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color, mosquitero, cajon);
@@ -144,7 +145,7 @@
     const manijaBox = document.getElementById('p2-img-manija-box');
     if (manija) {
       manijaBox.hidden = false;
-      document.getElementById('p2-img-manija').src = imagenManija(state.config, manija, color);
+      document.getElementById('p2-img-manija').src = imagenManija(state.config, manija, colorManija);
     } else {
       manijaBox.hidden = true;
     }
@@ -166,8 +167,8 @@
       tipo: document.getElementById('p2-tipo').value,
       color: document.getElementById('p2-color').value,
       linea: document.getElementById('p2-linea').value,
-      cierre: document.getElementById('p2-cierre').value,
       manija: document.getElementById('p2-manija').value,
+      colorManija: document.getElementById('p2-color-manija').value,
       vidrio: document.getElementById('p2-vidrio').value,
       cajon: document.getElementById('p2-cajon').value,
       mosquitero: document.getElementById('p2-mosquitero').value,
@@ -180,7 +181,6 @@
   function validarFormularioItem(data) {
     if (!data.tipo) return 'Elegí el tipo de abertura.';
     if (!data.color) return 'Elegí un color.';
-    if (!data.cierre) return 'Elegí el tipo de cierre.';
     if (!data.ancho || data.ancho <= 0) return 'Ingresá un ancho válido.';
     if (!data.alto || data.alto <= 0) return 'Ingresá un alto válido.';
     if (!data.cantidad || data.cantidad <= 0) return 'Ingresá una cantidad válida.';
@@ -234,7 +234,7 @@
     if (item.linea) partes.push(`Línea: ${item.linea}`);
     partes.push(`Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}`);
     partes.push(`Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}`);
-    if (item.manija) partes.push(`Manija: ${item.manija}`);
+    if (item.manija) partes.push(`Manija: ${item.manija}${item.colorManija ? ' (' + item.colorManija + ')' : ''}`);
     if (item.vidrio) partes.push(`Vidrio: ${item.vidrio}`);
     return partes.join(' · ');
   }
@@ -258,7 +258,7 @@
       div.innerHTML = `
         <img src="${img}" alt="${item.tipo}" />
         <div class="item-info">
-          <strong>${item.tipo} · ${item.color} · ${item.cierre}</strong>
+          <strong>${item.tipo} · ${item.color}</strong>
           <span class="item-detalles">${descripcionItem(item)}</span>
         </div>
         <div class="item-card-actions">
@@ -285,8 +285,8 @@
     document.getElementById('p2-tipo').value = item.tipo;
     document.getElementById('p2-color').value = item.color;
     document.getElementById('p2-linea').value = item.linea || '';
-    document.getElementById('p2-cierre').value = item.cierre;
     document.getElementById('p2-manija').value = item.manija || '';
+    document.getElementById('p2-color-manija').value = item.colorManija || '';
     document.getElementById('p2-vidrio').value = item.vidrio || '';
     document.getElementById('p2-cajon').value = item.cajon;
     document.getElementById('p2-mosquitero').value = item.mosquitero;
@@ -384,7 +384,7 @@
 
   function crearVentanaCard(item) {
     const imgAbertura = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
-    const imgManija = item.manija ? imagenManija(state.config, item.manija, item.color) : null;
+    const imgManija = item.manija ? imagenManija(state.config, item.manija, item.colorManija) : null;
     const imgVidrio = item.vidrio ? imagenVidrio(state.config, item.vidrio) : null;
 
     const card = document.createElement('div');
@@ -426,8 +426,7 @@
     ];
     if (item.vidrio) lineas.push(`VIDRIO: ${item.vidrio}`);
     lineas.push(`COLOR: ${item.color}`);
-    lineas.push(`CIERRE: ${item.cierre}`);
-    if (item.manija) lineas.push(`MANIJA: ${item.manija}`);
+    if (item.manija) lineas.push(`MANIJA: ${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`);
     if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
     if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
     return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
@@ -677,10 +676,6 @@
       c.lineas = c.lineas.filter((x) => x !== v);
       guardarYRenderConfig();
     });
-    renderListaChips('config-lista-cierres', c.tiposCierre, (v) => {
-      c.tiposCierre = c.tiposCierre.filter((x) => x !== v);
-      guardarYRenderConfig();
-    });
     renderListaChips('config-lista-aberturas', c.tiposAbertura, (v) => {
       c.tiposAbertura = c.tiposAbertura.filter((x) => x !== v);
       guardarYRenderConfig();
@@ -794,13 +789,6 @@
     document.getElementById('btn-add-linea').addEventListener('click', () => {
       const input = document.getElementById('config-nueva-linea');
       if (agregarSimple(state.config.lineas, input.value)) {
-        input.value = '';
-        guardarYRenderConfig();
-      }
-    });
-    document.getElementById('btn-add-cierre').addEventListener('click', () => {
-      const input = document.getElementById('config-nuevo-cierre');
-      if (agregarSimple(state.config.tiposCierre, input.value)) {
         input.value = '';
         guardarYRenderConfig();
       }
