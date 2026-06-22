@@ -39,19 +39,20 @@ function placeholderImagen(texto) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
-function claveAbertura(tipo, color, mosquitero) {
-  return `${tipo}||${color}||${mosquitero === 'si' ? 'si' : 'no'}`;
+function claveAbertura(tipo, color, mosquitero, cajon) {
+  return `${tipo}||${color}||${mosquitero === 'si' ? 'si' : 'no'}||${cajon === 'si' ? 'si' : 'no'}`;
 }
 
 function claveManija(manija, color) {
   return `${manija}||${color}`;
 }
 
-function imagenAbertura(config, tipo, color, mosquitero) {
+function imagenAbertura(config, tipo, color, mosquitero, cajon) {
   const etiquetaMosquitero = mosquitero === 'si' ? 'con mosquitero' : 'sin mosquitero';
+  const etiquetaCajon = cajon === 'si' ? 'con cajón' : 'sin cajón';
   return (
-    config.imagenesAbertura[claveAbertura(tipo, color, mosquitero)] ||
-    placeholderImagen(`${tipo} · ${color} · ${etiquetaMosquitero}`)
+    config.imagenesAbertura[claveAbertura(tipo, color, mosquitero, cajon)] ||
+    placeholderImagen(`${tipo} · ${color} · ${etiquetaMosquitero} · ${etiquetaCajon}`)
   );
 }
 

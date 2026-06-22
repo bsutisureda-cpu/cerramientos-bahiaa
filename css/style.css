@@ -22,7 +22,7 @@
 
 body {
   margin: 0;
-  background: var(--color-bg);
+  background: var(--color-primary);
   color: var(--color-text);
   font-family: inherit;
   line-height: 1.4;
@@ -128,7 +128,7 @@ label {
   align-items: center;
   justify-content: center;
   height: 100vh;
-  color: var(--color-text-muted);
+  color: #fff;
   font-size: 1rem;
 }
 
@@ -148,8 +148,20 @@ label {
   margin-bottom: 1rem;
 }
 
-.topbar h1 { font-size: 1.25rem; }
+.topbar h1 { font-size: 1.25rem; color: #fff; }
 .topbar-actions { display: flex; gap: 0.5rem; }
+
+.topbar .btn-ghost,
+.config-header .btn-ghost,
+.vp-actions .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.topbar .btn-ghost:hover,
+.config-header .btn-ghost:hover,
+.vp-actions .btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
 
 .panel {
   background: var(--color-panel);
@@ -234,6 +246,7 @@ label {
   align-items: center;
   margin-bottom: 1rem;
 }
+.config-header h2 { color: #fff; }
 
 .config-grid {
   display: grid;

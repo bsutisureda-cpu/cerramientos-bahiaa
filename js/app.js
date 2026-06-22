@@ -99,7 +99,7 @@
     actualizarPreviewImagenes();
     renderListaItems();
 
-    ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-manija', 'p2-vidrio'].forEach((id) =>
+    ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-cajon', 'p2-manija', 'p2-vidrio'].forEach((id) =>
       document.getElementById(id).addEventListener('change', actualizarPreviewImagenes)
     );
 
@@ -135,10 +135,11 @@
     const tipo = document.getElementById('p2-tipo').value;
     const color = document.getElementById('p2-color').value;
     const mosquitero = document.getElementById('p2-mosquitero').value;
+    const cajon = document.getElementById('p2-cajon').value;
     const manija = document.getElementById('p2-manija').value;
     const vidrio = document.getElementById('p2-vidrio').value;
 
-    document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color, mosquitero);
+    document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color, mosquitero, cajon);
 
     const manijaBox = document.getElementById('p2-img-manija-box');
     if (manija) {
@@ -251,7 +252,7 @@
 
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero);
+      const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
       const div = document.createElement('div');
       div.className = 'item-card';
       div.innerHTML = `
@@ -382,7 +383,7 @@
   }
 
   function crearVentanaCard(item) {
-    const imgAbertura = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero);
+    const imgAbertura = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
     const imgManija = item.manija ? imagenManija(state.config, item.manija, item.color) : null;
     const imgVidrio = item.vidrio ? imagenVidrio(state.config, item.vidrio) : null;
 
@@ -704,7 +705,8 @@
           c,
           document.getElementById('config-img-tipo').value,
           document.getElementById('config-img-color').value,
-          document.getElementById('config-img-mosquitero').value
+          document.getElementById('config-img-mosquitero').value,
+          document.getElementById('config-img-cajon').value
         )
       : null);
     renderPreviewImg('config-preview-manija', c.tiposManija.length && c.colores.length
@@ -745,7 +747,10 @@
       const div = document.createElement('div');
       div.className = 'config-galeria-item';
       const partes = clave.split('||');
-      if (partes.length === 3) {
+      if (partes.length === 4) {
+        partes[2] = partes[2] === 'si' ? 'Con mosquitero' : 'Sin mosquitero';
+        partes[3] = partes[3] === 'si' ? 'Con cajón' : 'Sin cajón';
+      } else if (partes.length === 3) {
         partes[2] = partes[2] === 'si' ? 'Con mosquitero' : 'Sin mosquitero';
       }
       const etiqueta = partes.join(' · ');
@@ -822,7 +827,7 @@
       }
     });
 
-    ['config-img-tipo', 'config-img-color', 'config-img-mosquitero'].forEach((id) =>
+    ['config-img-tipo', 'config-img-color', 'config-img-mosquitero', 'config-img-cajon'].forEach((id) =>
       document.getElementById(id).addEventListener('change', () => {
         renderPreviewImg(
           'config-preview-abertura',
@@ -830,7 +835,8 @@
             state.config,
             document.getElementById('config-img-tipo').value,
             document.getElementById('config-img-color').value,
-            document.getElementById('config-img-mosquitero').value
+            document.getElementById('config-img-mosquitero').value,
+            document.getElementById('config-img-cajon').value
           )
         );
       })
@@ -851,13 +857,14 @@
       const tipo = document.getElementById('config-img-tipo').value;
       const color = document.getElementById('config-img-color').value;
       const mosquitero = document.getElementById('config-img-mosquitero').value;
+      const cajon = document.getElementById('config-img-cajon').value;
       const file = document.getElementById('config-img-file').files[0];
       if (!tipo || !color || !file) {
         alert('Elegí tipo, color y un archivo de imagen.');
         return;
       }
       try {
-        state.config.imagenesAbertura[claveAbertura(tipo, color, mosquitero)] = await subirImagen(file);
+        state.config.imagenesAbertura[claveAbertura(tipo, color, mosquitero, cajon)] = await subirImagen(file);
       } catch (e) {
         alert('No se pudo subir la imagen. Probá nuevamente.');
         return;
