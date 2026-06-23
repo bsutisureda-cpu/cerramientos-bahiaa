@@ -368,7 +368,7 @@
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
 
-    document.getElementById('vp-cliente').textContent = datos.nombre;
+    setFila('vp-fila-cliente', 'vp-cliente', datos.nombre);
     setFila('vp-fila-direccion', 'vp-direccion', datos.direccion);
     setFila('vp-fila-arquitecto', 'vp-arquitecto', datos.arquitecto);
 
