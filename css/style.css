@@ -713,9 +713,35 @@ label {
 .guardado-row .guardado-info { font-size: 0.88rem; }
 .guardado-row .guardado-acciones { display: flex; gap: 0.4rem; }
 
+.cliente-row { margin-bottom: 0.7rem; }
+.cliente-row .guardado-row { margin-bottom: 0; }
+
+.cliente-presupuestos {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  border: 1px solid var(--color-border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  padding: 0.5rem 0.7rem;
+  margin-top: -1px;
+}
+
+.cliente-presupuesto-link {
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--color-primary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.15rem 0;
+}
+.cliente-presupuesto-link:hover { text-decoration: underline; }
+
 /* --- Impresión --- */
 @media print {
-  .no-print, .sidebar, #editor-view, .modal-overlay, #auth-loading, #config-view {
+  .no-print, .sidebar, #editor-view, .modal-overlay, #auth-loading, #config-view, #clientes-view {
     display: none !important;
   }
 

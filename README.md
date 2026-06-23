@@ -15,7 +15,7 @@ server.js            → servidor Express: login, API de configuración, subida 
 package.json         → dependencias (express, multer) y script de arranque
 ```
 
-No hay base de datos relacional: la configuración se guarda como un archivo `config.json` y las imágenes subidas como archivos sueltos, todo dentro de una carpeta de datos persistente (`DATA_DIR`). Así, **todos los navegadores que entren a la app ven la misma configuración e imágenes** (a diferencia de una versión que use solo `localStorage`, que es por navegador).
+No hay base de datos relacional: la configuración, los clientes y los presupuestos guardados se guardan como archivos JSON (`config.json`, `clientes.json`, `presupuestos.json`) y las imágenes subidas como archivos sueltos, todo dentro de una carpeta de datos persistente (`DATA_DIR`). Así, **todos los navegadores que entren a la app ven lo mismo** (clientes, presupuestos guardados, configuración e imágenes), a diferencia de una versión que use solo `localStorage`, que sería por navegador.
 
 ## Cómo administrar tipos, colores, líneas e imágenes
 
@@ -71,5 +71,6 @@ Abrí `http://localhost:3344`. En local, si no definís `DATA_DIR`, los datos se
 2. **Panel 2 — Configuración de la abertura**: elegí tipo, color, línea, manija (con su color)/vidrio (opcionales), cajón/mosquitero, medidas y cantidad. Las imágenes se muestran solas según lo que asignaste en Configuración.
 3. **Panel 3 — Lista de ítems**: cada "Agregar al presupuesto" suma una fila; se puede editar o eliminar cualquier ítem.
 4. **Generar presupuesto**: valida los campos obligatorios (cliente, número, al menos un ítem) y muestra la vista final — cada unidad de cada ítem aparece en su propia tarjeta — lista para completar el precio a mano y guardar/descargar.
-5. **Guardar presupuesto**: lo persiste en `localStorage` del navegador (esto sí queda por dispositivo). Podés recuperarlo después desde "Presupuestos guardados" en la barra superior.
-6. **Vista previa / Descargar PDF**: genera el PDF en el navegador (con [jsPDF](https://github.com/parallax/jsPDF) + [html2canvas](https://github.com/niklasvh/html2canvas), cargados desde CDN) y lo muestra en una vista previa antes de descargarlo como archivo `.pdf`.
+5. **Guardar presupuesto**: lo persiste en el servidor (compartido entre dispositivos). Podés recuperarlo después desde "Presupuestos guardados" en la barra lateral, o desde la ficha del cliente en "Clientes" si el presupuesto tiene un cliente registrado asignado.
+6. **Clientes**: sección para registrar clientes (nombre, apellido, teléfono, email). Al elegir un "Cliente registrado" en el Panel 1, se autocompletan nombre y teléfono. Cada presupuesto guardado con un cliente asignado queda visible en la ficha de ese cliente.
+7. **Vista previa / Descargar PDF**: genera el PDF en el navegador (con [jsPDF](https://github.com/parallax/jsPDF) + [html2canvas](https://github.com/niklasvh/html2canvas), cargados desde CDN) y lo muestra en una vista previa antes de descargarlo como archivo `.pdf`.

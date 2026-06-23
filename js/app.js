@@ -1,12 +1,45 @@
 (function () {
-  const STORAGE_KEY = 'cerr_presupuestos';
-  const LAST_NUMERO_KEY = 'cerr_ultimo_numero';
-
   const state = {
     items: [],
     editingItemId: null,
+    editingClienteId: null,
     config: null,
+    clientes: [],
+    presupuestos: [],
   };
+
+  // ---------------------------------------------------------------------
+  // Datos remotos: clientes y presupuestos (compartidos en el servidor)
+  // ---------------------------------------------------------------------
+  async function cargarClientesRemoto() {
+    const resp = await fetch('/api/clientes');
+    if (!resp.ok) throw new Error('No se pudo cargar la lista de clientes.');
+    return resp.json();
+  }
+
+  async function guardarClientesRemoto(lista) {
+    const resp = await fetch('/api/clientes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lista),
+    });
+    if (!resp.ok) throw new Error('No se pudo guardar la lista de clientes.');
+  }
+
+  async function cargarPresupuestosRemoto() {
+    const resp = await fetch('/api/presupuestos');
+    if (!resp.ok) throw new Error('No se pudo cargar los presupuestos guardados.');
+    return resp.json();
+  }
+
+  async function guardarPresupuestosRemoto(lista) {
+    const resp = await fetch('/api/presupuestos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lista),
+    });
+    if (!resp.ok) throw new Error('No se pudo guardar el presupuesto.');
+  }
 
   // ---------------------------------------------------------------------
   // Auth guard
@@ -18,6 +51,8 @@
       const datosSesion = await resp.json();
       document.getElementById('sidebar-usuario').textContent = datosSesion.usuario || '';
       state.config = await cargarConfigRemota();
+      state.clientes = await cargarClientesRemoto();
+      state.presupuestos = await cargarPresupuestosRemoto();
       document.getElementById('auth-loading').hidden = true;
       document.getElementById('app-root').hidden = false;
       initApp();
@@ -43,7 +78,7 @@
   }
 
   function nextNumero() {
-    const last = parseInt(localStorage.getItem(LAST_NUMERO_KEY) || '0', 10);
+    const last = state.presupuestos.reduce((max, p) => Math.max(max, parseInt(p.numero, 10) || 0), 0);
     return String(last + 1);
   }
 
@@ -56,18 +91,6 @@
     if (!isoDate) return '';
     const [y, m, d] = isoDate.split('-');
     return `${d}/${m}/${y}`;
-  }
-
-  function getSavedList() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function setSavedList(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
   }
 
   function populateSelect(id, values, placeholder) {
@@ -94,6 +117,7 @@
   // ---------------------------------------------------------------------
   function initApp() {
     refrescarSelectsPanel2();
+    poblarSelectClientes();
 
     document.getElementById('p1-numero').value = nextNumero();
     document.getElementById('p1-fecha').value = todayISO();
@@ -120,19 +144,26 @@
 
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
+      cerrarClientes();
       volverAEditar();
       activarNav('nav-crear');
     });
     document.getElementById('nav-guardados').addEventListener('click', abrirModalGuardados);
+    document.getElementById('nav-clientes').addEventListener('click', () => {
+      abrirClientes();
+      activarNav('nav-clientes');
+    });
     document.getElementById('nav-config').addEventListener('click', () => {
+      cerrarClientes();
       abrirConfig();
       activarNav('nav-config');
     });
     initConfigEvents();
+    initClientesEvents();
   }
 
   function activarNav(navId) {
-    ['nav-crear', 'nav-guardados', 'nav-config'].forEach((id) => {
+    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-config'].forEach((id) => {
       document.getElementById(id).classList.toggle('active', id === navId);
     });
   }
@@ -331,6 +362,7 @@
   // ---------------------------------------------------------------------
   function leerPanel1() {
     return {
+      clienteId: document.getElementById('p1-cliente-select').value || null,
       nombre: document.getElementById('p1-nombre').value.trim(),
       telefono: document.getElementById('p1-telefono').value.trim(),
       direccion: document.getElementById('p1-direccion').value.trim(),
@@ -451,7 +483,7 @@
   }
 
   function volverAEditar() {
-    document.getElementById('vista-presupuesto').hidden = true;
+    ocultarTodasLasVistas();
     document.getElementById('editor-view').hidden = false;
   }
 
@@ -527,42 +559,45 @@
   // ---------------------------------------------------------------------
   // Guardar / recuperar presupuestos en localStorage
   // ---------------------------------------------------------------------
-  function onGuardarPresupuesto() {
+  async function onGuardarPresupuesto() {
     const datos = leerPanel1();
     const precioTexto = document.getElementById('vp-precio-texto').value;
 
     const registro = {
       numero: datos.numero,
+      clienteId: datos.clienteId,
       panel1: datos,
       items: state.items,
       precioTexto,
       guardadoEn: new Date().toISOString(),
     };
 
-    const lista = getSavedList();
-    const idx = lista.findIndex((p) => p.numero === registro.numero);
-    if (idx !== -1) lista[idx] = registro;
-    else lista.push(registro);
-    setSavedList(lista);
+    const idx = state.presupuestos.findIndex((p) => p.numero === registro.numero);
+    if (idx !== -1) state.presupuestos[idx] = registro;
+    else state.presupuestos.push(registro);
 
-    const numActual = parseInt(datos.numero, 10);
-    if (!isNaN(numActual)) {
-      const last = parseInt(localStorage.getItem(LAST_NUMERO_KEY) || '0', 10);
-      if (numActual > last) localStorage.setItem(LAST_NUMERO_KEY, String(numActual));
+    try {
+      await guardarPresupuestosRemoto(state.presupuestos);
+      alert('Presupuesto guardado.');
+    } catch (e) {
+      alert('No se pudo guardar el presupuesto. Probá nuevamente.');
     }
-
-    alert('Presupuesto guardado.');
   }
 
-  function abrirModalGuardados() {
-    const lista = getSavedList();
+  async function abrirModalGuardados() {
+    try {
+      state.presupuestos = await cargarPresupuestosRemoto();
+    } catch (e) {
+      /* usamos lo que ya tenemos en memoria */
+    }
+
     const cont = document.getElementById('lista-guardados');
     cont.innerHTML = '';
 
-    if (!lista.length) {
+    if (!state.presupuestos.length) {
       cont.innerHTML = '<p class="empty-msg">No hay presupuestos guardados.</p>';
     } else {
-      lista
+      state.presupuestos
         .slice()
         .reverse()
         .forEach((p) => {
@@ -597,10 +632,10 @@
   }
 
   function cargarGuardado(numero) {
-    const lista = getSavedList();
-    const registro = lista.find((p) => p.numero === numero);
+    const registro = state.presupuestos.find((p) => p.numero === numero);
     if (!registro) return;
 
+    document.getElementById('p1-cliente-select').value = registro.clienteId || '';
     document.getElementById('p1-nombre').value = registro.panel1.nombre || '';
     document.getElementById('p1-telefono').value = registro.panel1.telefono || '';
     document.getElementById('p1-direccion').value = registro.panel1.direccion || '';
@@ -619,14 +654,193 @@
 
     volverAEditar();
     cerrarModalGuardados();
+    cerrarClientes();
     activarNav('nav-crear');
   }
 
-  function eliminarGuardado(numero) {
+  async function eliminarGuardado(numero) {
     if (!confirm('¿Eliminar este presupuesto guardado?')) return;
-    const lista = getSavedList().filter((p) => p.numero !== numero);
-    setSavedList(lista);
+    state.presupuestos = state.presupuestos.filter((p) => p.numero !== numero);
+    try {
+      await guardarPresupuestosRemoto(state.presupuestos);
+    } catch (e) {
+      alert('No se pudo eliminar el presupuesto. Probá nuevamente.');
+    }
     abrirModalGuardados();
+  }
+
+  function ocultarTodasLasVistas() {
+    document.getElementById('editor-view').hidden = true;
+    document.getElementById('vista-presupuesto').hidden = true;
+    document.getElementById('config-view').hidden = true;
+    document.getElementById('clientes-view').hidden = true;
+  }
+
+  // ---------------------------------------------------------------------
+  // Clientes
+  // ---------------------------------------------------------------------
+  function abrirClientes() {
+    cancelarEdicionCliente();
+    renderClientes();
+    ocultarTodasLasVistas();
+    document.getElementById('clientes-view').hidden = false;
+  }
+
+  function cerrarClientes() {
+    document.getElementById('clientes-view').hidden = true;
+  }
+
+  function poblarSelectClientes() {
+    const select = document.getElementById('p1-cliente-select');
+    const valorActual = select.value;
+    select.innerHTML = '<option value="">— Nuevo / sin registrar —</option>';
+    state.clientes.forEach((c) => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = `${c.nombre} ${c.apellido || ''}`.trim();
+      select.appendChild(opt);
+    });
+    if (state.clientes.some((c) => c.id === valorActual)) select.value = valorActual;
+  }
+
+  function onSeleccionarClientePanel1() {
+    const id = document.getElementById('p1-cliente-select').value;
+    if (!id) return;
+    const cliente = state.clientes.find((c) => c.id === id);
+    if (!cliente) return;
+    document.getElementById('p1-nombre').value = `${cliente.nombre} ${cliente.apellido || ''}`.trim();
+    document.getElementById('p1-telefono').value = cliente.telefono || '';
+  }
+
+  function renderClientes() {
+    const cont = document.getElementById('lista-clientes');
+    cont.innerHTML = '';
+
+    if (!state.clientes.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste clientes.</p>';
+      return;
+    }
+
+    state.clientes.forEach((cliente) => {
+      const presupuestosCliente = state.presupuestos.filter((p) => p.clienteId === cliente.id);
+      const div = document.createElement('div');
+      div.className = 'cliente-row';
+      div.innerHTML = `
+        <div class="guardado-row">
+          <div class="guardado-info">
+            <strong>${cliente.nombre} ${cliente.apellido || ''}</strong><br/>
+            <span>${cliente.telefono || ''}${cliente.telefono && cliente.email ? ' · ' : ''}${cliente.email || ''}</span><br/>
+            <span>${presupuestosCliente.length} presupuesto(s) guardado(s)</span>
+          </div>
+          <div class="guardado-acciones">
+            <button type="button" data-action="editar">Editar</button>
+            <button type="button" data-action="eliminar">Eliminar</button>
+          </div>
+        </div>
+      `;
+      if (presupuestosCliente.length) {
+        const lista = document.createElement('div');
+        lista.className = 'cliente-presupuestos';
+        presupuestosCliente.forEach((p) => {
+          const item = document.createElement('button');
+          item.type = 'button';
+          item.className = 'cliente-presupuesto-link';
+          item.textContent = `N.º ${p.numero} · ${formatFechaLegible(p.panel1.fecha)} · ${p.items.length} ítem(s)`;
+          item.addEventListener('click', () => cargarGuardado(p.numero));
+          lista.appendChild(item);
+        });
+        div.appendChild(lista);
+      }
+      div.querySelector('[data-action="editar"]').addEventListener('click', () => editarCliente(cliente.id));
+      div.querySelector('[data-action="eliminar"]').addEventListener('click', () => eliminarCliente(cliente.id));
+      cont.appendChild(div);
+    });
+  }
+
+  function leerFormularioCliente() {
+    return {
+      nombre: document.getElementById('cliente-nombre').value.trim(),
+      apellido: document.getElementById('cliente-apellido').value.trim(),
+      telefono: document.getElementById('cliente-telefono').value.trim(),
+      email: document.getElementById('cliente-email').value.trim(),
+    };
+  }
+
+  function resetFormularioCliente() {
+    document.getElementById('cliente-nombre').value = '';
+    document.getElementById('cliente-apellido').value = '';
+    document.getElementById('cliente-telefono').value = '';
+    document.getElementById('cliente-email').value = '';
+  }
+
+  function cancelarEdicionCliente() {
+    state.editingClienteId = null;
+    document.getElementById('clientes-form-titulo').textContent = 'Nuevo cliente';
+    document.getElementById('btn-guardar-cliente').textContent = 'Guardar cliente';
+    document.getElementById('btn-cancelar-cliente').hidden = true;
+    resetFormularioCliente();
+  }
+
+  function editarCliente(id) {
+    const cliente = state.clientes.find((c) => c.id === id);
+    if (!cliente) return;
+    state.editingClienteId = id;
+    document.getElementById('cliente-nombre').value = cliente.nombre || '';
+    document.getElementById('cliente-apellido').value = cliente.apellido || '';
+    document.getElementById('cliente-telefono').value = cliente.telefono || '';
+    document.getElementById('cliente-email').value = cliente.email || '';
+    document.getElementById('clientes-form-titulo').textContent = 'Editar cliente';
+    document.getElementById('btn-guardar-cliente').textContent = 'Guardar cambios';
+    document.getElementById('btn-cancelar-cliente').hidden = false;
+  }
+
+  async function onGuardarCliente() {
+    const errorEl = document.getElementById('cliente-error');
+    const datos = leerFormularioCliente();
+
+    if (!datos.nombre) {
+      errorEl.textContent = 'Ingresá el nombre del cliente.';
+      errorEl.hidden = false;
+      return;
+    }
+    errorEl.hidden = true;
+
+    if (state.editingClienteId) {
+      const idx = state.clientes.findIndex((c) => c.id === state.editingClienteId);
+      if (idx !== -1) state.clientes[idx] = { ...datos, id: state.editingClienteId };
+    } else {
+      state.clientes.push({ ...datos, id: uid() });
+    }
+
+    try {
+      await guardarClientesRemoto(state.clientes);
+    } catch (e) {
+      alert('No se pudo guardar el cliente. Probá nuevamente.');
+      return;
+    }
+
+    cancelarEdicionCliente();
+    renderClientes();
+    poblarSelectClientes();
+  }
+
+  async function eliminarCliente(id) {
+    if (!confirm('¿Eliminar este cliente? (los presupuestos guardados que tenga asociado no se borran)')) return;
+    state.clientes = state.clientes.filter((c) => c.id !== id);
+    try {
+      await guardarClientesRemoto(state.clientes);
+    } catch (e) {
+      alert('No se pudo eliminar el cliente. Probá nuevamente.');
+    }
+    if (state.editingClienteId === id) cancelarEdicionCliente();
+    renderClientes();
+    poblarSelectClientes();
+  }
+
+  function initClientesEvents() {
+    document.getElementById('btn-guardar-cliente').addEventListener('click', onGuardarCliente);
+    document.getElementById('btn-cancelar-cliente').addEventListener('click', cancelarEdicionCliente);
+    document.getElementById('p1-cliente-select').addEventListener('change', onSeleccionarClientePanel1);
   }
 
   // ---------------------------------------------------------------------
@@ -634,14 +848,12 @@
   // ---------------------------------------------------------------------
   function abrirConfig() {
     renderConfig();
+    ocultarTodasLasVistas();
     document.getElementById('config-view').hidden = false;
-    document.getElementById('editor-view').hidden = true;
-    document.getElementById('vista-presupuesto').hidden = true;
   }
 
   function cerrarConfig() {
     document.getElementById('config-view').hidden = true;
-    document.getElementById('editor-view').hidden = false;
     refrescarSelectsPanel2();
     actualizarPreviewImagenes();
     renderListaItems();

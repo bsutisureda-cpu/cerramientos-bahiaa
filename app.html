@@ -16,6 +16,7 @@
       </div>
       <button type="button" id="nav-crear" class="sidebar-link active">Crear presupuesto</button>
       <button type="button" id="nav-guardados" class="sidebar-link">Presupuestos guardados</button>
+      <button type="button" id="nav-clientes" class="sidebar-link">Clientes</button>
       <button type="button" id="nav-config" class="sidebar-link">Configuración</button>
       <div class="sidebar-footer">
         <p class="sidebar-cuenta">Cuenta activa: <strong id="sidebar-usuario"></strong></p>
@@ -29,6 +30,12 @@
       <section class="panel panel-general" aria-label="Datos generales del presupuesto">
         <h2>1. Datos generales</h2>
         <div class="field-grid">
+          <div class="field field-full">
+            <label for="p1-cliente-select">Cliente registrado</label>
+            <select id="p1-cliente-select">
+              <option value="">— Nuevo / sin registrar —</option>
+            </select>
+          </div>
           <div class="field">
             <label for="p1-nombre">Nombre del cliente *</label>
             <input type="text" id="p1-nombre" />
@@ -214,6 +221,45 @@
           <textarea id="vp-precio-texto" rows="4" placeholder="Escribí aquí el precio / condiciones de pago..."></textarea>
         </section>
         </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA: Clientes -->
+    <section id="clientes-view" class="config-view" hidden>
+      <div class="config-grid">
+        <section class="panel panel-full">
+          <h3 id="clientes-form-titulo">Nuevo cliente</h3>
+          <div class="field-grid">
+            <div class="field">
+              <label for="cliente-nombre">Nombre *</label>
+              <input type="text" id="cliente-nombre" />
+            </div>
+            <div class="field">
+              <label for="cliente-apellido">Apellido</label>
+              <input type="text" id="cliente-apellido" />
+            </div>
+            <div class="field">
+              <label for="cliente-telefono">Teléfono</label>
+              <input type="text" id="cliente-telefono" />
+            </div>
+            <div class="field">
+              <label for="cliente-email">Email</label>
+              <input type="email" id="cliente-email" />
+            </div>
+          </div>
+          <p id="cliente-error" class="error-msg" hidden></p>
+          <div class="panel-actions">
+            <button type="button" id="btn-guardar-cliente" class="btn btn-primary">Guardar cliente</button>
+            <button type="button" id="btn-cancelar-cliente" class="btn btn-ghost" hidden>Cancelar edición</button>
+          </div>
+        </section>
+
+        <section class="panel panel-full">
+          <h3>Clientes registrados</h3>
+          <div id="lista-clientes" class="lista-clientes">
+            <p class="empty-msg">Todavía no agregaste clientes.</p>
+          </div>
+        </section>
       </div>
     </section>
 

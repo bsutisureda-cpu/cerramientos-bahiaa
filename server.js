@@ -21,6 +21,8 @@ const PORT = process.env.PORT || 3344;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
+const CLIENTES_FILE = path.join(DATA_DIR, 'clientes.json');
+const PRESUPUESTOS_FILE = path.join(DATA_DIR, 'presupuestos.json');
 
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
@@ -55,6 +57,19 @@ function leerConfig() {
 
 function guardarConfig(config) {
   fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf8');
+}
+
+function leerJSONArray(file) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function guardarJSONArray(file, lista) {
+  fs.writeFileSync(file, JSON.stringify(lista, null, 2), 'utf8');
 }
 
 // --- Sesión (cookie firmada con HMAC, sin dependencias externas) ---
@@ -144,6 +159,32 @@ app.post('/api/config', requireAuth, (req, res) => {
     return;
   }
   guardarConfig(config);
+  res.json({ ok: true });
+});
+
+app.get('/api/clientes', requireAuth, (req, res) => {
+  res.json(leerJSONArray(CLIENTES_FILE));
+});
+
+app.post('/api/clientes', requireAuth, (req, res) => {
+  if (!Array.isArray(req.body)) {
+    res.status(400).json({ ok: false, error: 'Lista de clientes inválida.' });
+    return;
+  }
+  guardarJSONArray(CLIENTES_FILE, req.body);
+  res.json({ ok: true });
+});
+
+app.get('/api/presupuestos', requireAuth, (req, res) => {
+  res.json(leerJSONArray(PRESUPUESTOS_FILE));
+});
+
+app.post('/api/presupuestos', requireAuth, (req, res) => {
+  if (!Array.isArray(req.body)) {
+    res.status(400).json({ ok: false, error: 'Lista de presupuestos inválida.' });
+    return;
+  }
+  guardarJSONArray(PRESUPUESTOS_FILE, req.body);
   res.json({ ok: true });
 });
 
