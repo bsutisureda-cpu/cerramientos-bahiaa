@@ -133,35 +133,103 @@ label {
 }
 
 /* --- App shell --- */
-.app-root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 1rem;
-}
-
-.topbar {
+.app-shell {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  min-height: 100vh;
+}
+
+/* --- Sidebar --- */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--color-primary-dark);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding: 1.2rem 1rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand h1 {
+  font-size: 1.05rem;
+  color: #fff;
+  margin: 0 0 1.2rem;
+  line-height: 1.3;
+}
+
+.sidebar-link {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.85);
+  padding: 0.65rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sidebar-link:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.sidebar-link.active { background: #fff; color: var(--color-primary-dark); }
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  padding-top: 1rem;
+  display: flex;
+  flex-direction: column;
   gap: 0.6rem;
-  margin-bottom: 1rem;
 }
 
-.topbar h1 { font-size: 1.25rem; color: #fff; }
-.topbar-actions { display: flex; gap: 0.5rem; }
-
-.topbar .btn-ghost,
-.config-header .btn-ghost,
-.vp-actions .btn-ghost {
-  background: #fff;
-  color: var(--color-primary-dark);
-  border-color: #fff;
+.sidebar-cuenta {
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
 }
-.topbar .btn-ghost:hover,
-.config-header .btn-ghost:hover,
-.vp-actions .btn-ghost:hover {
-  background: #eef1f3;
+.sidebar-cuenta strong { color: #fff; }
+
+.btn-block { width: 100%; }
+
+.sidebar-footer .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.sidebar-footer .btn-ghost:hover { background: rgba(255, 255, 255, 0.12); }
+
+/* --- Contenido principal --- */
+.main-content {
+  flex: 1;
+  min-width: 0;
+  padding: 1.2rem 1.5rem;
+}
+
+@media (max-width: 800px) {
+  .app-shell { flex-direction: column; }
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .sidebar-brand { width: 100%; }
+  .sidebar-brand h1 { margin-bottom: 0.6rem; }
+  .sidebar-footer {
+    margin-top: 0;
+    margin-left: auto;
+    border-top: none;
+    flex-direction: row;
+    align-items: center;
+    padding-top: 0;
+  }
+  .btn-block { width: auto; }
 }
 
 .panel {
@@ -240,14 +308,6 @@ label {
   margin: 0 auto;
   padding: 1rem;
 }
-
-.config-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-.config-header h2 { color: #fff; }
 
 .config-grid {
   display: grid;
@@ -398,12 +458,16 @@ label {
   flex-wrap: wrap;
 }
 
-.vp-actions .btn-primary {
+.vp-actions .btn-primary,
+.vp-actions .btn-ghost {
   background: #fff;
   color: var(--color-primary-dark);
   border-color: #fff;
 }
-.vp-actions .btn-primary:hover { background: #eef1f3; }
+.vp-actions .btn-primary:hover,
+.vp-actions .btn-ghost:hover {
+  background: #eef1f3;
+}
 
 .hoja {
   background: #fff;
@@ -651,13 +715,14 @@ label {
 
 /* --- Impresión --- */
 @media print {
-  .no-print, .topbar, #editor-view, .modal-overlay, #auth-loading, #config-view {
+  .no-print, .sidebar, #editor-view, .modal-overlay, #auth-loading, #config-view {
     display: none !important;
   }
 
   body { background: #fff; }
 
-  .app-root { padding: 0; max-width: none; }
+  .app-shell { display: block; }
+  .main-content { padding: 0; }
 
   .hoja {
     box-shadow: none;

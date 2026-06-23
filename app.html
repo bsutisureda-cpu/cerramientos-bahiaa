@@ -9,16 +9,21 @@
 <body>
   <div id="auth-loading" class="auth-loading">Verificando sesión...</div>
 
-  <div id="app-root" class="app-root" hidden>
-    <header class="topbar">
-      <h1>Presupuestos de Aberturas</h1>
-      <div class="topbar-actions">
-        <button type="button" id="btn-config" class="btn btn-ghost">Configuración</button>
-        <button type="button" id="btn-guardados" class="btn btn-ghost">Presupuestos guardados</button>
-        <button type="button" id="btn-logout" class="btn btn-ghost">Cerrar sesión</button>
+  <div id="app-root" class="app-shell" hidden>
+    <nav class="sidebar">
+      <div class="sidebar-brand">
+        <h1>Presupuestos de Aberturas</h1>
       </div>
-    </header>
+      <button type="button" id="nav-crear" class="sidebar-link active">Crear presupuesto</button>
+      <button type="button" id="nav-guardados" class="sidebar-link">Presupuestos guardados</button>
+      <button type="button" id="nav-config" class="sidebar-link">Configuración</button>
+      <div class="sidebar-footer">
+        <p class="sidebar-cuenta">Cuenta activa: <strong id="sidebar-usuario"></strong></p>
+        <button type="button" id="btn-logout" class="btn btn-ghost btn-block">Cerrar sesión</button>
+      </div>
+    </nav>
 
+    <div class="main-content">
     <main id="editor-view" class="editor-grid">
       <!-- PANEL 1: Datos generales -->
       <section class="panel panel-general" aria-label="Datos generales del presupuesto">
@@ -211,16 +216,10 @@
         </div>
       </div>
     </section>
-  </div>
 
-  <!-- PANTALLA: Configuración -->
-  <section id="config-view" class="config-view" hidden>
-    <div class="config-header">
-      <h2>Configuración</h2>
-      <button type="button" id="btn-cerrar-config" class="btn btn-ghost">Cerrar</button>
-    </div>
-
-    <div class="config-grid">
+    <!-- PANTALLA: Configuración -->
+    <section id="config-view" class="config-view" hidden>
+      <div class="config-grid">
       <!-- Datos de la empresa -->
       <section class="panel panel-full">
         <h3>Datos de la empresa</h3>
@@ -338,8 +337,10 @@
         <div id="config-preview-vidrio" class="config-preview"></div>
         <div id="config-galeria-vidrio" class="config-galeria-asignadas"></div>
       </section>
+      </div>
+    </section>
     </div>
-  </section>
+  </div>
 
   <!-- MODAL: presupuestos guardados -->
   <div id="modal-guardados" class="modal-overlay" hidden>

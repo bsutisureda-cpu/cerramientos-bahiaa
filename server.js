@@ -125,7 +125,7 @@ app.get('/api/check', (req, res) => {
     res.status(401).json({ ok: false });
     return;
   }
-  res.json({ ok: true });
+  res.json({ ok: true, usuario: USUARIO });
 });
 
 app.post('/api/logout', (req, res) => {

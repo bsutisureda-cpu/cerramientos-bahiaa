@@ -15,6 +15,8 @@
     try {
       const resp = await fetch('/api/check', { method: 'GET' });
       if (!resp.ok) throw new Error('no autorizado');
+      const datosSesion = await resp.json();
+      document.getElementById('sidebar-usuario').textContent = datosSesion.usuario || '';
       state.config = await cargarConfigRemota();
       document.getElementById('auth-loading').hidden = true;
       document.getElementById('app-root').hidden = false;
@@ -106,17 +108,33 @@
     document.getElementById('btn-agregar-item').addEventListener('click', onAgregarOActualizarItem);
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicion);
     document.getElementById('btn-generar').addEventListener('click', onGenerarPresupuesto);
-    document.getElementById('btn-volver-editar').addEventListener('click', volverAEditar);
+    document.getElementById('btn-volver-editar').addEventListener('click', () => {
+      volverAEditar();
+      activarNav('nav-crear');
+    });
     document.getElementById('btn-guardar-presupuesto').addEventListener('click', onGuardarPresupuesto);
     document.getElementById('btn-vista-previa-pdf').addEventListener('click', onVistaPreviaPDF);
     document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
     document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
-    document.getElementById('btn-guardados').addEventListener('click', abrirModalGuardados);
     document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalGuardados);
 
-    document.getElementById('btn-config').addEventListener('click', abrirConfig);
-    document.getElementById('btn-cerrar-config').addEventListener('click', cerrarConfig);
+    document.getElementById('nav-crear').addEventListener('click', () => {
+      cerrarConfig();
+      volverAEditar();
+      activarNav('nav-crear');
+    });
+    document.getElementById('nav-guardados').addEventListener('click', abrirModalGuardados);
+    document.getElementById('nav-config').addEventListener('click', () => {
+      abrirConfig();
+      activarNav('nav-config');
+    });
     initConfigEvents();
+  }
+
+  function activarNav(navId) {
+    ['nav-crear', 'nav-guardados', 'nav-config'].forEach((id) => {
+      document.getElementById(id).classList.toggle('active', id === navId);
+    });
   }
 
   function refrescarSelectsPanel2() {
@@ -601,6 +619,7 @@
 
     volverAEditar();
     cerrarModalGuardados();
+    activarNav('nav-crear');
   }
 
   function eliminarGuardado(numero) {
@@ -617,6 +636,7 @@
     renderConfig();
     document.getElementById('config-view').hidden = false;
     document.getElementById('editor-view').hidden = true;
+    document.getElementById('vista-presupuesto').hidden = true;
   }
 
   function cerrarConfig() {
