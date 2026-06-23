@@ -273,7 +273,7 @@
 
   function cancelarEdicion() {
     state.editingItemId = null;
-    document.getElementById('panel2-titulo').textContent = '2. Agregar abertura';
+    document.getElementById('panel2-titulo').textContent = 'Agregar abertura';
     document.getElementById('btn-agregar-item').textContent = 'Agregar al presupuesto';
     document.getElementById('btn-cancelar-edicion').hidden = true;
   }
