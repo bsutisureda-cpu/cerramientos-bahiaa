@@ -389,7 +389,18 @@ label {
 }
 .calendario-dia.seleccionado .punto-nota { background: #fff; }
 
+.calendario-col-derecha { display: flex; flex-direction: column; gap: 1rem; }
+
 .lista-notas { display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.8rem; }
+
+.pendiente-fecha {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-top: 0.1rem;
+}
 
 .nota-row {
   display: flex;

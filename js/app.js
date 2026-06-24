@@ -891,6 +891,7 @@
     document.getElementById('calendario-view').hidden = false;
     renderCalendarioMes();
     renderNotasDia();
+    renderListaPendientes();
   }
 
   function cerrarCalendario() {
@@ -978,6 +979,59 @@
     });
   }
 
+  function renderListaPendientes() {
+    const cont = document.getElementById('calendario-lista-pendientes');
+    if (!cont) return;
+
+    const pendientes = [];
+    Object.keys(state.calendario).forEach((clave) => {
+      (state.calendario[clave] || []).forEach((nota) => {
+        if (!nota.hecho) pendientes.push({ clave, nota });
+      });
+    });
+    pendientes.sort((a, b) => a.clave.localeCompare(b.clave));
+
+    cont.innerHTML = '';
+
+    if (!pendientes.length) {
+      cont.innerHTML = '<p class="empty-msg">No hay anotaciones pendientes.</p>';
+      return;
+    }
+
+    pendientes.forEach(({ clave, nota }) => {
+      const [y, m, d] = clave.split('-');
+      const row = document.createElement('div');
+      row.className = 'nota-row';
+      row.innerHTML = `
+        <input type="checkbox" data-id="${nota.id}" data-clave="${clave}" />
+        <span class="pendiente-fecha">${d}/${m}/${y}</span>
+        <span>${nota.texto}</span>
+      `;
+      row.querySelector('input').addEventListener('change', (e) => onTogglePendiente(clave, nota.id, e.target.checked));
+      row.querySelector('span:last-child').addEventListener('click', () => {
+        state.calDiaSeleccionado = clave;
+        renderCalendarioMes();
+        renderNotasDia();
+      });
+      cont.appendChild(row);
+    });
+  }
+
+  async function onTogglePendiente(clave, id, hecho) {
+    const notas = state.calendario[clave] || [];
+    const nota = notas.find((n) => n.id === id);
+    if (!nota) return;
+    nota.hecho = hecho;
+    try {
+      await guardarCalendarioRemoto(state.calendario);
+    } catch (e) {
+      alert('No se pudo guardar el cambio. Probá nuevamente.');
+    }
+    renderListaPendientes();
+    if (clave === state.calDiaSeleccionado) renderNotasDia();
+    renderCalendarioMes();
+  }
+
   async function onAgregarNota() {
     if (!state.calDiaSeleccionado) return;
     const input = document.getElementById('calendario-nueva-nota');
@@ -997,6 +1051,7 @@
     input.value = '';
     renderNotasDia();
     renderCalendarioMes();
+    renderListaPendientes();
   }
 
   async function onToggleNota(id, hecho) {
@@ -1010,6 +1065,7 @@
       alert('No se pudo guardar el cambio. Probá nuevamente.');
     }
     renderNotasDia();
+    renderListaPendientes();
   }
 
   async function onEliminarNota(id) {
@@ -1023,6 +1079,7 @@
       alert('No se pudo eliminar la anotación. Probá nuevamente.');
     }
     renderNotasDia();
+    renderListaPendientes();
     renderCalendarioMes();
   }
 

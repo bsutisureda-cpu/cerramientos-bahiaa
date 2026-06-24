@@ -280,16 +280,25 @@
           <div id="calendario-dias" class="calendario-dias"></div>
         </section>
 
-        <section class="panel calendario-notas-panel">
-          <h3 id="calendario-dia-titulo">Seleccioná un día</h3>
-          <div id="calendario-lista-notas" class="lista-notas">
-            <p class="empty-msg">Elegí un día del calendario para ver o agregar anotaciones.</p>
-          </div>
-          <div class="config-add-row">
-            <input type="text" id="calendario-nueva-nota" placeholder="Nueva anotación..." />
-            <button type="button" id="btn-add-nota" class="btn btn-primary">Agregar</button>
-          </div>
-        </section>
+        <div class="calendario-col-derecha">
+          <section class="panel calendario-notas-panel">
+            <h3 id="calendario-dia-titulo">Seleccioná un día</h3>
+            <div id="calendario-lista-notas" class="lista-notas">
+              <p class="empty-msg">Elegí un día del calendario para ver o agregar anotaciones.</p>
+            </div>
+            <div class="config-add-row">
+              <input type="text" id="calendario-nueva-nota" placeholder="Nueva anotación..." />
+              <button type="button" id="btn-add-nota" class="btn btn-primary">Agregar</button>
+            </div>
+          </section>
+
+          <section class="panel calendario-pendientes-panel">
+            <h3>Pendientes</h3>
+            <div id="calendario-lista-pendientes" class="lista-notas">
+              <p class="empty-msg">No hay anotaciones pendientes.</p>
+            </div>
+          </section>
+        </div>
       </div>
     </section>
 
