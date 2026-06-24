@@ -1005,20 +1005,26 @@
 
 
   function initConfigEvents() {
-    document.getElementById('btn-guardar-empresa').addEventListener('click', async () => {
+    document.getElementById('btn-guardar-empresa').addEventListener('click', () => {
       state.config.empresaNombre = document.getElementById('config-empresa-nombre').value.trim();
       state.config.empresaHandle = document.getElementById('config-empresa-handle').value.trim();
       state.config.empresaEmail = document.getElementById('config-empresa-email').value.trim();
       state.config.empresaTelefonos = document.getElementById('config-empresa-telefonos').value;
+      guardarYRenderConfig();
+    });
+
+    document.getElementById('btn-guardar-logo').addEventListener('click', async () => {
       const file = document.getElementById('config-empresa-logo-file').files[0];
-      if (file) {
-        try {
-          state.config.empresaLogo = await subirImagen(file);
-          document.getElementById('config-empresa-logo-file').value = '';
-        } catch (e) {
-          alert('No se pudo subir el logo. Probá nuevamente.');
-          return;
-        }
+      if (!file) {
+        alert('Elegí un archivo de imagen.');
+        return;
+      }
+      try {
+        state.config.empresaLogo = await subirImagen(file);
+        document.getElementById('config-empresa-logo-file').value = '';
+      } catch (e) {
+        alert('No se pudo subir el logo. Probá nuevamente.');
+        return;
       }
       guardarYRenderConfig();
     });

@@ -276,11 +276,6 @@
             <input type="text" id="config-empresa-nombre" />
           </div>
           <div class="field">
-            <label for="config-empresa-logo-file">Logo (se muestra en el encabezado del presupuesto)</label>
-            <input type="file" id="config-empresa-logo-file" accept="image/*" />
-            <div id="config-empresa-logo-preview" class="config-preview config-preview-inline"></div>
-          </div>
-          <div class="field">
             <label for="config-empresa-handle">Usuario / Instagram</label>
             <input type="text" id="config-empresa-handle" placeholder="@CERRAMIENTOS_BAHIA" />
           </div>
@@ -315,6 +310,19 @@
         <div class="config-add-row">
           <input type="text" id="config-nueva-linea" placeholder="Nueva línea..." />
           <button type="button" id="btn-add-linea" class="btn btn-ghost">Agregar</button>
+        </div>
+      </section>
+
+      <!-- Logo de la empresa -->
+      <section class="panel">
+        <h3>Logo de la empresa</h3>
+        <div class="field">
+          <label for="config-empresa-logo-file">Logo (se muestra en el encabezado del presupuesto)</label>
+          <input type="file" id="config-empresa-logo-file" accept="image/*" />
+          <div id="config-empresa-logo-preview" class="config-preview config-preview-inline"></div>
+        </div>
+        <div class="panel-actions">
+          <button type="button" id="btn-guardar-logo" class="btn btn-primary">Guardar logo</button>
         </div>
       </section>
 
