@@ -384,6 +384,9 @@ label {
   margin-bottom: 0.6rem;
 }
 
+.config-preview-inline { margin-top: 0.5rem; }
+.config-preview-inline img { margin-bottom: 0; }
+
 .config-galeria-asignadas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
