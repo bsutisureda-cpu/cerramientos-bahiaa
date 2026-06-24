@@ -6,6 +6,9 @@
     config: null,
     clientes: [],
     presupuestos: [],
+    calendario: {},
+    calVista: new Date(),
+    calDiaSeleccionado: null,
   };
 
   // ---------------------------------------------------------------------
@@ -41,6 +44,21 @@
     if (!resp.ok) throw new Error('No se pudo guardar el presupuesto.');
   }
 
+  async function cargarCalendarioRemoto() {
+    const resp = await fetch('/api/calendario');
+    if (!resp.ok) throw new Error('No se pudo cargar el calendario.');
+    return resp.json();
+  }
+
+  async function guardarCalendarioRemoto(datos) {
+    const resp = await fetch('/api/calendario', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(datos),
+    });
+    if (!resp.ok) throw new Error('No se pudo guardar el calendario.');
+  }
+
   // ---------------------------------------------------------------------
   // Auth guard
   // ---------------------------------------------------------------------
@@ -53,6 +71,7 @@
       state.config = await cargarConfigRemota();
       state.clientes = await cargarClientesRemoto();
       state.presupuestos = await cargarPresupuestosRemoto();
+      state.calendario = await cargarCalendarioRemoto();
       document.getElementById('auth-loading').hidden = true;
       document.getElementById('app-root').hidden = false;
       initApp();
@@ -146,25 +165,34 @@
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
       cerrarClientes();
+      cerrarCalendario();
       volverAEditar();
       activarNav('nav-crear');
     });
     document.getElementById('nav-guardados').addEventListener('click', abrirModalGuardados);
     document.getElementById('nav-clientes').addEventListener('click', () => {
+      cerrarCalendario();
       abrirClientes();
       activarNav('nav-clientes');
     });
+    document.getElementById('nav-calendario').addEventListener('click', () => {
+      cerrarClientes();
+      abrirCalendario();
+      activarNav('nav-calendario');
+    });
     document.getElementById('nav-config').addEventListener('click', () => {
       cerrarClientes();
+      cerrarCalendario();
       abrirConfig();
       activarNav('nav-config');
     });
     initConfigEvents();
     initClientesEvents();
+    initCalendarioEvents();
   }
 
   function activarNav(navId) {
-    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-config'].forEach((id) => {
+    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-config'].forEach((id) => {
       document.getElementById(id).classList.toggle('active', id === navId);
     });
   }
@@ -675,6 +703,7 @@
     document.getElementById('vista-presupuesto').hidden = true;
     document.getElementById('config-view').hidden = true;
     document.getElementById('clientes-view').hidden = true;
+    document.getElementById('calendario-view').hidden = true;
   }
 
   // ---------------------------------------------------------------------
@@ -842,6 +871,174 @@
     document.getElementById('btn-guardar-cliente').addEventListener('click', onGuardarCliente);
     document.getElementById('btn-cancelar-cliente').addEventListener('click', cancelarEdicionCliente);
     document.getElementById('p1-cliente-select').addEventListener('change', onSeleccionarClientePanel1);
+  }
+
+  // ---------------------------------------------------------------------
+  // Calendario
+  // ---------------------------------------------------------------------
+  function claveFecha(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  function abrirCalendario() {
+    if (!state.calDiaSeleccionado) {
+      state.calDiaSeleccionado = claveFecha(new Date());
+    }
+    ocultarTodasLasVistas();
+    document.getElementById('calendario-view').hidden = false;
+    renderCalendarioMes();
+    renderNotasDia();
+  }
+
+  function cerrarCalendario() {
+    document.getElementById('calendario-view').hidden = true;
+  }
+
+  function renderCalendarioMes() {
+    const vista = state.calVista;
+    const año = vista.getFullYear();
+    const mes = vista.getMonth();
+
+    const titulo = vista.toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+    document.getElementById('cal-mes-actual').textContent = titulo.charAt(0).toUpperCase() + titulo.slice(1);
+
+    const primerDiaMes = new Date(año, mes, 1);
+    // Lunes = 0 ... Domingo = 6
+    const offset = (primerDiaMes.getDay() + 6) % 7;
+    const inicioGrilla = new Date(año, mes, 1 - offset);
+
+    const hoyClave = claveFecha(new Date());
+    const cont = document.getElementById('calendario-dias');
+    cont.innerHTML = '';
+
+    for (let i = 0; i < 42; i++) {
+      const dia = new Date(inicioGrilla);
+      dia.setDate(inicioGrilla.getDate() + i);
+      const clave = claveFecha(dia);
+
+      const celda = document.createElement('div');
+      celda.className = 'calendario-dia';
+      if (dia.getMonth() !== mes) celda.classList.add('fuera-de-mes');
+      if (clave === hoyClave) celda.classList.add('hoy');
+      if (clave === state.calDiaSeleccionado) celda.classList.add('seleccionado');
+
+      celda.textContent = String(dia.getDate());
+
+      if ((state.calendario[clave] || []).length) {
+        const punto = document.createElement('span');
+        punto.className = 'punto-nota';
+        celda.appendChild(punto);
+      }
+
+      celda.addEventListener('click', () => {
+        state.calDiaSeleccionado = clave;
+        renderCalendarioMes();
+        renderNotasDia();
+      });
+
+      cont.appendChild(celda);
+    }
+  }
+
+  function renderNotasDia() {
+    const titulo = document.getElementById('calendario-dia-titulo');
+    const cont = document.getElementById('calendario-lista-notas');
+
+    if (!state.calDiaSeleccionado) {
+      titulo.textContent = 'Seleccioná un día';
+      cont.innerHTML = '<p class="empty-msg">Elegí un día del calendario para ver o agregar anotaciones.</p>';
+      return;
+    }
+
+    const [y, m, d] = state.calDiaSeleccionado.split('-');
+    titulo.textContent = `${d}/${m}/${y}`;
+
+    const notas = state.calendario[state.calDiaSeleccionado] || [];
+    cont.innerHTML = '';
+
+    if (!notas.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no hay anotaciones para este día.</p>';
+      return;
+    }
+
+    notas.forEach((nota) => {
+      const row = document.createElement('div');
+      row.className = 'nota-row' + (nota.hecho ? ' hecha' : '');
+      row.innerHTML = `
+        <input type="checkbox" ${nota.hecho ? 'checked' : ''} data-id="${nota.id}" />
+        <span>${nota.texto}</span>
+        <button type="button" data-id="${nota.id}" aria-label="Eliminar">×</button>
+      `;
+      row.querySelector('input').addEventListener('change', (e) => onToggleNota(nota.id, e.target.checked));
+      row.querySelector('button').addEventListener('click', () => onEliminarNota(nota.id));
+      cont.appendChild(row);
+    });
+  }
+
+  async function onAgregarNota() {
+    if (!state.calDiaSeleccionado) return;
+    const input = document.getElementById('calendario-nueva-nota');
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    if (!state.calendario[state.calDiaSeleccionado]) state.calendario[state.calDiaSeleccionado] = [];
+    state.calendario[state.calDiaSeleccionado].push({ id: uid(), texto, hecho: false });
+
+    try {
+      await guardarCalendarioRemoto(state.calendario);
+    } catch (e) {
+      alert('No se pudo guardar la anotación. Probá nuevamente.');
+      return;
+    }
+
+    input.value = '';
+    renderNotasDia();
+    renderCalendarioMes();
+  }
+
+  async function onToggleNota(id, hecho) {
+    const notas = state.calendario[state.calDiaSeleccionado] || [];
+    const nota = notas.find((n) => n.id === id);
+    if (!nota) return;
+    nota.hecho = hecho;
+    try {
+      await guardarCalendarioRemoto(state.calendario);
+    } catch (e) {
+      alert('No se pudo guardar el cambio. Probá nuevamente.');
+    }
+    renderNotasDia();
+  }
+
+  async function onEliminarNota(id) {
+    if (!confirm('¿Eliminar esta anotación?')) return;
+    state.calendario[state.calDiaSeleccionado] = (state.calendario[state.calDiaSeleccionado] || []).filter(
+      (n) => n.id !== id
+    );
+    try {
+      await guardarCalendarioRemoto(state.calendario);
+    } catch (e) {
+      alert('No se pudo eliminar la anotación. Probá nuevamente.');
+    }
+    renderNotasDia();
+    renderCalendarioMes();
+  }
+
+  function initCalendarioEvents() {
+    document.getElementById('cal-mes-anterior').addEventListener('click', () => {
+      state.calVista.setMonth(state.calVista.getMonth() - 1);
+      renderCalendarioMes();
+    });
+    document.getElementById('cal-mes-siguiente').addEventListener('click', () => {
+      state.calVista.setMonth(state.calVista.getMonth() + 1);
+      renderCalendarioMes();
+    });
+    document.getElementById('btn-add-nota').addEventListener('click', onAgregarNota);
+    document.getElementById('calendario-nueva-nota').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') onAgregarNota();
+    });
   }
 
   // ---------------------------------------------------------------------

@@ -23,6 +23,7 @@ const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 const CLIENTES_FILE = path.join(DATA_DIR, 'clientes.json');
 const PRESUPUESTOS_FILE = path.join(DATA_DIR, 'presupuestos.json');
+const CALENDARIO_FILE = path.join(DATA_DIR, 'calendario.json');
 
 fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
@@ -70,6 +71,19 @@ function leerJSONArray(file) {
 
 function guardarJSONArray(file, lista) {
   fs.writeFileSync(file, JSON.stringify(lista, null, 2), 'utf8');
+}
+
+function leerJSONObjeto(file) {
+  try {
+    const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function guardarJSONObjeto(file, obj) {
+  fs.writeFileSync(file, JSON.stringify(obj, null, 2), 'utf8');
 }
 
 // --- Sesión (cookie firmada con HMAC, sin dependencias externas) ---
@@ -185,6 +199,19 @@ app.post('/api/presupuestos', requireAuth, (req, res) => {
     return;
   }
   guardarJSONArray(PRESUPUESTOS_FILE, req.body);
+  res.json({ ok: true });
+});
+
+app.get('/api/calendario', requireAuth, (req, res) => {
+  res.json(leerJSONObjeto(CALENDARIO_FILE));
+});
+
+app.post('/api/calendario', requireAuth, (req, res) => {
+  if (!req.body || typeof req.body !== 'object' || Array.isArray(req.body)) {
+    res.status(400).json({ ok: false, error: 'Calendario inválido.' });
+    return;
+  }
+  guardarJSONObjeto(CALENDARIO_FILE, req.body);
   res.json({ ok: true });
 });
 
