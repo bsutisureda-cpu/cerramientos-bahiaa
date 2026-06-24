@@ -118,6 +118,7 @@
   function initApp() {
     refrescarSelectsPanel2();
     poblarSelectClientes();
+    actualizarLogoSidebar();
 
     document.getElementById('p1-numero').value = nextNumero();
     document.getElementById('p1-fecha').value = todayISO();
@@ -891,8 +892,19 @@
     return true;
   }
 
+  function actualizarLogoSidebar() {
+    const logo = document.getElementById('sidebar-logo');
+    if (state.config.empresaLogo) {
+      logo.src = state.config.empresaLogo;
+      logo.hidden = false;
+    } else {
+      logo.hidden = true;
+    }
+  }
+
   function renderConfig() {
     const c = state.config;
+    actualizarLogoSidebar();
 
     document.getElementById('config-empresa-nombre').value = c.empresaNombre || '';
     document.getElementById('config-empresa-handle').value = c.empresaHandle || '';
