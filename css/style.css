@@ -757,18 +757,6 @@ label {
   border-radius: 4px;
 }
 
-.vp-precio {
-  margin-top: 1.6rem;
-  display: flex;
-  justify-content: flex-end;
-}
-.vp-precio-input-field {
-  width: 220px;
-}
-.vp-precio-input-field input {
-  text-align: right;
-}
-
 .vp-totales {
   margin-top: 1rem;
   padding: 0.8rem 0;

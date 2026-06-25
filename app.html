@@ -69,6 +69,10 @@
             <label for="p1-fecha">Fecha</label>
             <input type="date" id="p1-fecha" />
           </div>
+          <div class="field">
+            <label for="p1-total-bruto">Total Bruto $</label>
+            <input type="number" id="p1-total-bruto" min="0" step="0.01" placeholder="0.00" />
+          </div>
           <div class="field field-full">
             <label for="p1-extra">Extra (opcional)</label>
             <textarea id="p1-extra" rows="2"></textarea>
@@ -216,13 +220,6 @@
         <section class="vp-items">
           <h3>Detalle de aberturas</h3>
           <div id="vp-lista-items" class="vp-lista-items"></div>
-        </section>
-
-        <section class="vp-precio no-print">
-          <div class="field vp-precio-input-field">
-            <label for="vp-total-bruto">Total Bruto $</label>
-            <input type="number" id="vp-total-bruto" min="0" step="0.01" placeholder="0.00" />
-          </div>
         </section>
 
         <section class="vp-totales" id="vp-totales-box" hidden>

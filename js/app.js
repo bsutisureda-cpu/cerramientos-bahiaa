@@ -9,7 +9,6 @@
     calendario: {},
     calVista: new Date(),
     calDiaSeleccionado: null,
-    totalBruto: 0,
   };
 
   // ---------------------------------------------------------------------
@@ -167,7 +166,6 @@
     document.getElementById('btn-vista-previa-pdf').addEventListener('click', onVistaPreviaPDF);
     document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
     document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
-    document.getElementById('vp-total-bruto').addEventListener('input', actualizarTotales);
 
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
@@ -417,6 +415,7 @@
       numero: document.getElementById('p1-numero').value.trim(),
       validez: document.getElementById('p1-validez').value.trim(),
       fecha: document.getElementById('p1-fecha').value,
+      totalBruto: parseFloat(document.getElementById('p1-total-bruto').value) || 0,
       extra: document.getElementById('p1-extra').value.trim(),
     };
   }
@@ -481,8 +480,7 @@
       }
     });
 
-    document.getElementById('vp-total-bruto').value = state.totalBruto || '';
-    actualizarTotales();
+    actualizarTotales(datos.totalBruto || 0);
   }
 
   const IVA_PORCENTAJE = 0.21;
@@ -491,9 +489,7 @@
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  function actualizarTotales() {
-    state.totalBruto = parseFloat(document.getElementById('vp-total-bruto').value) || 0;
-    const totalBruto = state.totalBruto;
+  function actualizarTotales(totalBruto) {
     const iva = totalBruto * IVA_PORCENTAJE;
     const total = totalBruto + iva;
 
@@ -632,7 +628,6 @@
   // ---------------------------------------------------------------------
   async function onGuardarPresupuesto() {
     const datos = leerPanel1();
-    datos.totalBruto = state.totalBruto;
 
     const registro = {
       numero: datos.numero,
@@ -738,10 +733,10 @@
     document.getElementById('p1-numero').value = registro.panel1.numero || '';
     document.getElementById('p1-validez').value = registro.panel1.validez || '';
     document.getElementById('p1-fecha').value = registro.panel1.fecha || todayISO();
+    document.getElementById('p1-total-bruto').value = registro.panel1.totalBruto || '';
     document.getElementById('p1-extra').value = registro.panel1.extra || '';
 
     state.items = registro.items || [];
-    state.totalBruto = registro.panel1.totalBruto || 0;
     cancelarEdicion();
     renderListaItems();
 
