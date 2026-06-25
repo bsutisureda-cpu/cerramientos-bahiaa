@@ -762,11 +762,22 @@ label {
   display: flex;
   justify-content: flex-end;
 }
-.vp-precio textarea {
-  resize: vertical;
-  width: 60%;
-  min-width: 220px;
+.vp-precio-input-field {
+  width: 220px;
+}
+.vp-precio-input-field input {
   text-align: right;
+}
+
+.vp-totales {
+  margin-top: 1rem;
+  padding: 0.8rem 0;
+  border-top: 2px solid var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  text-align: right;
+}
+.vp-totales p {
+  margin: 0.2rem 0;
 }
 
 .vp-mensaje-final {

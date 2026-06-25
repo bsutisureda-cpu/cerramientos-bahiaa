@@ -9,6 +9,7 @@
     calendario: {},
     calVista: new Date(),
     calDiaSeleccionado: null,
+    totalBruto: 0,
   };
 
   // ---------------------------------------------------------------------
@@ -166,6 +167,7 @@
     document.getElementById('btn-vista-previa-pdf').addEventListener('click', onVistaPreviaPDF);
     document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
     document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
+    document.getElementById('vp-total-bruto').addEventListener('input', actualizarTotales);
 
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
@@ -478,6 +480,27 @@
         cont.appendChild(crearVentanaCard(item));
       }
     });
+
+    document.getElementById('vp-total-bruto').value = state.totalBruto || '';
+    actualizarTotales();
+  }
+
+  const IVA_PORCENTAJE = 0.21;
+
+  function formatMoney(n) {
+    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function actualizarTotales() {
+    state.totalBruto = parseFloat(document.getElementById('vp-total-bruto').value) || 0;
+    const totalBruto = state.totalBruto;
+    const iva = totalBruto * IVA_PORCENTAJE;
+    const total = totalBruto + iva;
+
+    document.getElementById('vp-total-bruto-out').textContent = `$ ${formatMoney(totalBruto)}`;
+    document.getElementById('vp-iva-out').textContent = formatMoney(iva);
+    document.getElementById('vp-total-out').textContent = formatMoney(total);
+    document.getElementById('vp-totales-box').hidden = !totalBruto;
   }
 
   function crearVentanaCard(item) {
@@ -609,14 +632,13 @@
   // ---------------------------------------------------------------------
   async function onGuardarPresupuesto() {
     const datos = leerPanel1();
-    const precioTexto = document.getElementById('vp-precio-texto').value;
+    datos.totalBruto = state.totalBruto;
 
     const registro = {
       numero: datos.numero,
       clienteId: datos.clienteId,
       panel1: datos,
       items: state.items,
-      precioTexto,
       guardadoEn: new Date().toISOString(),
     };
 
@@ -719,10 +741,9 @@
     document.getElementById('p1-extra').value = registro.panel1.extra || '';
 
     state.items = registro.items || [];
+    state.totalBruto = registro.panel1.totalBruto || 0;
     cancelarEdicion();
     renderListaItems();
-
-    document.getElementById('vp-precio-texto').value = registro.precioTexto || '';
 
     volverAEditar();
     cerrarGuardados();
