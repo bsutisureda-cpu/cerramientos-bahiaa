@@ -112,6 +112,12 @@
     return `${d}/${m}/${y}`;
   }
 
+  function formatFechaHoraLegible(isoDateTime) {
+    if (!isoDateTime) return '';
+    const fecha = new Date(isoDateTime);
+    return fecha.toLocaleDateString('es-AR') + ' ' + fecha.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
   function populateSelect(id, values, placeholder) {
     const select = document.getElementById(id);
     const valorActual = select.value;
@@ -160,29 +166,38 @@
     document.getElementById('btn-vista-previa-pdf').addEventListener('click', onVistaPreviaPDF);
     document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
     document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
-    document.getElementById('btn-cerrar-modal').addEventListener('click', cerrarModalGuardados);
 
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
       cerrarClientes();
       cerrarCalendario();
+      cerrarGuardados();
       volverAEditar();
       activarNav('nav-crear');
     });
-    document.getElementById('nav-guardados').addEventListener('click', abrirModalGuardados);
+    document.getElementById('nav-guardados').addEventListener('click', () => {
+      cerrarConfig();
+      cerrarClientes();
+      cerrarCalendario();
+      abrirGuardados();
+      activarNav('nav-guardados');
+    });
     document.getElementById('nav-clientes').addEventListener('click', () => {
       cerrarCalendario();
+      cerrarGuardados();
       abrirClientes();
       activarNav('nav-clientes');
     });
     document.getElementById('nav-calendario').addEventListener('click', () => {
       cerrarClientes();
+      cerrarGuardados();
       abrirCalendario();
       activarNav('nav-calendario');
     });
     document.getElementById('nav-config').addEventListener('click', () => {
       cerrarClientes();
       cerrarCalendario();
+      cerrarGuardados();
       abrirConfig();
       activarNav('nav-config');
     });
@@ -444,6 +459,10 @@
     document.getElementById('vp-empresa-email').textContent = state.config.empresaEmail || '';
     document.getElementById('vp-empresa-telefonos').textContent = state.config.empresaTelefonos || '';
 
+    const mensajeFinal = state.config.empresaMensajeFinal || '';
+    document.getElementById('vp-mensaje-final').textContent = mensajeFinal;
+    document.getElementById('vp-mensaje-final-box').hidden = !mensajeFinal;
+
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
 
@@ -602,7 +621,7 @@
     };
 
     const idx = state.presupuestos.findIndex((p) => p.numero === registro.numero);
-    if (idx !== -1) state.presupuestos[idx] = registro;
+    if (idx !== -1) state.presupuestos[idx] = { ...registro, descripcion: state.presupuestos[idx].descripcion };
     else state.presupuestos.push(registro);
 
     try {
@@ -613,51 +632,75 @@
     }
   }
 
-  async function abrirModalGuardados() {
+  async function abrirGuardados() {
     try {
       state.presupuestos = await cargarPresupuestosRemoto();
     } catch (e) {
       /* usamos lo que ya tenemos en memoria */
     }
 
+    renderListaGuardados();
+    ocultarTodasLasVistas();
+    document.getElementById('guardados-view').hidden = false;
+  }
+
+  function cerrarGuardados() {
+    document.getElementById('guardados-view').hidden = true;
+  }
+
+  function renderListaGuardados() {
     const cont = document.getElementById('lista-guardados');
     cont.innerHTML = '';
 
     if (!state.presupuestos.length) {
       cont.innerHTML = '<p class="empty-msg">No hay presupuestos guardados.</p>';
-    } else {
-      state.presupuestos
-        .slice()
-        .reverse()
-        .forEach((p) => {
-          const row = document.createElement('div');
-          row.className = 'guardado-row';
-          row.innerHTML = `
-            <div class="guardado-info">
-              <strong>N.º ${p.numero}</strong> — ${p.panel1.nombre || 'Sin nombre'}<br/>
-              <span>${formatFechaLegible(p.panel1.fecha)} · ${p.items.length} ítem(s)</span>
-            </div>
-            <div class="guardado-acciones">
-              <button type="button" data-action="cargar" data-numero="${p.numero}">Cargar</button>
-              <button type="button" data-action="eliminar" data-numero="${p.numero}">Eliminar</button>
-            </div>
-          `;
-          cont.appendChild(row);
-        });
-
-      cont.querySelectorAll('[data-action="cargar"]').forEach((btn) =>
-        btn.addEventListener('click', () => cargarGuardado(btn.dataset.numero))
-      );
-      cont.querySelectorAll('[data-action="eliminar"]').forEach((btn) =>
-        btn.addEventListener('click', () => eliminarGuardado(btn.dataset.numero))
-      );
+      return;
     }
 
-    document.getElementById('modal-guardados').hidden = false;
+    state.presupuestos
+      .slice()
+      .reverse()
+      .forEach((p) => {
+        const row = document.createElement('div');
+        row.className = 'guardado-row';
+        row.innerHTML = `
+          <div class="guardado-info">
+            <strong>N.º ${p.numero}</strong> — ${p.panel1.nombre || 'Sin nombre'}<br/>
+            <span>Fecha del presupuesto: ${formatFechaLegible(p.panel1.fecha)} · ${p.items.length} ítem(s)</span><br/>
+            <span class="guardado-fecha-guardado">Guardado el: ${formatFechaHoraLegible(p.guardadoEn)}</span>
+            <div class="field guardado-descripcion-field">
+              <label>Descripción (opcional)</label>
+              <textarea rows="2" data-descripcion="${p.numero}" placeholder="Agregar una descripción...">${p.descripcion || ''}</textarea>
+            </div>
+          </div>
+          <div class="guardado-acciones">
+            <button type="button" data-action="cargar" data-numero="${p.numero}">Cargar</button>
+            <button type="button" data-action="eliminar" data-numero="${p.numero}">Eliminar</button>
+          </div>
+        `;
+        cont.appendChild(row);
+      });
+
+    cont.querySelectorAll('[data-action="cargar"]').forEach((btn) =>
+      btn.addEventListener('click', () => cargarGuardado(btn.dataset.numero))
+    );
+    cont.querySelectorAll('[data-action="eliminar"]').forEach((btn) =>
+      btn.addEventListener('click', () => eliminarGuardado(btn.dataset.numero))
+    );
+    cont.querySelectorAll('[data-descripcion]').forEach((textarea) =>
+      textarea.addEventListener('blur', () => onGuardarDescripcion(textarea.dataset.descripcion, textarea.value))
+    );
   }
 
-  function cerrarModalGuardados() {
-    document.getElementById('modal-guardados').hidden = true;
+  async function onGuardarDescripcion(numero, descripcion) {
+    const registro = state.presupuestos.find((p) => p.numero === numero);
+    if (!registro || registro.descripcion === descripcion) return;
+    registro.descripcion = descripcion;
+    try {
+      await guardarPresupuestosRemoto(state.presupuestos);
+    } catch (e) {
+      alert('No se pudo guardar la descripción. Probá nuevamente.');
+    }
   }
 
   function cargarGuardado(numero) {
@@ -682,7 +725,7 @@
     document.getElementById('vp-precio-texto').value = registro.precioTexto || '';
 
     volverAEditar();
-    cerrarModalGuardados();
+    cerrarGuardados();
     cerrarClientes();
     activarNav('nav-crear');
   }
@@ -695,7 +738,7 @@
     } catch (e) {
       alert('No se pudo eliminar el presupuesto. Probá nuevamente.');
     }
-    abrirModalGuardados();
+    renderListaGuardados();
   }
 
   function ocultarTodasLasVistas() {
@@ -704,6 +747,7 @@
     document.getElementById('config-view').hidden = true;
     document.getElementById('clientes-view').hidden = true;
     document.getElementById('calendario-view').hidden = true;
+    document.getElementById('guardados-view').hidden = true;
   }
 
   // ---------------------------------------------------------------------
@@ -1164,6 +1208,7 @@
     document.getElementById('config-empresa-handle').value = c.empresaHandle || '';
     document.getElementById('config-empresa-email').value = c.empresaEmail || '';
     document.getElementById('config-empresa-telefonos').value = c.empresaTelefonos || '';
+    document.getElementById('config-empresa-mensaje-final').value = c.empresaMensajeFinal || '';
     renderPreviewImg('config-empresa-logo-preview', c.empresaLogo || null);
 
     renderListaChips('config-lista-colores', c.colores, (v) => {
@@ -1264,6 +1309,7 @@
       state.config.empresaHandle = document.getElementById('config-empresa-handle').value.trim();
       state.config.empresaEmail = document.getElementById('config-empresa-email').value.trim();
       state.config.empresaTelefonos = document.getElementById('config-empresa-telefonos').value;
+      state.config.empresaMensajeFinal = document.getElementById('config-empresa-mensaje-final').value;
       guardarYRenderConfig();
     });
 

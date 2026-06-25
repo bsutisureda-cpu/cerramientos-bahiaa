@@ -13,7 +13,6 @@
     <nav class="sidebar">
       <div class="sidebar-brand">
         <img id="sidebar-logo" class="sidebar-logo" alt="Logo" hidden />
-        <h1>Presupuestos de Aberturas</h1>
       </div>
       <button type="button" id="nav-crear" class="sidebar-link active">Crear presupuesto</button>
       <button type="button" id="nav-guardados" class="sidebar-link">Presupuestos guardados</button>
@@ -222,7 +221,23 @@
         <section class="vp-precio">
           <textarea id="vp-precio-texto" rows="4" placeholder="Escribí aquí el precio / condiciones de pago..."></textarea>
         </section>
+
+        <section class="vp-mensaje-final" id="vp-mensaje-final-box">
+          <p id="vp-mensaje-final"></p>
+        </section>
         </div>
+      </div>
+    </section>
+
+    <!-- PANTALLA: Presupuestos guardados -->
+    <section id="guardados-view" class="config-view" hidden>
+      <div class="config-grid">
+        <section class="panel panel-full">
+          <h3>Presupuestos guardados</h3>
+          <div id="lista-guardados" class="lista-guardados">
+            <p class="empty-msg">No hay presupuestos guardados.</p>
+          </div>
+        </section>
       </div>
     </section>
 
@@ -324,6 +339,10 @@
           <div class="field field-full">
             <label for="config-empresa-telefonos">Teléfonos (uno por línea)</label>
             <textarea id="config-empresa-telefonos" rows="3" placeholder="291 4433628&#10;291 4405181"></textarea>
+          </div>
+          <div class="field field-full">
+            <label for="config-empresa-mensaje-final">Mensaje final del presupuesto (aparece al pie de todos los PDF)</label>
+            <textarea id="config-empresa-mensaje-final" rows="5" placeholder="El presupuesto no contempla servicio de grúa para izaje en altura.&#10;Las modificaciones que se realicen sobre el presupuesto se deberán informar..."></textarea>
           </div>
         </div>
         <div class="panel-actions">
@@ -435,18 +454,6 @@
     </div>
   </div>
 
-  <!-- MODAL: presupuestos guardados -->
-  <div id="modal-guardados" class="modal-overlay" hidden>
-    <div class="modal-box">
-      <div class="modal-header">
-        <h3>Presupuestos guardados</h3>
-        <button type="button" id="btn-cerrar-modal" class="btn btn-ghost">Cerrar</button>
-      </div>
-      <div id="lista-guardados" class="lista-guardados">
-        <p class="empty-msg">No hay presupuestos guardados.</p>
-      </div>
-    </div>
-  </div>
 
   <!-- MODAL: vista previa del PDF -->
   <div id="modal-pdf-preview" class="modal-overlay" hidden>
