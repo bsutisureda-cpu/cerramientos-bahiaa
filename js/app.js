@@ -154,7 +154,7 @@
     ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-cajon', 'p2-manija', 'p2-color-manija', 'p2-vidrio'].forEach((id) =>
       document.getElementById(id).addEventListener('change', actualizarPreviewImagenes)
     );
-    ['p2-tipo', 'p2-linea', 'p2-color'].forEach((id) =>
+    ['p2-tipo', 'p2-linea'].forEach((id) =>
       document.getElementById(id).addEventListener('change', aplicarBaseEjemplo)
     );
 
@@ -261,11 +261,10 @@
 
     const tipo = document.getElementById('p2-tipo').value;
     const linea = document.getElementById('p2-linea').value;
-    const color = document.getElementById('p2-color').value;
-    if (!tipo || !linea || !color) return;
+    if (!tipo || !linea) return;
 
     const base = (state.config.basesEjemplo || []).find(
-      (b) => b.tipo === tipo && (b.linea === linea || b.linea === 'TODAS') && b.color === color
+      (b) => b.tipo === tipo && (b.linea === linea || b.linea === 'TODAS')
     );
     if (!base) return;
 
@@ -1307,7 +1306,6 @@
 
     populateSelect('base-tipo', c.tiposAbertura);
     populateSelect('base-linea', ['TODAS', ...c.lineas]);
-    populateSelect('base-color', c.colores);
     populateSelect('base-cierre', c.tiposManija);
     renderListaBasesEjemplo();
   }
@@ -1327,7 +1325,7 @@
       const row = document.createElement('div');
       row.className = 'nota-row';
       row.innerHTML = `
-        <span>${base.tipo} · ${base.linea} · ${base.color} → <strong>${base.cierre}</strong></span>
+        <span>${base.tipo} · ${base.linea} → <strong>${base.cierre}</strong></span>
         <button type="button" data-idx="${idx}" aria-label="Eliminar">×</button>
       `;
       row.querySelector('button').addEventListener('click', () => {
@@ -1438,17 +1436,16 @@
     document.getElementById('btn-add-base').addEventListener('click', () => {
       const tipo = document.getElementById('base-tipo').value;
       const linea = document.getElementById('base-linea').value;
-      const color = document.getElementById('base-color').value;
       const cierre = document.getElementById('base-cierre').value;
-      if (!tipo || !linea || !color || !cierre) {
-        alert('Elegí tipo, línea, color y cierre.');
+      if (!tipo || !linea || !cierre) {
+        alert('Elegí tipo, línea y cierre.');
         return;
       }
       if (!state.config.basesEjemplo) state.config.basesEjemplo = [];
       state.config.basesEjemplo = state.config.basesEjemplo.filter(
-        (b) => !(b.tipo === tipo && b.linea === linea && b.color === color)
+        (b) => !(b.tipo === tipo && b.linea === linea)
       );
-      state.config.basesEjemplo.push({ tipo, linea, color, cierre });
+      state.config.basesEjemplo.push({ tipo, linea, cierre });
       guardarYRenderConfig();
     });
 
