@@ -443,6 +443,8 @@
       numero: document.getElementById('p1-numero').value.trim(),
       validez: document.getElementById('p1-validez').value.trim(),
       fecha: document.getElementById('p1-fecha').value,
+      ivaPorcentaje: parseFloat(document.getElementById('p1-iva').value) || 21,
+      descuentoPorcentaje: parseFloat(document.getElementById('p1-descuento').value) || 0,
       extra: document.getElementById('p1-extra').value.trim(),
     };
   }
@@ -507,10 +509,8 @@
       }
     });
 
-    actualizarTotales(calcularTotalBrutoItems());
+    actualizarTotales(calcularTotalBrutoItems(), datos.ivaPorcentaje, datos.descuentoPorcentaje);
   }
-
-  const IVA_PORCENTAJE = 0.21;
 
   function formatMoney(n) {
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -520,11 +520,25 @@
     return state.items.reduce((acum, item) => acum + (item.precio || 0) * (item.cantidad || 1), 0);
   }
 
-  function actualizarTotales(totalBruto) {
-    const iva = totalBruto * IVA_PORCENTAJE;
-    const total = totalBruto + iva;
+  function actualizarTotales(totalBruto, ivaPorcentaje, descuentoPorcentaje) {
+    ivaPorcentaje = ivaPorcentaje || 21;
+    descuentoPorcentaje = descuentoPorcentaje || 0;
+
+    const descuento = totalBruto * (descuentoPorcentaje / 100);
+    const baseConDescuento = totalBruto - descuento;
+    const iva = baseConDescuento * (ivaPorcentaje / 100);
+    const total = baseConDescuento + iva;
 
     document.getElementById('vp-total-bruto-out').textContent = `$ ${formatMoney(totalBruto)}`;
+
+    const descuentoFila = document.getElementById('vp-descuento-fila');
+    descuentoFila.hidden = !descuento;
+    if (descuento) {
+      document.getElementById('vp-descuento-porcentaje-out').textContent = descuentoPorcentaje;
+      document.getElementById('vp-descuento-out').textContent = `- $ ${formatMoney(descuento)}`;
+    }
+
+    document.getElementById('vp-iva-porcentaje-out').textContent = ivaPorcentaje;
     document.getElementById('vp-iva-out').textContent = formatMoney(iva);
     document.getElementById('vp-total-out').textContent = formatMoney(total);
     document.getElementById('vp-totales-box').hidden = !totalBruto;
@@ -765,6 +779,8 @@
     document.getElementById('p1-numero').value = registro.panel1.numero || '';
     document.getElementById('p1-validez').value = registro.panel1.validez || '';
     document.getElementById('p1-fecha').value = registro.panel1.fecha || todayISO();
+    document.getElementById('p1-iva').value = registro.panel1.ivaPorcentaje || 21;
+    document.getElementById('p1-descuento').value = registro.panel1.descuentoPorcentaje || '';
     document.getElementById('p1-extra').value = registro.panel1.extra || '';
 
     state.items = registro.items || [];
