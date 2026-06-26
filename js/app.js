@@ -288,6 +288,7 @@
       ancho: parseFloat(document.getElementById('p2-ancho').value),
       alto: parseFloat(document.getElementById('p2-alto').value),
       cantidad: parseInt(document.getElementById('p2-cantidad').value, 10),
+      precio: parseFloat(document.getElementById('p2-precio').value),
     };
   }
 
@@ -297,6 +298,7 @@
     if (!data.ancho || data.ancho <= 0) return 'Ingresá un ancho válido.';
     if (!data.alto || data.alto <= 0) return 'Ingresá un alto válido.';
     if (!data.cantidad || data.cantidad <= 0) return 'Ingresá una cantidad válida.';
+    if (!data.precio || data.precio <= 0) return 'Ingresá un precio bruto válido.';
     return null;
   }
 
@@ -328,6 +330,7 @@
     document.getElementById('p2-ancho').value = '';
     document.getElementById('p2-alto').value = '';
     document.getElementById('p2-cantidad').value = '1';
+    document.getElementById('p2-precio').value = '';
     document.getElementById('p2-cajon').value = 'no';
     document.getElementById('p2-mosquitero').value = 'no';
     document.getElementById('p2-manija').value = '';
@@ -350,6 +353,9 @@
     partes.push(`Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}`);
     if (item.manija) partes.push(`Cierre: ${item.manija}${item.colorManija ? ' (' + item.colorManija + ')' : ''}`);
     if (item.vidrio) partes.push(`Vidrio: ${item.vidrio}`);
+    if (item.precio) {
+      partes.push(`Precio: $ ${formatMoney(item.precio)} c/u (Subtotal: $ ${formatMoney(item.precio * item.cantidad)})`);
+    }
     return partes.join(' · ');
   }
 
@@ -407,6 +413,7 @@
     document.getElementById('p2-ancho').value = item.ancho;
     document.getElementById('p2-alto').value = item.alto;
     document.getElementById('p2-cantidad').value = item.cantidad;
+    document.getElementById('p2-precio').value = item.precio || '';
     actualizarPreviewImagenes();
 
     document.getElementById('panel2-titulo').textContent = 'Editar abertura';
@@ -436,7 +443,6 @@
       numero: document.getElementById('p1-numero').value.trim(),
       validez: document.getElementById('p1-validez').value.trim(),
       fecha: document.getElementById('p1-fecha').value,
-      totalBruto: parseFloat(document.getElementById('p1-total-bruto').value) || 0,
       extra: document.getElementById('p1-extra').value.trim(),
     };
   }
@@ -501,13 +507,17 @@
       }
     });
 
-    actualizarTotales(datos.totalBruto || 0);
+    actualizarTotales(calcularTotalBrutoItems());
   }
 
   const IVA_PORCENTAJE = 0.21;
 
   function formatMoney(n) {
     return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function calcularTotalBrutoItems() {
+    return state.items.reduce((acum, item) => acum + (item.precio || 0) * (item.cantidad || 1), 0);
   }
 
   function actualizarTotales(totalBruto) {
@@ -567,6 +577,7 @@
     if (item.manija) lineas.push(`CIERRE: ${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`);
     if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
     if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
+    if (item.precio) lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)}`);
     return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
   }
 
@@ -754,7 +765,6 @@
     document.getElementById('p1-numero').value = registro.panel1.numero || '';
     document.getElementById('p1-validez').value = registro.panel1.validez || '';
     document.getElementById('p1-fecha').value = registro.panel1.fecha || todayISO();
-    document.getElementById('p1-total-bruto').value = registro.panel1.totalBruto || '';
     document.getElementById('p1-extra').value = registro.panel1.extra || '';
 
     state.items = registro.items || [];
