@@ -1245,10 +1245,8 @@
     });
     renderListaChips('config-lista-vidrios', c.tiposVidrio, (v) => {
       c.tiposVidrio = c.tiposVidrio.filter((x) => x !== v);
-      delete c.conformacionVidrio[v];
       guardarYRenderConfig();
     });
-    renderTablaConformacionVidrio();
 
     populateSelect('config-img-tipo', c.tiposAbertura);
     populateSelect('config-img-color', c.colores);
@@ -1283,37 +1281,6 @@
     renderGaleriaAsignadas('config-galeria-vidrio', c.imagenesVidrio, (clave) => {
       delete c.imagenesVidrio[clave];
       guardarYRenderConfig();
-    });
-  }
-
-  function renderTablaConformacionVidrio() {
-    const c = state.config;
-    if (!c.conformacionVidrio) c.conformacionVidrio = {};
-    const body = document.getElementById('tabla-conformacion-vidrio-body');
-    body.innerHTML = '';
-
-    if (!c.tiposVidrio.length) {
-      body.innerHTML = '<tr><td colspan="4" class="empty-msg">Todavía no agregaste tipos de vidrio.</td></tr>';
-      return;
-    }
-
-    c.tiposVidrio.forEach((nombre) => {
-      const datos = c.conformacionVidrio[nombre] || {};
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${nombre}</td>
-        <td><input type="text" data-vidrio="${nombre}" data-campo="cara1" value="${datos.cara1 || ''}" placeholder="Ej: FLOAT 4mm" /></td>
-        <td><input type="text" data-vidrio="${nombre}" data-campo="camara" value="${datos.camara || ''}" placeholder="Ej: 12mm" /></td>
-        <td><input type="text" data-vidrio="${nombre}" data-campo="cara2" value="${datos.cara2 || ''}" placeholder="Ej: FLOAT 4mm" /></td>
-      `;
-      row.querySelectorAll('input').forEach((input) => {
-        input.addEventListener('blur', () => {
-          if (!c.conformacionVidrio[nombre]) c.conformacionVidrio[nombre] = {};
-          c.conformacionVidrio[nombre][input.dataset.campo] = input.value;
-          guardarYRenderConfig();
-        });
-      });
-      body.appendChild(row);
     });
   }
 

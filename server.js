@@ -45,7 +45,6 @@ const DEFAULT_CONFIG = {
   imagenesAbertura: {},
   imagenesManija: {},
   imagenesVidrio: {},
-  conformacionVidrio: {},
 };
 
 function leerConfig() {
