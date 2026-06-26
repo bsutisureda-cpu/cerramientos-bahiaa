@@ -482,6 +482,23 @@ label {
 .config-img-form select { flex: 1; min-width: 140px; }
 .config-img-form input[type="file"] { flex: 1; min-width: 160px; }
 
+.config-checks-grupo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0.4rem 0 0.8rem;
+}
+.config-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--color-text);
+  margin: 0;
+}
+.config-check-item input { width: auto; }
+
 .config-preview img {
   width: 120px;
   height: 100px;

@@ -1273,7 +1273,7 @@
     populateSelect('config-img-color', c.colores);
     populateSelect('config-img-manija', c.tiposManija);
     populateSelect('config-img-color-manija', c.colores);
-    populateSelect('config-img-vidrio', c.tiposVidrio);
+    renderChecksVidrio(c.tiposVidrio);
 
     renderPreviewImg('config-preview-abertura', c.tiposAbertura.length && c.colores.length
       ? imagenAbertura(
@@ -1286,9 +1286,6 @@
       : null);
     renderPreviewImg('config-preview-manija', c.tiposManija.length && c.colores.length
       ? imagenManija(c, document.getElementById('config-img-manija').value, document.getElementById('config-img-color-manija').value)
-      : null);
-    renderPreviewImg('config-preview-vidrio', c.tiposVidrio.length
-      ? imagenVidrio(c, document.getElementById('config-img-vidrio').value)
       : null);
 
     renderGaleriaAsignadas('config-galeria-abertura', c.imagenesAbertura, (clave) => {
@@ -1339,6 +1336,23 @@
   function renderPreviewImg(contId, src) {
     const cont = document.getElementById(contId);
     cont.innerHTML = src ? `<img src="${src}" alt="preview" />` : '';
+  }
+
+  function renderChecksVidrio(tiposVidrio) {
+    const cont = document.getElementById('config-img-vidrio-checks');
+    cont.innerHTML = '';
+
+    if (!tiposVidrio.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste tipos de vidrio.</p>';
+      return;
+    }
+
+    tiposVidrio.forEach((nombre) => {
+      const label = document.createElement('label');
+      label.className = 'config-check-item';
+      label.innerHTML = `<input type="checkbox" value="${nombre}" /> ${nombre}`;
+      cont.appendChild(label);
+    });
   }
 
   function renderGaleriaAsignadas(contId, mapa, onEliminar) {
@@ -1470,10 +1484,6 @@
         renderPreviewImg('config-preview-manija', manija ? imagenManija(state.config, manija, color) : null);
       })
     );
-    document.getElementById('config-img-vidrio').addEventListener('change', () => {
-      const vidrio = document.getElementById('config-img-vidrio').value;
-      renderPreviewImg('config-preview-vidrio', vidrio ? imagenVidrio(state.config, vidrio) : null);
-    });
 
     document.getElementById('btn-guardar-img-abertura').addEventListener('click', async () => {
       const tipo = document.getElementById('config-img-tipo').value;
@@ -1514,14 +1524,19 @@
     });
 
     document.getElementById('btn-guardar-img-vidrio').addEventListener('click', async () => {
-      const vidrio = document.getElementById('config-img-vidrio').value;
+      const vidrios = Array.from(
+        document.querySelectorAll('#config-img-vidrio-checks input[type="checkbox"]:checked')
+      ).map((input) => input.value);
       const file = document.getElementById('config-img-file-vidrio').files[0];
-      if (!vidrio || !file) {
-        alert('Elegí un tipo de vidrio y un archivo de imagen.');
+      if (!vidrios.length || !file) {
+        alert('Elegí al menos un tipo de vidrio y un archivo de imagen.');
         return;
       }
       try {
-        state.config.imagenesVidrio[vidrio] = await subirImagen(file);
+        const url = await subirImagen(file);
+        vidrios.forEach((vidrio) => {
+          state.config.imagenesVidrio[vidrio] = url;
+        });
       } catch (e) {
         alert('No se pudo subir la imagen. Probá nuevamente.');
         return;
