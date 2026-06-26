@@ -327,7 +327,7 @@
     if (item.linea) partes.push(`Línea: ${item.linea}`);
     partes.push(`Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}`);
     partes.push(`Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}`);
-    if (item.manija) partes.push(`Manija: ${item.manija}${item.colorManija ? ' (' + item.colorManija + ')' : ''}`);
+    if (item.manija) partes.push(`Cierre: ${item.manija}${item.colorManija ? ' (' + item.colorManija + ')' : ''}`);
     if (item.vidrio) partes.push(`Vidrio: ${item.vidrio}`);
     return partes.join(' · ');
   }
@@ -543,7 +543,7 @@
     ];
     if (item.vidrio) lineas.push(`VIDRIO: ${item.vidrio}`);
     lineas.push(`COLOR: ${item.color}`);
-    if (item.manija) lineas.push(`MANIJA: ${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`);
+    if (item.manija) lineas.push(`CIERRE: ${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`);
     if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
     if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
     return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
@@ -1432,7 +1432,7 @@
       const color = document.getElementById('config-img-color-manija').value;
       const file = document.getElementById('config-img-file-manija').files[0];
       if (!manija || !color || !file) {
-        alert('Elegí manija, color y un archivo de imagen.');
+        alert('Elegí cierre, color y un archivo de imagen.');
         return;
       }
       try {

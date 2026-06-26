@@ -97,13 +97,13 @@
             <select id="p2-linea"></select>
           </div>
           <div class="field">
-            <label for="p2-manija">Tipo de manija</label>
+            <label for="p2-manija">Tipo de cierre</label>
             <select id="p2-manija">
               <option value="">Ninguna</option>
             </select>
           </div>
           <div class="field">
-            <label for="p2-color-manija">Color de manija</label>
+            <label for="p2-color-manija">Color de cierre</label>
             <select id="p2-color-manija"></select>
           </div>
           <div class="field">
@@ -141,15 +141,15 @@
         </div>
 
         <div class="field field-full">
-          <label>Imágenes (asignadas en Configuración según tipo/manija/vidrio + color)</label>
+          <label>Imágenes (asignadas en Configuración según tipo/cierre/vidrio + color)</label>
           <div class="preview-imagenes">
             <div class="preview-img-box">
               <img id="p2-img-abertura" alt="Imagen abertura" />
               <span>Abertura</span>
             </div>
             <div class="preview-img-box" id="p2-img-manija-box" hidden>
-              <img id="p2-img-manija" alt="Imagen manija" />
-              <span>Manija</span>
+              <img id="p2-img-manija" alt="Imagen cierre" />
+              <span>Cierre</span>
             </div>
             <div class="preview-img-box" id="p2-img-vidrio-box" hidden>
               <img id="p2-img-vidrio" alt="Imagen vidrio" />
@@ -417,16 +417,16 @@
         <div id="config-galeria-abertura" class="config-galeria-asignadas"></div>
       </section>
 
-      <!-- Tipos de manija + imagen por manija+color -->
+      <!-- Tipos de cierre + imagen por cierre+color -->
       <section class="panel panel-full">
-        <h3>Tipos de manija</h3>
+        <h3>Tipos de cierre</h3>
         <div class="config-lista-simple" id="config-lista-manijas"></div>
         <div class="config-add-row">
-          <input type="text" id="config-nueva-manija" placeholder="Nuevo tipo de manija..." />
+          <input type="text" id="config-nueva-manija" placeholder="Nuevo tipo de cierre..." />
           <button type="button" id="btn-add-manija" class="btn btn-ghost">Agregar</button>
         </div>
 
-        <h4>Asignar imagen (manija + color)</h4>
+        <h4>Asignar imagen (cierre + color)</h4>
         <div class="config-img-form">
           <select id="config-img-manija"></select>
           <select id="config-img-color-manija"></select>
