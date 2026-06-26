@@ -265,7 +265,7 @@
     if (!tipo || !linea || !color) return;
 
     const base = (state.config.basesEjemplo || []).find(
-      (b) => b.tipo === tipo && b.linea === linea && b.color === color
+      (b) => b.tipo === tipo && (b.linea === linea || b.linea === 'TODAS') && b.color === color
     );
     if (!base) return;
 
@@ -1306,7 +1306,7 @@
     });
 
     populateSelect('base-tipo', c.tiposAbertura);
-    populateSelect('base-linea', c.lineas);
+    populateSelect('base-linea', ['TODAS', ...c.lineas]);
     populateSelect('base-color', c.colores);
     populateSelect('base-cierre', c.tiposManija);
     renderListaBasesEjemplo();
