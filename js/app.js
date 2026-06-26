@@ -154,6 +154,9 @@
     ['p2-tipo', 'p2-color', 'p2-mosquitero', 'p2-cajon', 'p2-manija', 'p2-color-manija', 'p2-vidrio'].forEach((id) =>
       document.getElementById(id).addEventListener('change', actualizarPreviewImagenes)
     );
+    ['p2-tipo', 'p2-linea', 'p2-color'].forEach((id) =>
+      document.getElementById(id).addEventListener('change', aplicarBaseEjemplo)
+    );
 
     document.getElementById('btn-agregar-item').addEventListener('click', onAgregarOActualizarItem);
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicion);
@@ -252,6 +255,24 @@
     }
   }
 
+  function aplicarBaseEjemplo() {
+    const manijaSelect = document.getElementById('p2-manija');
+    if (manijaSelect.value) return;
+
+    const tipo = document.getElementById('p2-tipo').value;
+    const linea = document.getElementById('p2-linea').value;
+    const color = document.getElementById('p2-color').value;
+    if (!tipo || !linea || !color) return;
+
+    const base = (state.config.basesEjemplo || []).find(
+      (b) => b.tipo === tipo && b.linea === linea && b.color === color
+    );
+    if (!base) return;
+
+    manijaSelect.value = base.cierre;
+    actualizarPreviewImagenes();
+  }
+
   // ---------------------------------------------------------------------
   // Panel 2 -> Panel 3 (agregar / editar ítem)
   // ---------------------------------------------------------------------
@@ -312,6 +333,7 @@
     document.getElementById('p2-mosquitero').value = 'no';
     document.getElementById('p2-manija').value = '';
     document.getElementById('p2-vidrio').value = '';
+    aplicarBaseEjemplo();
     actualizarPreviewImagenes();
   }
 
@@ -1282,6 +1304,38 @@
       delete c.imagenesVidrio[clave];
       guardarYRenderConfig();
     });
+
+    populateSelect('base-tipo', c.tiposAbertura);
+    populateSelect('base-linea', c.lineas);
+    populateSelect('base-color', c.colores);
+    populateSelect('base-cierre', c.tiposManija);
+    renderListaBasesEjemplo();
+  }
+
+  function renderListaBasesEjemplo() {
+    const c = state.config;
+    if (!c.basesEjemplo) c.basesEjemplo = [];
+    const cont = document.getElementById('lista-bases-ejemplo');
+    cont.innerHTML = '';
+
+    if (!c.basesEjemplo.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste bases de ejemplo.</p>';
+      return;
+    }
+
+    c.basesEjemplo.forEach((base, idx) => {
+      const row = document.createElement('div');
+      row.className = 'nota-row';
+      row.innerHTML = `
+        <span>${base.tipo} · ${base.linea} · ${base.color} → <strong>${base.cierre}</strong></span>
+        <button type="button" data-idx="${idx}" aria-label="Eliminar">×</button>
+      `;
+      row.querySelector('button').addEventListener('click', () => {
+        c.basesEjemplo.splice(idx, 1);
+        guardarYRenderConfig();
+      });
+      cont.appendChild(row);
+    });
   }
 
   function renderPreviewImg(contId, src) {
@@ -1379,6 +1433,23 @@
         input.value = '';
         guardarYRenderConfig();
       }
+    });
+
+    document.getElementById('btn-add-base').addEventListener('click', () => {
+      const tipo = document.getElementById('base-tipo').value;
+      const linea = document.getElementById('base-linea').value;
+      const color = document.getElementById('base-color').value;
+      const cierre = document.getElementById('base-cierre').value;
+      if (!tipo || !linea || !color || !cierre) {
+        alert('Elegí tipo, línea, color y cierre.');
+        return;
+      }
+      if (!state.config.basesEjemplo) state.config.basesEjemplo = [];
+      state.config.basesEjemplo = state.config.basesEjemplo.filter(
+        (b) => !(b.tipo === tipo && b.linea === linea && b.color === color)
+      );
+      state.config.basesEjemplo.push({ tipo, linea, color, cierre });
+      guardarYRenderConfig();
     });
 
     ['config-img-tipo', 'config-img-color', 'config-img-mosquitero', 'config-img-cajon'].forEach((id) =>

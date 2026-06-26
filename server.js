@@ -45,6 +45,7 @@ const DEFAULT_CONFIG = {
   imagenesAbertura: {},
   imagenesManija: {},
   imagenesVidrio: {},
+  basesEjemplo: [],
 };
 
 function leerConfig() {
