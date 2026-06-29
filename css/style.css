@@ -531,6 +531,34 @@ label {
 .config-preview-inline { margin-top: 0.5rem; }
 .config-preview-inline img { margin-bottom: 0; }
 
+.tabla-conformacion {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-bottom: 1rem;
+}
+.tabla-conformacion th,
+.tabla-conformacion td {
+  border: 1px solid var(--color-border);
+  padding: 0.4rem 0.6rem;
+  text-align: left;
+  font-size: 0.88rem;
+}
+.tabla-conformacion th { background: #f1f3f5; font-weight: 700; }
+.tabla-conformacion th:first-child,
+.tabla-conformacion td:first-child { width: 50%; }
+.tabla-conformacion input {
+  width: 100%;
+  text-align: right;
+  padding: 0.35rem 0.5rem;
+}
+
+.config-unidad-nota {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--color-text-muted);
+}
+
 .config-galeria-asignadas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
