@@ -185,6 +185,7 @@
       cerrarCalendario();
       cerrarGuardados();
       cerrarReportes();
+      cerrarValores();
       volverAEditar();
       activarNav('nav-crear');
     });
@@ -193,6 +194,7 @@
       cerrarClientes();
       cerrarCalendario();
       cerrarReportes();
+      cerrarValores();
       abrirGuardados();
       activarNav('nav-guardados');
     });
@@ -200,6 +202,7 @@
       cerrarCalendario();
       cerrarGuardados();
       cerrarReportes();
+      cerrarValores();
       abrirClientes();
       activarNav('nav-clientes');
     });
@@ -207,6 +210,7 @@
       cerrarClientes();
       cerrarGuardados();
       cerrarReportes();
+      cerrarValores();
       abrirCalendario();
       activarNav('nav-calendario');
     });
@@ -215,14 +219,25 @@
       cerrarCalendario();
       cerrarGuardados();
       cerrarConfig();
+      cerrarValores();
       abrirReportes();
       activarNav('nav-reportes');
+    });
+    document.getElementById('nav-valores').addEventListener('click', () => {
+      cerrarClientes();
+      cerrarCalendario();
+      cerrarGuardados();
+      cerrarReportes();
+      cerrarConfig();
+      abrirValores();
+      activarNav('nav-valores');
     });
     document.getElementById('nav-config').addEventListener('click', () => {
       cerrarClientes();
       cerrarCalendario();
       cerrarGuardados();
       cerrarReportes();
+      cerrarValores();
       abrirConfig();
       activarNav('nav-config');
     });
@@ -232,7 +247,7 @@
   }
 
   function activarNav(navId) {
-    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-reportes', 'nav-config'].forEach((id) => {
+    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-reportes', 'nav-valores', 'nav-config'].forEach((id) => {
       document.getElementById(id).classList.toggle('active', id === navId);
     });
   }
@@ -752,6 +767,19 @@
     document.getElementById('reportes-view').hidden = true;
   }
 
+  // ---------------------------------------------------------------------
+  // Valores
+  // ---------------------------------------------------------------------
+  function abrirValores() {
+    renderValores();
+    ocultarTodasLasVistas();
+    document.getElementById('valores-view').hidden = false;
+  }
+
+  function cerrarValores() {
+    document.getElementById('valores-view').hidden = true;
+  }
+
   function renderReportes() {
     const cont = document.getElementById('tabla-reportes-mes');
     const aprobados = state.presupuestos.filter((p) => p.estado === 'aprobado');
@@ -942,6 +970,7 @@
     document.getElementById('calendario-view').hidden = true;
     document.getElementById('guardados-view').hidden = true;
     document.getElementById('reportes-view').hidden = true;
+    document.getElementById('valores-view').hidden = true;
   }
 
   // ---------------------------------------------------------------------
@@ -1464,7 +1493,6 @@
     populateSelect('base-linea', ['TODAS', ...c.lineas]);
     populateSelect('base-cierre', c.tiposManija);
     renderListaBasesEjemplo();
-    renderValores();
   }
 
   function renderListaBasesEjemplo() {

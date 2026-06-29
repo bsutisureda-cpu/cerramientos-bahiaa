@@ -20,6 +20,7 @@
       <button type="button" id="nav-clientes" class="sidebar-link">Clientes</button>
       <button type="button" id="nav-calendario" class="sidebar-link">Calendario</button>
       <button type="button" id="nav-reportes" class="sidebar-link">Reportes</button>
+      <button type="button" id="nav-valores" class="sidebar-link">Valores</button>
       <button type="button" id="nav-config" class="sidebar-link">Configuración</button>
       <div class="sidebar-footer">
         <p class="sidebar-cuenta">Cuenta activa: <strong id="sidebar-usuario"></strong></p>
@@ -279,6 +280,34 @@
       </div>
     </section>
 
+    <!-- PANTALLA: Valores -->
+    <section id="valores-view" class="config-view" hidden>
+      <div class="config-grid">
+        <section class="panel panel-full">
+          <h3>Valores</h3>
+          <p class="empty-msg">Precio de cada Cierre, Vidrio y Perfil ya cargado. Por ahora es solo de referencia, todavía no se usa para calcular el precio del presupuesto automáticamente.</p>
+
+          <h4>Cierres</h4>
+          <table class="tabla-conformacion" id="tabla-valores-cierre">
+            <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
+            <tbody id="tabla-valores-cierre-body"></tbody>
+          </table>
+
+          <h4>Vidrios</h4>
+          <table class="tabla-conformacion" id="tabla-valores-vidrio">
+            <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
+            <tbody id="tabla-valores-vidrio-body"></tbody>
+          </table>
+
+          <h4>Perfiles</h4>
+          <table class="tabla-conformacion" id="tabla-valores-perfil">
+            <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
+            <tbody id="tabla-valores-perfil-body"></tbody>
+          </table>
+        </section>
+      </div>
+    </section>
+
     <!-- PANTALLA: Clientes -->
     <section id="clientes-view" class="config-view" hidden>
       <div class="config-grid">
@@ -479,29 +508,6 @@
         </div>
       </section>
 
-      <!-- Valores: precio de cada Cierre / Vidrio / Perfil existente -->
-      <section class="panel panel-full">
-        <h3>Valores</h3>
-        <p class="empty-msg">Precio de cada Cierre, Vidrio y Perfil ya cargado. Por ahora es solo de referencia, todavía no se usa para calcular el precio del presupuesto automáticamente.</p>
-
-        <h4>Cierres</h4>
-        <table class="tabla-conformacion" id="tabla-valores-cierre">
-          <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
-          <tbody id="tabla-valores-cierre-body"></tbody>
-        </table>
-
-        <h4>Vidrios</h4>
-        <table class="tabla-conformacion" id="tabla-valores-vidrio">
-          <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
-          <tbody id="tabla-valores-vidrio-body"></tbody>
-        </table>
-
-        <h4>Perfiles</h4>
-        <table class="tabla-conformacion" id="tabla-valores-perfil">
-          <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
-          <tbody id="tabla-valores-perfil-body"></tbody>
-        </table>
-      </section>
 
       <!-- Tipos de vidrio + imagen propia -->
       <section class="panel panel-full">
