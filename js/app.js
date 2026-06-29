@@ -1355,7 +1355,7 @@
   const COLLATOR_ES = new Intl.Collator('es', { sensitivity: 'base' });
 
   function ordenarListasConfig(c) {
-    ['tiposAbertura', 'colores', 'lineas', 'tiposManija', 'tiposVidrio'].forEach((clave) => {
+    ['tiposAbertura', 'colores', 'lineas', 'perfiles', 'tiposManija', 'tiposVidrio'].forEach((clave) => {
       if (Array.isArray(c[clave])) c[clave].sort(COLLATOR_ES.compare);
     });
   }
@@ -1422,16 +1422,23 @@
       c.lineas = c.lineas.filter((x) => x !== v);
       guardarYRenderConfig();
     });
+    renderListaChips('config-lista-perfiles', c.perfiles, (v) => {
+      c.perfiles = c.perfiles.filter((x) => x !== v);
+      delete c.valores.perfil[v];
+      guardarYRenderConfig();
+    });
     renderListaChips('config-lista-aberturas', c.tiposAbertura, (v) => {
       c.tiposAbertura = c.tiposAbertura.filter((x) => x !== v);
       guardarYRenderConfig();
     });
     renderListaChips('config-lista-manijas', c.tiposManija, (v) => {
       c.tiposManija = c.tiposManija.filter((x) => x !== v);
+      delete c.valores.cierre[v];
       guardarYRenderConfig();
     });
     renderListaChips('config-lista-vidrios', c.tiposVidrio, (v) => {
       c.tiposVidrio = c.tiposVidrio.filter((x) => x !== v);
+      delete c.valores.vidrio[v];
       guardarYRenderConfig();
     });
 
@@ -1457,7 +1464,7 @@
     populateSelect('base-linea', ['TODAS', ...c.lineas]);
     populateSelect('base-cierre', c.tiposManija);
     renderListaBasesEjemplo();
-    renderTablaMateriales();
+    renderValores();
   }
 
   function renderListaBasesEjemplo() {
@@ -1486,39 +1493,37 @@
     });
   }
 
-  const UNIDAD_LABEL = { metro: 'Por metro', m2: 'Por m²', unidad: 'Por unidad' };
-
-  function renderTablaMateriales() {
-    const c = state.config;
-    if (!c.materiales) c.materiales = [];
-    const body = document.getElementById('tabla-materiales-body');
+  function renderTablaValores(bodyId, nombres, mapaPrecios) {
+    const body = document.getElementById(bodyId);
     body.innerHTML = '';
 
-    if (!c.materiales.length) {
-      body.innerHTML = '<tr><td colspan="4" class="empty-msg">Todavía no agregaste materiales.</td></tr>';
+    if (!nombres.length) {
+      body.innerHTML = '<tr><td colspan="2" class="empty-msg">Todavía no agregaste ninguno.</td></tr>';
       return;
     }
 
-    c.materiales.forEach((material, idx) => {
+    nombres.forEach((nombre) => {
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${material.nombre}</td>
-        <td>${UNIDAD_LABEL[material.unidad] || material.unidad}</td>
-        <td><input type="number" min="0" step="0.01" data-idx="${idx}" value="${material.precio}" /></td>
-        <td><button type="button" data-idx="${idx}" aria-label="Eliminar">×</button></td>
+        <td>${nombre}</td>
+        <td><input type="number" min="0" step="0.01" value="${mapaPrecios[nombre] || ''}" placeholder="0.00" /></td>
       `;
       row.querySelector('input').addEventListener('blur', (e) => {
         const precio = parseFloat(e.target.value) || 0;
-        if (precio === material.precio) return;
-        material.precio = precio;
-        guardarYRenderConfig();
-      });
-      row.querySelector('button').addEventListener('click', () => {
-        c.materiales.splice(idx, 1);
+        if (precio === (mapaPrecios[nombre] || 0)) return;
+        mapaPrecios[nombre] = precio;
         guardarYRenderConfig();
       });
       body.appendChild(row);
     });
+  }
+
+  function renderValores() {
+    const c = state.config;
+    if (!c.valores) c.valores = { cierre: {}, vidrio: {}, perfil: {} };
+    renderTablaValores('tabla-valores-cierre-body', c.tiposManija, c.valores.cierre);
+    renderTablaValores('tabla-valores-vidrio-body', c.tiposVidrio, c.valores.vidrio);
+    renderTablaValores('tabla-valores-perfil-body', c.perfiles, c.valores.perfil);
   }
 
   function renderPreviewImg(contId, src) {
@@ -1696,6 +1701,13 @@
         guardarYRenderConfig();
       }
     });
+    document.getElementById('btn-add-perfil').addEventListener('click', () => {
+      const input = document.getElementById('config-nuevo-perfil');
+      if (agregarSimple(state.config.perfiles, input.value)) {
+        input.value = '';
+        guardarYRenderConfig();
+      }
+    });
     document.getElementById('btn-add-tipo').addEventListener('click', () => {
       const input = document.getElementById('config-nuevo-tipo');
       if (agregarSimple(state.config.tiposAbertura, input.value)) {
@@ -1731,22 +1743,6 @@
         (b) => !(b.tipo === tipo && b.linea === linea)
       );
       state.config.basesEjemplo.push({ tipo, linea, cierre });
-      guardarYRenderConfig();
-    });
-
-    document.getElementById('btn-add-material').addEventListener('click', () => {
-      const nombreInput = document.getElementById('material-nombre');
-      const nombre = nombreInput.value.trim();
-      const unidad = document.getElementById('material-unidad').value;
-      const precio = parseFloat(document.getElementById('material-precio').value) || 0;
-      if (!nombre || precio <= 0) {
-        alert('Ingresá un nombre y un precio válido.');
-        return;
-      }
-      if (!state.config.materiales) state.config.materiales = [];
-      state.config.materiales.push({ nombre, unidad, precio });
-      nombreInput.value = '';
-      document.getElementById('material-precio').value = '';
       guardarYRenderConfig();
     });
 

@@ -408,6 +408,16 @@
         </div>
       </section>
 
+      <!-- Perfiles -->
+      <section class="panel">
+        <h3>Perfiles</h3>
+        <div class="config-lista-simple" id="config-lista-perfiles"></div>
+        <div class="config-add-row">
+          <input type="text" id="config-nuevo-perfil" placeholder="Nuevo perfil..." />
+          <button type="button" id="btn-add-perfil" class="btn btn-ghost">Agregar</button>
+        </div>
+      </section>
+
       <!-- Logo de la empresa -->
       <section class="panel">
         <h3>Logo de la empresa</h3>
@@ -469,30 +479,27 @@
         </div>
       </section>
 
-      <!-- Materiales: catalogo de precios para el futuro calculo automatico -->
+      <!-- Valores: precio de cada Cierre / Vidrio / Perfil existente -->
       <section class="panel panel-full">
-        <h3>Materiales</h3>
-        <p class="empty-msg">Catálogo de precios de materiales (perfiles, vidrio, herrajes). Por ahora es solo de referencia, todavía no se usa para calcular el precio del presupuesto automáticamente.</p>
-        <div class="config-img-form">
-          <input type="text" id="material-nombre" placeholder="Nombre del material..." />
-          <select id="material-unidad">
-            <option value="metro">Por metro</option>
-            <option value="m2">Por m²</option>
-            <option value="unidad">Por unidad</option>
-          </select>
-          <input type="number" id="material-precio" min="0" step="0.01" placeholder="Precio $" />
-          <button type="button" id="btn-add-material" class="btn btn-primary">Agregar material</button>
-        </div>
-        <table class="tabla-conformacion" id="tabla-materiales">
-          <thead>
-            <tr>
-              <th>Material</th>
-              <th>Unidad</th>
-              <th>Precio $</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="tabla-materiales-body"></tbody>
+        <h3>Valores</h3>
+        <p class="empty-msg">Precio de cada Cierre, Vidrio y Perfil ya cargado. Por ahora es solo de referencia, todavía no se usa para calcular el precio del presupuesto automáticamente.</p>
+
+        <h4>Cierres</h4>
+        <table class="tabla-conformacion" id="tabla-valores-cierre">
+          <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
+          <tbody id="tabla-valores-cierre-body"></tbody>
+        </table>
+
+        <h4>Vidrios</h4>
+        <table class="tabla-conformacion" id="tabla-valores-vidrio">
+          <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
+          <tbody id="tabla-valores-vidrio-body"></tbody>
+        </table>
+
+        <h4>Perfiles</h4>
+        <table class="tabla-conformacion" id="tabla-valores-perfil">
+          <thead><tr><th>Nombre</th><th>Precio $</th></tr></thead>
+          <tbody id="tabla-valores-perfil-body"></tbody>
         </table>
       </section>
 

@@ -42,11 +42,12 @@ const DEFAULT_CONFIG = {
   tiposVidrio: [],
   colores: ['Blanco', 'Negro', 'Símil madera', 'Anodizado negro', 'Anodizado gris'],
   lineas: ['M3', 'M5', 'M7'],
+  perfiles: [],
   imagenesAbertura: {},
   imagenesManija: {},
   imagenesVidrio: {},
   basesEjemplo: [],
-  materiales: [],
+  valores: { cierre: {}, vidrio: {}, perfil: {} },
 };
 
 function leerConfig() {
