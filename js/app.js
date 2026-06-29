@@ -1295,29 +1295,15 @@
       guardarYRenderConfig();
     });
 
-    populateSelect('config-img-tipo', c.tiposAbertura);
-    populateSelect('config-img-color', c.colores);
     populateSelect('config-img-manija', c.tiposManija);
     populateSelect('config-img-color-manija', c.colores);
     renderChecksVidrio(c.tiposVidrio);
+    renderGruposAbertura();
 
-    renderPreviewImg('config-preview-abertura', c.tiposAbertura.length && c.colores.length
-      ? imagenAbertura(
-          c,
-          document.getElementById('config-img-tipo').value,
-          document.getElementById('config-img-color').value,
-          document.getElementById('config-img-mosquitero').value,
-          document.getElementById('config-img-cajon').value
-        )
-      : null);
     renderPreviewImg('config-preview-manija', c.tiposManija.length && c.colores.length
       ? imagenManija(c, document.getElementById('config-img-manija').value, document.getElementById('config-img-color-manija').value)
       : null);
 
-    renderGaleriaAsignadas('config-galeria-abertura', c.imagenesAbertura, (clave) => {
-      delete c.imagenesAbertura[clave];
-      guardarYRenderConfig();
-    });
     renderGaleriaAsignadas('config-galeria-manija', c.imagenesManija, (clave) => {
       delete c.imagenesManija[clave];
       guardarYRenderConfig();
@@ -1378,6 +1364,89 @@
       label.className = 'config-check-item';
       label.innerHTML = `<input type="checkbox" value="${nombre}" /> ${nombre}`;
       cont.appendChild(label);
+    });
+  }
+
+  function renderGruposAbertura() {
+    const c = state.config;
+    const cont = document.getElementById('config-aberturas-grupos');
+    cont.innerHTML = '';
+
+    if (!c.tiposAbertura.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste tipos de abertura.</p>';
+      return;
+    }
+
+    const colorOptions = c.colores.map((col) => `<option value="${col}">${col}</option>`).join('');
+
+    c.tiposAbertura.forEach((tipo) => {
+      const details = document.createElement('details');
+      details.className = 'config-checks-detalle';
+      details.innerHTML = `
+        <summary>${tipo}</summary>
+        <div class="config-img-form">
+          <select class="grupo-color">${colorOptions}</select>
+          <select class="grupo-mosquitero">
+            <option value="no">Sin mosquitero</option>
+            <option value="si">Con mosquitero</option>
+          </select>
+          <select class="grupo-cajon">
+            <option value="no">Sin cajón</option>
+            <option value="si">Con cajón</option>
+          </select>
+          <input type="file" class="grupo-file" accept="image/*" />
+          <button type="button" class="btn btn-primary grupo-guardar">Guardar imagen</button>
+        </div>
+        <div class="config-galeria-asignadas grupo-galeria"></div>
+      `;
+
+      const galeria = details.querySelector('.grupo-galeria');
+      const clavesTipo = Object.keys(c.imagenesAbertura).filter((clave) => clave.split('||')[0] === tipo);
+      if (!clavesTipo.length) {
+        galeria.innerHTML = '<p class="empty-msg">Todavía no asignaste imágenes para este tipo.</p>';
+      } else {
+        clavesTipo.forEach((clave) => {
+          const partes = clave.split('||');
+          const etiqueta = [
+            partes[1],
+            partes[2] === 'si' ? 'Con mosquitero' : 'Sin mosquitero',
+            partes[3] === 'si' ? 'Con cajón' : 'Sin cajón',
+          ].join(' · ');
+          const item = document.createElement('div');
+          item.className = 'config-galeria-item';
+          item.innerHTML = `
+            <button type="button" aria-label="Eliminar">×</button>
+            <img src="${c.imagenesAbertura[clave]}" alt="${etiqueta}" />
+            <span>${etiqueta}</span>
+          `;
+          item.querySelector('button').addEventListener('click', () => {
+            delete c.imagenesAbertura[clave];
+            guardarYRenderConfig();
+          });
+          galeria.appendChild(item);
+        });
+      }
+
+      details.querySelector('.grupo-guardar').addEventListener('click', async () => {
+        const color = details.querySelector('.grupo-color').value;
+        const mosquitero = details.querySelector('.grupo-mosquitero').value;
+        const cajon = details.querySelector('.grupo-cajon').value;
+        const file = details.querySelector('.grupo-file').files[0];
+        if (!color || !file) {
+          alert('Elegí color y un archivo de imagen.');
+          return;
+        }
+        try {
+          const url = await subirImagen(file);
+          c.imagenesAbertura[claveAbertura(tipo, color, mosquitero, cajon)] = url;
+        } catch (e) {
+          alert('No se pudo subir la imagen. Probá nuevamente.');
+          return;
+        }
+        guardarYRenderConfig();
+      });
+
+      cont.appendChild(details);
     });
   }
 
@@ -1489,20 +1558,6 @@
       guardarYRenderConfig();
     });
 
-    ['config-img-tipo', 'config-img-color', 'config-img-mosquitero', 'config-img-cajon'].forEach((id) =>
-      document.getElementById(id).addEventListener('change', () => {
-        renderPreviewImg(
-          'config-preview-abertura',
-          imagenAbertura(
-            state.config,
-            document.getElementById('config-img-tipo').value,
-            document.getElementById('config-img-color').value,
-            document.getElementById('config-img-mosquitero').value,
-            document.getElementById('config-img-cajon').value
-          )
-        );
-      })
-    );
     ['config-img-manija', 'config-img-color-manija'].forEach((id) =>
       document.getElementById(id).addEventListener('change', () => {
         const manija = document.getElementById('config-img-manija').value;
@@ -1510,26 +1565,6 @@
         renderPreviewImg('config-preview-manija', manija ? imagenManija(state.config, manija, color) : null);
       })
     );
-
-    document.getElementById('btn-guardar-img-abertura').addEventListener('click', async () => {
-      const tipo = document.getElementById('config-img-tipo').value;
-      const color = document.getElementById('config-img-color').value;
-      const mosquitero = document.getElementById('config-img-mosquitero').value;
-      const cajon = document.getElementById('config-img-cajon').value;
-      const file = document.getElementById('config-img-file').files[0];
-      if (!tipo || !color || !file) {
-        alert('Elegí tipo, color y un archivo de imagen.');
-        return;
-      }
-      try {
-        state.config.imagenesAbertura[claveAbertura(tipo, color, mosquitero, cajon)] = await subirImagen(file);
-      } catch (e) {
-        alert('No se pudo subir la imagen. Probá nuevamente.');
-        return;
-      }
-      document.getElementById('config-img-file').value = '';
-      guardarYRenderConfig();
-    });
 
     document.getElementById('btn-guardar-img-manija').addEventListener('click', async () => {
       const manija = document.getElementById('config-img-manija').value;
