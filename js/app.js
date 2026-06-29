@@ -232,6 +232,13 @@
       abrirValores();
       activarNav('nav-valores');
     });
+    document.getElementById('valores-cotizacion').addEventListener('blur', (e) => {
+      const cotizacion = parseFloat(e.target.value) || 0;
+      if (cotizacion === (state.config.cotizacionDolar || 0)) return;
+      state.config.cotizacionDolar = cotizacion;
+      guardarYRenderConfig();
+      renderValores();
+    });
     document.getElementById('nav-config').addEventListener('click', () => {
       cerrarClientes();
       cerrarCalendario();
@@ -1521,26 +1528,37 @@
     });
   }
 
-  function renderTablaValores(bodyId, nombres, mapaPrecios) {
+  function renderTablaValores(bodyId, nombres, mapaPrecios, cotizacion) {
     const body = document.getElementById(bodyId);
     body.innerHTML = '';
 
     if (!nombres.length) {
-      body.innerHTML = '<tr><td colspan="2" class="empty-msg">Todavía no agregaste ninguno.</td></tr>';
+      body.innerHTML = '<tr><td colspan="3" class="empty-msg">Todavía no agregaste ninguno.</td></tr>';
       return;
     }
 
     nombres.forEach((nombre) => {
+      const usd = mapaPrecios[nombre] || 0;
+      const ars = usd * cotizacion;
       const row = document.createElement('tr');
       row.innerHTML = `
         <td>${nombre}</td>
-        <td><input type="number" min="0" step="0.01" value="${mapaPrecios[nombre] || ''}" placeholder="0.00" /></td>
+        <td><input type="number" min="0" step="0.01" class="valor-usd" value="${usd || ''}" placeholder="0.00" /></td>
+        <td><input type="number" min="0" step="0.01" class="valor-ars" value="${ars || ''}" placeholder="0.00" /></td>
       `;
-      row.querySelector('input').addEventListener('blur', (e) => {
-        const precio = parseFloat(e.target.value) || 0;
-        if (precio === (mapaPrecios[nombre] || 0)) return;
-        mapaPrecios[nombre] = precio;
+      row.querySelector('.valor-usd').addEventListener('blur', (e) => {
+        const nuevoUsd = parseFloat(e.target.value) || 0;
+        if (nuevoUsd === usd) return;
+        mapaPrecios[nombre] = nuevoUsd;
         guardarYRenderConfig();
+        renderValores();
+      });
+      row.querySelector('.valor-ars').addEventListener('blur', (e) => {
+        const nuevoArs = parseFloat(e.target.value) || 0;
+        if (nuevoArs === ars) return;
+        mapaPrecios[nombre] = cotizacion > 0 ? nuevoArs / cotizacion : 0;
+        guardarYRenderConfig();
+        renderValores();
       });
       body.appendChild(row);
     });
@@ -1549,9 +1567,12 @@
   function renderValores() {
     const c = state.config;
     if (!c.valores) c.valores = { cierre: {}, vidrio: {}, perfil: {} };
-    renderTablaValores('tabla-valores-cierre-body', c.tiposManija, c.valores.cierre);
-    renderTablaValores('tabla-valores-vidrio-body', c.tiposVidrio, c.valores.vidrio);
-    renderTablaValores('tabla-valores-perfil-body', c.perfiles, c.valores.perfil);
+    const cotizacionInput = document.getElementById('valores-cotizacion');
+    cotizacionInput.value = c.cotizacionDolar || '';
+    const cotizacion = c.cotizacionDolar || 0;
+    renderTablaValores('tabla-valores-cierre-body', c.tiposManija, c.valores.cierre, cotizacion);
+    renderTablaValores('tabla-valores-vidrio-body', c.tiposVidrio, c.valores.vidrio, cotizacion);
+    renderTablaValores('tabla-valores-perfil-body', c.perfiles, c.valores.perfil, cotizacion);
   }
 
   function renderPreviewImg(contId, src) {

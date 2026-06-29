@@ -48,6 +48,7 @@ const DEFAULT_CONFIG = {
   imagenesVidrio: {},
   basesEjemplo: [],
   valores: { cierre: {}, vidrio: {}, perfil: {} },
+  cotizacionDolar: 0,
 };
 
 function leerConfig() {
