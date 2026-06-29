@@ -171,6 +171,14 @@
     document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
     document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
 
+    document.getElementById('guardados-filtro-cliente').addEventListener('input', renderListaGuardados);
+    document.getElementById('guardados-filtro-fecha').addEventListener('change', renderListaGuardados);
+    document.getElementById('btn-limpiar-filtros-guardados').addEventListener('click', () => {
+      document.getElementById('guardados-filtro-cliente').value = '';
+      document.getElementById('guardados-filtro-fecha').value = '';
+      renderListaGuardados();
+    });
+
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
       cerrarClientes();
@@ -792,7 +800,21 @@
       return;
     }
 
-    state.presupuestos
+    const filtroCliente = document.getElementById('guardados-filtro-cliente').value.trim().toLowerCase();
+    const filtroFecha = document.getElementById('guardados-filtro-fecha').value;
+
+    const filtrados = state.presupuestos.filter((p) => {
+      if (filtroCliente && !(p.panel1.nombre || '').toLowerCase().includes(filtroCliente)) return false;
+      if (filtroFecha && p.panel1.fecha !== filtroFecha) return false;
+      return true;
+    });
+
+    if (!filtrados.length) {
+      cont.innerHTML = '<p class="empty-msg">No hay presupuestos que coincidan con la búsqueda.</p>';
+      return;
+    }
+
+    filtrados
       .slice()
       .reverse()
       .forEach((p) => {
