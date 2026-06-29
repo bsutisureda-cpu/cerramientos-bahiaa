@@ -1457,6 +1457,7 @@
     populateSelect('base-linea', ['TODAS', ...c.lineas]);
     populateSelect('base-cierre', c.tiposManija);
     renderListaBasesEjemplo();
+    renderTablaMateriales();
   }
 
   function renderListaBasesEjemplo() {
@@ -1482,6 +1483,41 @@
         guardarYRenderConfig();
       });
       cont.appendChild(row);
+    });
+  }
+
+  const UNIDAD_LABEL = { metro: 'Por metro', m2: 'Por m²', unidad: 'Por unidad' };
+
+  function renderTablaMateriales() {
+    const c = state.config;
+    if (!c.materiales) c.materiales = [];
+    const body = document.getElementById('tabla-materiales-body');
+    body.innerHTML = '';
+
+    if (!c.materiales.length) {
+      body.innerHTML = '<tr><td colspan="4" class="empty-msg">Todavía no agregaste materiales.</td></tr>';
+      return;
+    }
+
+    c.materiales.forEach((material, idx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${material.nombre}</td>
+        <td>${UNIDAD_LABEL[material.unidad] || material.unidad}</td>
+        <td><input type="number" min="0" step="0.01" data-idx="${idx}" value="${material.precio}" /></td>
+        <td><button type="button" data-idx="${idx}" aria-label="Eliminar">×</button></td>
+      `;
+      row.querySelector('input').addEventListener('blur', (e) => {
+        const precio = parseFloat(e.target.value) || 0;
+        if (precio === material.precio) return;
+        material.precio = precio;
+        guardarYRenderConfig();
+      });
+      row.querySelector('button').addEventListener('click', () => {
+        c.materiales.splice(idx, 1);
+        guardarYRenderConfig();
+      });
+      body.appendChild(row);
     });
   }
 
@@ -1695,6 +1731,22 @@
         (b) => !(b.tipo === tipo && b.linea === linea)
       );
       state.config.basesEjemplo.push({ tipo, linea, cierre });
+      guardarYRenderConfig();
+    });
+
+    document.getElementById('btn-add-material').addEventListener('click', () => {
+      const nombreInput = document.getElementById('material-nombre');
+      const nombre = nombreInput.value.trim();
+      const unidad = document.getElementById('material-unidad').value;
+      const precio = parseFloat(document.getElementById('material-precio').value) || 0;
+      if (!nombre || precio <= 0) {
+        alert('Ingresá un nombre y un precio válido.');
+        return;
+      }
+      if (!state.config.materiales) state.config.materiales = [];
+      state.config.materiales.push({ nombre, unidad, precio });
+      nombreInput.value = '';
+      document.getElementById('material-precio').value = '';
       guardarYRenderConfig();
     });
 
