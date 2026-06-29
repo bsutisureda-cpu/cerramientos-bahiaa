@@ -19,6 +19,7 @@
       <button type="button" id="nav-guardados" class="sidebar-link">Presupuestos guardados</button>
       <button type="button" id="nav-clientes" class="sidebar-link">Clientes</button>
       <button type="button" id="nav-calendario" class="sidebar-link">Calendario</button>
+      <button type="button" id="nav-reportes" class="sidebar-link">Reportes</button>
       <button type="button" id="nav-config" class="sidebar-link">Configuración</button>
       <div class="sidebar-footer">
         <p class="sidebar-cuenta">Cuenta activa: <strong id="sidebar-usuario"></strong></p>
@@ -255,6 +256,19 @@
           <h3>Presupuestos guardados</h3>
           <div id="lista-guardados" class="lista-guardados">
             <p class="empty-msg">No hay presupuestos guardados.</p>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- PANTALLA: Reportes -->
+    <section id="reportes-view" class="config-view" hidden>
+      <div class="config-grid">
+        <section class="panel panel-full">
+          <h3>Facturación por mes</h3>
+          <p class="empty-msg">Suma el Total final de los presupuestos marcados como "Aprobado", agrupados por el mes de la fecha del presupuesto.</p>
+          <div id="tabla-reportes-mes" class="lista-notas">
+            <p class="empty-msg">Todavía no hay presupuestos aprobados.</p>
           </div>
         </section>
       </div>

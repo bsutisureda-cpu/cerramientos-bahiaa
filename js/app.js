@@ -176,6 +176,7 @@
       cerrarClientes();
       cerrarCalendario();
       cerrarGuardados();
+      cerrarReportes();
       volverAEditar();
       activarNav('nav-crear');
     });
@@ -183,25 +184,37 @@
       cerrarConfig();
       cerrarClientes();
       cerrarCalendario();
+      cerrarReportes();
       abrirGuardados();
       activarNav('nav-guardados');
     });
     document.getElementById('nav-clientes').addEventListener('click', () => {
       cerrarCalendario();
       cerrarGuardados();
+      cerrarReportes();
       abrirClientes();
       activarNav('nav-clientes');
     });
     document.getElementById('nav-calendario').addEventListener('click', () => {
       cerrarClientes();
       cerrarGuardados();
+      cerrarReportes();
       abrirCalendario();
       activarNav('nav-calendario');
+    });
+    document.getElementById('nav-reportes').addEventListener('click', () => {
+      cerrarClientes();
+      cerrarCalendario();
+      cerrarGuardados();
+      cerrarConfig();
+      abrirReportes();
+      activarNav('nav-reportes');
     });
     document.getElementById('nav-config').addEventListener('click', () => {
       cerrarClientes();
       cerrarCalendario();
       cerrarGuardados();
+      cerrarReportes();
       abrirConfig();
       activarNav('nav-config');
     });
@@ -211,7 +224,7 @@
   }
 
   function activarNav(navId) {
-    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-config'].forEach((id) => {
+    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-reportes', 'nav-config'].forEach((id) => {
       document.getElementById(id).classList.toggle('active', id === navId);
     });
   }
@@ -712,6 +725,61 @@
     document.getElementById('guardados-view').hidden = true;
   }
 
+  // ---------------------------------------------------------------------
+  // Reportes
+  // ---------------------------------------------------------------------
+  async function abrirReportes() {
+    try {
+      state.presupuestos = await cargarPresupuestosRemoto();
+    } catch (e) {
+      /* usamos lo que ya tenemos en memoria */
+    }
+
+    renderReportes();
+    ocultarTodasLasVistas();
+    document.getElementById('reportes-view').hidden = false;
+  }
+
+  function cerrarReportes() {
+    document.getElementById('reportes-view').hidden = true;
+  }
+
+  function renderReportes() {
+    const cont = document.getElementById('tabla-reportes-mes');
+    const aprobados = state.presupuestos.filter((p) => p.estado === 'aprobado');
+
+    if (!aprobados.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no hay presupuestos aprobados.</p>';
+      return;
+    }
+
+    const totalesPorMes = {};
+    aprobados.forEach((p) => {
+      const fecha = p.panel1.fecha;
+      if (!fecha) return;
+      const clave = fecha.slice(0, 7);
+      totalesPorMes[clave] = (totalesPorMes[clave] || 0) + calcularTotalRegistro(p);
+    });
+
+    const claves = Object.keys(totalesPorMes).sort().reverse();
+    cont.innerHTML = '';
+
+    claves.forEach((clave) => {
+      const [y, m] = clave.split('-');
+      const etiqueta = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-AR', {
+        month: 'long',
+        year: 'numeric',
+      });
+      const row = document.createElement('div');
+      row.className = 'nota-row';
+      row.innerHTML = `
+        <span>${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)}</span>
+        <strong>$ ${formatMoney(totalesPorMes[clave])}</strong>
+      `;
+      cont.appendChild(row);
+    });
+  }
+
   function renderListaGuardados() {
     const cont = document.getElementById('lista-guardados');
     cont.innerHTML = '';
@@ -727,11 +795,20 @@
       .forEach((p) => {
         const row = document.createElement('div');
         row.className = 'guardado-row';
+        const estado = p.estado || 'pendiente';
         row.innerHTML = `
           <div class="guardado-info">
             <strong>N.º ${p.numero}</strong> — ${p.panel1.nombre || 'Sin nombre'}<br/>
-            <span>Fecha del presupuesto: ${formatFechaLegible(p.panel1.fecha)} · ${p.items.length} ítem(s)</span><br/>
+            <span>Fecha del presupuesto: ${formatFechaLegible(p.panel1.fecha)} · ${p.items.length} ítem(s) · Total: $ ${formatMoney(calcularTotalRegistro(p))}</span><br/>
             <span class="guardado-fecha-guardado">Guardado el: ${formatFechaHoraLegible(p.guardadoEn)}</span>
+            <div class="field guardado-descripcion-field">
+              <label>Estado</label>
+              <select class="guardado-estado-select" data-estado="${p.numero}">
+                <option value="pendiente" ${estado === 'pendiente' ? 'selected' : ''}>Pendiente</option>
+                <option value="aprobado" ${estado === 'aprobado' ? 'selected' : ''}>Aprobado</option>
+                <option value="rechazado" ${estado === 'rechazado' ? 'selected' : ''}>Rechazado</option>
+              </select>
+            </div>
             <div class="field guardado-descripcion-field">
               <label>Descripción (opcional)</label>
               <textarea rows="2" data-descripcion="${p.numero}" placeholder="Agregar una descripción...">${p.descripcion || ''}</textarea>
@@ -754,6 +831,9 @@
     cont.querySelectorAll('[data-descripcion]').forEach((textarea) =>
       textarea.addEventListener('blur', () => onGuardarDescripcion(textarea.dataset.descripcion, textarea.value))
     );
+    cont.querySelectorAll('[data-estado]').forEach((select) =>
+      select.addEventListener('change', () => onCambiarEstado(select.dataset.estado, select.value))
+    );
   }
 
   async function onGuardarDescripcion(numero, descripcion) {
@@ -765,6 +845,30 @@
     } catch (e) {
       alert('No se pudo guardar la descripción. Probá nuevamente.');
     }
+  }
+
+  async function onCambiarEstado(numero, estado) {
+    const registro = state.presupuestos.find((p) => p.numero === numero);
+    if (!registro) return;
+    registro.estado = estado;
+    try {
+      await guardarPresupuestosRemoto(state.presupuestos);
+    } catch (e) {
+      alert('No se pudo guardar el estado. Probá nuevamente.');
+    }
+  }
+
+  function calcularTotalRegistro(registro) {
+    const totalBruto = (registro.items || []).reduce(
+      (acum, item) => acum + (item.precio || 0) * (item.cantidad || 1),
+      0
+    );
+    const ivaPorcentaje = registro.panel1.ivaPorcentaje || 21;
+    const descuentoPorcentaje = registro.panel1.descuentoPorcentaje || 0;
+    const descuento = totalBruto * (descuentoPorcentaje / 100);
+    const base = totalBruto - descuento;
+    const iva = base * (ivaPorcentaje / 100);
+    return base + iva;
   }
 
   function cargarGuardado(numero) {
@@ -812,6 +916,7 @@
     document.getElementById('clientes-view').hidden = true;
     document.getElementById('calendario-view').hidden = true;
     document.getElementById('guardados-view').hidden = true;
+    document.getElementById('reportes-view').hidden = true;
   }
 
   // ---------------------------------------------------------------------
