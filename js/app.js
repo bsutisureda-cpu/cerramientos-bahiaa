@@ -69,6 +69,7 @@
       const datosSesion = await resp.json();
       document.getElementById('sidebar-usuario').textContent = datosSesion.usuario || '';
       state.config = await cargarConfigRemota();
+      ordenarListasConfig(state.config);
       state.clientes = await cargarClientesRemoto();
       state.presupuestos = await cargarPresupuestosRemoto();
       state.calendario = await cargarCalendarioRemoto();
@@ -1221,7 +1222,16 @@
     renderListaItems();
   }
 
+  const COLLATOR_ES = new Intl.Collator('es', { sensitivity: 'base' });
+
+  function ordenarListasConfig(c) {
+    ['tiposAbertura', 'colores', 'lineas', 'tiposManija', 'tiposVidrio'].forEach((clave) => {
+      if (Array.isArray(c[clave])) c[clave].sort(COLLATOR_ES.compare);
+    });
+  }
+
   async function guardarYRenderConfig() {
+    ordenarListasConfig(state.config);
     try {
       await guardarConfigRemota(state.config);
     } catch (e) {
