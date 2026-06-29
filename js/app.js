@@ -753,15 +753,17 @@
       return;
     }
 
-    const totalesPorMes = {};
+    const datosPorMes = {};
     aprobados.forEach((p) => {
       const fecha = p.panel1.fecha;
       if (!fecha) return;
       const clave = fecha.slice(0, 7);
-      totalesPorMes[clave] = (totalesPorMes[clave] || 0) + calcularTotalRegistro(p);
+      if (!datosPorMes[clave]) datosPorMes[clave] = { total: 0, cantidad: 0 };
+      datosPorMes[clave].total += calcularTotalRegistro(p);
+      datosPorMes[clave].cantidad += 1;
     });
 
-    const claves = Object.keys(totalesPorMes).sort().reverse();
+    const claves = Object.keys(datosPorMes).sort().reverse();
     cont.innerHTML = '';
 
     claves.forEach((clave) => {
@@ -770,11 +772,12 @@
         month: 'long',
         year: 'numeric',
       });
+      const { total, cantidad } = datosPorMes[clave];
       const row = document.createElement('div');
       row.className = 'nota-row';
       row.innerHTML = `
-        <span>${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)}</span>
-        <strong>$ ${formatMoney(totalesPorMes[clave])}</strong>
+        <span>${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)} · ${cantidad} presupuesto(s)</span>
+        <strong>$ ${formatMoney(total)}</strong>
       `;
       cont.appendChild(row);
     });
