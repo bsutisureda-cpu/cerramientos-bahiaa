@@ -788,14 +788,73 @@
   }
 
   function renderReportes() {
-    const cont = document.getElementById('tabla-reportes-mes');
+    const total = state.presupuestos.length;
     const aprobados = state.presupuestos.filter((p) => p.estado === 'aprobado');
+    const rechazados = state.presupuestos.filter((p) => p.estado === 'rechazado');
+    const pendientes = state.presupuestos.filter((p) => (p.estado || 'pendiente') === 'pendiente');
 
+    // Conversión
+    const contConv = document.getElementById('tabla-reportes-conversion');
+    if (!total) {
+      contConv.innerHTML = '<p class="empty-msg">Todavía no hay presupuestos guardados.</p>';
+    } else {
+      const pct = (n) => Math.round((n / total) * 100);
+      contConv.innerHTML = `
+        <div class="reporte-stat-grid">
+          <div class="reporte-stat">
+            <span class="reporte-stat-num">${total}</span>
+            <span>Total</span>
+          </div>
+          <div class="reporte-stat reporte-stat-ok">
+            <span class="reporte-stat-num">${aprobados.length} <small>${pct(aprobados.length)}%</small></span>
+            <span>Aprobados</span>
+          </div>
+          <div class="reporte-stat reporte-stat-pend">
+            <span class="reporte-stat-num">${pendientes.length} <small>${pct(pendientes.length)}%</small></span>
+            <span>Pendientes</span>
+          </div>
+          <div class="reporte-stat reporte-stat-rej">
+            <span class="reporte-stat-num">${rechazados.length} <small>${pct(rechazados.length)}%</small></span>
+            <span>Rechazados</span>
+          </div>
+        </div>
+      `;
+    }
+
+    // Ranking de tipos de abertura
+    const contRanking = document.getElementById('tabla-reportes-ranking');
+    if (!aprobados.length) {
+      contRanking.innerHTML = '<p class="empty-msg">Todavía no hay presupuestos aprobados.</p>';
+    } else {
+      const conteo = {};
+      aprobados.forEach((p) => {
+        (p.items || []).forEach((item) => {
+          if (!item.tipo) return;
+          conteo[item.tipo] = (conteo[item.tipo] || 0) + (item.cantidad || 1);
+        });
+      });
+      const sorted = Object.entries(conteo).sort((a, b) => b[1] - a[1]);
+      const totalUd = sorted.reduce((s, [, n]) => s + n, 0);
+      contRanking.innerHTML = '';
+      sorted.forEach(([tipo, cantidad]) => {
+        const p = totalUd > 0 ? Math.round((cantidad / totalUd) * 100) : 0;
+        const row = document.createElement('div');
+        row.className = 'ranking-row';
+        row.innerHTML = `
+          <span class="ranking-nombre">${tipo}</span>
+          <div class="ranking-bar-wrap"><div class="ranking-bar" style="width:${p}%"></div></div>
+          <span class="ranking-valor">${cantidad} ud. · ${p}%</span>
+        `;
+        contRanking.appendChild(row);
+      });
+    }
+
+    // Facturación por mes
+    const cont = document.getElementById('tabla-reportes-mes');
     if (!aprobados.length) {
       cont.innerHTML = '<p class="empty-msg">Todavía no hay presupuestos aprobados.</p>';
       return;
     }
-
     const datosPorMes = {};
     aprobados.forEach((p) => {
       const fecha = p.panel1.fecha;
@@ -805,22 +864,17 @@
       datosPorMes[clave].total += calcularTotalRegistro(p);
       datosPorMes[clave].cantidad += 1;
     });
-
     const claves = Object.keys(datosPorMes).sort().reverse();
     cont.innerHTML = '';
-
     claves.forEach((clave) => {
       const [y, m] = clave.split('-');
-      const etiqueta = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-AR', {
-        month: 'long',
-        year: 'numeric',
-      });
-      const { total, cantidad } = datosPorMes[clave];
+      const etiqueta = new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('es-AR', { month: 'long', year: 'numeric' });
+      const { total: tot, cantidad } = datosPorMes[clave];
       const row = document.createElement('div');
       row.className = 'nota-row';
       row.innerHTML = `
         <span>${etiqueta.charAt(0).toUpperCase() + etiqueta.slice(1)} · ${cantidad} presupuesto(s)</span>
-        <strong>$ ${formatMoney(total)}</strong>
+        <strong>$ ${formatMoney(tot)}</strong>
       `;
       cont.appendChild(row);
     });
@@ -894,6 +948,17 @@
     cont.querySelectorAll('[data-estado]').forEach((select) =>
       select.addEventListener('change', () => onCambiarEstado(select.dataset.estado, select.value))
     );
+  }
+
+  async function onGuardarNotaCliente(id, nota) {
+    const cliente = state.clientes.find((c) => c.id === id);
+    if (!cliente || cliente.notaInterna === nota) return;
+    cliente.notaInterna = nota;
+    try {
+      await guardarClientesRemoto(state.clientes);
+    } catch (e) {
+      alert('No se pudo guardar la nota. Probá nuevamente.');
+    }
   }
 
   async function onGuardarDescripcion(numero, descripcion) {
@@ -1035,6 +1100,10 @@
             <strong>${cliente.nombre} ${cliente.apellido || ''}</strong><br/>
             <span>${cliente.telefono || ''}${cliente.telefono && cliente.email ? ' · ' : ''}${cliente.email || ''}</span><br/>
             <span>${presupuestosCliente.length} presupuesto(s) guardado(s)</span>
+            <div class="field guardado-descripcion-field">
+              <label>Nota interna</label>
+              <textarea rows="2" data-nota-cliente="${cliente.id}" placeholder="Uso interno...">${cliente.notaInterna || ''}</textarea>
+            </div>
           </div>
           <div class="guardado-acciones">
             <button type="button" data-action="editar">Editar</button>
@@ -1057,6 +1126,7 @@
       }
       div.querySelector('[data-action="editar"]').addEventListener('click', () => editarCliente(cliente.id));
       div.querySelector('[data-action="eliminar"]').addEventListener('click', () => eliminarCliente(cliente.id));
+      div.querySelector('[data-nota-cliente]').addEventListener('blur', (e) => onGuardarNotaCliente(cliente.id, e.target.value));
       cont.appendChild(div);
     });
   }
