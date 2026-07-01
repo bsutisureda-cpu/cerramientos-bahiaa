@@ -219,6 +219,19 @@ app.post('/api/calendario', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+app.get('/api/backup', requireAuth, (req, res) => {
+  const backup = {
+    exportadoEn: new Date().toISOString(),
+    config: leerConfig(),
+    clientes: leerJSONArray(CLIENTES_FILE),
+    presupuestos: leerJSONArray(PRESUPUESTOS_FILE),
+    calendario: leerJSONObjeto(CALENDARIO_FILE),
+  };
+  const fecha = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Disposition', `attachment; filename="backup-cerramientos-${fecha}.json"`);
+  res.json(backup);
+});
+
 const upload = multer({
   storage: multer.diskStorage({
     destination: UPLOADS_DIR,

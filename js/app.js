@@ -179,6 +179,10 @@
       renderListaGuardados();
     });
 
+    document.getElementById('nav-dashboard').addEventListener('click', () => {
+      abrirDashboard();
+      activarNav('nav-dashboard');
+    });
     document.getElementById('nav-crear').addEventListener('click', () => {
       cerrarConfig();
       cerrarClientes();
@@ -251,10 +255,12 @@
     initConfigEvents();
     initClientesEvents();
     initCalendarioEvents();
+    abrirDashboard();
+    activarNav('nav-dashboard');
   }
 
   function activarNav(navId) {
-    ['nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-reportes', 'nav-valores', 'nav-config'].forEach((id) => {
+    ['nav-dashboard', 'nav-crear', 'nav-guardados', 'nav-clientes', 'nav-calendario', 'nav-reportes', 'nav-valores', 'nav-config'].forEach((id) => {
       document.getElementById(id).classList.toggle('active', id === navId);
     });
   }
@@ -756,6 +762,94 @@
   }
 
   // ---------------------------------------------------------------------
+  // Dashboard
+  // ---------------------------------------------------------------------
+  function abrirDashboard() {
+    renderDashboard();
+    ocultarTodasLasVistas();
+    document.getElementById('dashboard-view').hidden = false;
+  }
+
+  function renderDashboard() {
+    // Presupuestos pendientes
+    const pendientes = state.presupuestos.filter((p) => (p.estado || 'pendiente') === 'pendiente');
+    const contPend = document.getElementById('dash-pendientes');
+    contPend.innerHTML = '';
+    if (!pendientes.length) {
+      contPend.innerHTML = '<p class="empty-msg">No hay presupuestos pendientes.</p>';
+    } else {
+      const recientes = pendientes.slice().reverse().slice(0, 6);
+      const encabezado = document.createElement('p');
+      encabezado.className = 'dash-count';
+      encabezado.textContent = `${pendientes.length} pendiente(s)`;
+      contPend.appendChild(encabezado);
+      recientes.forEach((p) => {
+        const row = document.createElement('div');
+        row.className = 'nota-row';
+        row.innerHTML = `<span><strong>N.º ${p.numero}</strong> — ${p.panel1.nombre || 'Sin nombre'} · ${formatFechaLegible(p.panel1.fecha)}</span><strong>$ ${formatMoney(calcularTotalRegistro(p))}</strong>`;
+        contPend.appendChild(row);
+      });
+      if (pendientes.length > 6) {
+        const mas = document.createElement('p');
+        mas.className = 'empty-msg';
+        mas.textContent = `... y ${pendientes.length - 6} más.`;
+        contPend.appendChild(mas);
+      }
+    }
+
+    // Calendario: hoy y mañana
+    const hoyDate = new Date();
+    const mananaDate = new Date(hoyDate);
+    mananaDate.setDate(mananaDate.getDate() + 1);
+    const hoy = claveFecha(hoyDate);
+    const manana = claveFecha(mananaDate);
+    const contCal = document.getElementById('dash-calendario');
+    contCal.innerHTML = '';
+    [[hoy, 'Hoy'], [manana, 'Mañana']].forEach(([clave, etiqueta]) => {
+      const notas = (state.calendario[clave] || []).filter((n) => !n.hecho);
+      const subtitulo = document.createElement('p');
+      subtitulo.style.cssText = 'font-weight:700;margin:0.4rem 0 0.2rem;font-size:0.85rem;';
+      subtitulo.textContent = etiqueta;
+      contCal.appendChild(subtitulo);
+      if (!notas.length) {
+        const p = document.createElement('p');
+        p.className = 'empty-msg';
+        p.style.marginBottom = '0.5rem';
+        p.textContent = 'Sin pendientes.';
+        contCal.appendChild(p);
+      } else {
+        notas.forEach((nota) => {
+          const div = document.createElement('div');
+          div.className = 'nota-row';
+          div.innerHTML = `<span>${nota.texto}</span>`;
+          contCal.appendChild(div);
+        });
+      }
+    });
+
+    // Facturado este mes
+    const mesActual = todayISO().slice(0, 7);
+    const aprobadosMes = state.presupuestos.filter(
+      (p) => p.estado === 'aprobado' && (p.panel1.fecha || '').slice(0, 7) === mesActual
+    );
+    const totalMes = aprobadosMes.reduce((sum, p) => sum + calcularTotalRegistro(p), 0);
+    const contMes = document.getElementById('dash-mes');
+    contMes.innerHTML = '';
+    if (!aprobadosMes.length) {
+      contMes.innerHTML = '<p class="empty-msg">Todavía no hay presupuestos aprobados este mes.</p>';
+    } else {
+      const monto = document.createElement('p');
+      monto.className = 'dash-count';
+      monto.textContent = `$ ${formatMoney(totalMes)}`;
+      contMes.appendChild(monto);
+      const cant = document.createElement('p');
+      cant.className = 'empty-msg';
+      cant.textContent = `${aprobadosMes.length} presupuesto(s) aprobado(s)`;
+      contMes.appendChild(cant);
+    }
+  }
+
+  // ---------------------------------------------------------------------
   // Reportes
   // ---------------------------------------------------------------------
   async function abrirReportes() {
@@ -970,6 +1064,7 @@
   }
 
   function ocultarTodasLasVistas() {
+    document.getElementById('dashboard-view').hidden = true;
     document.getElementById('editor-view').hidden = true;
     document.getElementById('vista-presupuesto').hidden = true;
     document.getElementById('config-view').hidden = true;
@@ -1711,6 +1806,22 @@
 
 
   function initConfigEvents() {
+    document.getElementById('btn-descargar-backup').addEventListener('click', async () => {
+      try {
+        const resp = await fetch('/api/backup');
+        if (!resp.ok) throw new Error();
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup-cerramientos-${todayISO()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        alert('No se pudo descargar el backup. Probá nuevamente.');
+      }
+    });
+
     document.getElementById('btn-guardar-empresa').addEventListener('click', () => {
       state.config.empresaNombre = document.getElementById('config-empresa-nombre').value.trim();
       state.config.empresaHandle = document.getElementById('config-empresa-handle').value.trim();
