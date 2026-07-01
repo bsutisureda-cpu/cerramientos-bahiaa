@@ -553,13 +553,6 @@ label {
   padding: 0.35rem 0.5rem;
 }
 
-.dash-count {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  margin: 0.3rem 0;
-}
-
 .config-unidad-nota {
   font-size: 0.78rem;
   font-weight: 400;
