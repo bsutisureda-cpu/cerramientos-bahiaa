@@ -184,21 +184,15 @@
         <!-- MODO COMBINACIÓN -->
         <div id="panel2-combo-fields" hidden>
           <div class="field-grid">
-            <div class="field">
-              <label for="p2-combo-nombre">Nombre / tipología * (ej: V1)</label>
-              <input type="text" id="p2-combo-nombre" placeholder="V1" />
+            <div class="field field-full">
+              <label for="p2-combo-select">Combinación *</label>
+              <select id="p2-combo-select">
+                <option value="">— Elegí una combinación —</option>
+              </select>
             </div>
             <div class="field">
               <label for="p2-combo-color">Color *</label>
               <select id="p2-combo-color"></select>
-            </div>
-            <div class="field">
-              <label for="p2-combo-ancho">Ancho total (mm) *</label>
-              <input type="number" id="p2-combo-ancho" min="1" step="1" />
-            </div>
-            <div class="field">
-              <label for="p2-combo-alto">Alto total (mm) *</label>
-              <input type="number" id="p2-combo-alto" min="1" step="1" />
             </div>
             <div class="field">
               <label for="p2-combo-cantidad">Cantidad *</label>
@@ -209,32 +203,14 @@
               <input type="number" id="p2-combo-precio" min="0" step="0.01" placeholder="0.00" />
             </div>
           </div>
-          <div class="combo-partes-section">
-            <h4>Partes de la combinación</h4>
-            <div id="combo-partes-lista"></div>
-            <div class="field-grid combo-parte-agregar">
-              <div class="field">
-                <label for="combo-parte-tipo">Tipo</label>
-                <select id="combo-parte-tipo"></select>
-              </div>
-              <div class="field">
-                <label for="combo-parte-linea">Línea</label>
-                <select id="combo-parte-linea"></select>
-              </div>
-              <div class="field">
-                <label for="combo-parte-vidrio">Vidrio</label>
-                <select id="combo-parte-vidrio"></select>
-              </div>
-              <div class="field">
-                <label for="combo-parte-ancho">Ancho (mm)</label>
-                <input type="number" id="combo-parte-ancho" min="1" step="1" />
-              </div>
-              <div class="field">
-                <label for="combo-parte-alto">Alto (mm)</label>
-                <input type="number" id="combo-parte-alto" min="1" step="1" />
+          <div id="combo-medidas-partes"></div>
+          <div class="field field-full" id="combo-preview-img-box" hidden>
+            <div class="preview-imagenes">
+              <div class="preview-img-box">
+                <img id="combo-preview-img" alt="Imagen combinación" />
+                <span>Combinación</span>
               </div>
             </div>
-            <button type="button" id="btn-add-parte-combo" class="btn btn-ghost">+ Agregar parte</button>
           </div>
         </div>
 
@@ -606,6 +582,36 @@
         </div>
         <div id="config-galeria-vidrio" class="config-galeria-asignadas"></div>
       </section>
+      <!-- Combinaciones -->
+      <section class="panel panel-full">
+        <h3>Combinaciones</h3>
+        <p class="empty-msg">Definí las combinaciones que usás (V1, P1, etc.) con sus partes. Al crear un presupuesto podés elegirlas y escribir las medidas de cada parte.</p>
+
+        <div class="field">
+          <label for="config-combo-nombre">Nombre de la combinación *</label>
+          <input type="text" id="config-combo-nombre" placeholder="V1" />
+        </div>
+
+        <h4>Partes de la combinación</h4>
+        <div id="config-combo-partes-lista"></div>
+        <div class="config-img-form">
+          <select id="config-combo-parte-tipo"></select>
+          <select id="config-combo-parte-linea"></select>
+          <select id="config-combo-parte-vidrio"></select>
+          <button type="button" id="btn-add-combo-parte-config" class="btn btn-ghost">+ Parte</button>
+        </div>
+
+        <h4>Imagen</h4>
+        <div class="config-img-form">
+          <input type="file" id="config-combo-img-file" accept="image/*" />
+          <button type="button" id="btn-guardar-combo" class="btn btn-primary">Guardar combinación</button>
+        </div>
+        <div id="config-preview-combo" class="config-preview config-preview-inline"></div>
+
+        <h4>Combinaciones guardadas</h4>
+        <div id="config-lista-combinaciones"></div>
+      </section>
+
       <!-- Backup -->
       <section class="panel">
         <h3>Backup</h3>

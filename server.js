@@ -49,6 +49,7 @@ const DEFAULT_CONFIG = {
   basesEjemplo: [],
   valores: { cierre: {}, vidrio: {}, perfil: {} },
   cotizacionDolar: 0,
+  combinaciones: [],
 };
 
 function leerConfig() {

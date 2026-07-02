@@ -10,7 +10,7 @@
     calVista: new Date(),
     calDiaSeleccionado: null,
     modoPanel2: 'simple',
-    comboParts: [],
+    configComboParts: [],
   };
 
   // ---------------------------------------------------------------------
@@ -163,7 +163,7 @@
 
     document.getElementById('btn-modo-simple').addEventListener('click', () => switchModoPanel2('simple'));
     document.getElementById('btn-modo-combo').addEventListener('click', () => switchModoPanel2('combo'));
-    document.getElementById('btn-add-parte-combo').addEventListener('click', onAddParteCombinacion);
+    document.getElementById('p2-combo-select').addEventListener('change', onSelectCombinacion);
     document.getElementById('btn-agregar-item').addEventListener('click', onAgregarOActualizarItem);
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicion);
     document.getElementById('btn-generar').addEventListener('click', onGenerarPresupuesto);
@@ -272,9 +272,7 @@
     populateSelect('p2-color-manija', state.config.colores);
     populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
     populateSelect('p2-combo-color', state.config.colores);
-    populateSelect('combo-parte-tipo', state.config.tiposAbertura);
-    populateSelect('combo-parte-linea', state.config.lineas, '— Sin línea —');
-    populateSelect('combo-parte-vidrio', state.config.tiposVidrio, '— Sin vidrio —');
+    populateSelect('p2-combo-select', (state.config.combinaciones || []).map((c) => c.nombre), '— Elegí una combinación —');
   }
 
   // ---------------------------------------------------------------------
@@ -405,7 +403,6 @@
 
   function cancelarEdicion() {
     state.editingItemId = null;
-    state.comboParts = [];
     switchModoPanel2('simple');
     document.getElementById('btn-cancelar-edicion').hidden = true;
   }
@@ -422,88 +419,99 @@
     } else {
       document.getElementById('panel2-titulo').textContent = 'Agregar combinación';
       document.getElementById('btn-agregar-item').textContent = 'Agregar combinación';
-      renderComboPartes();
     }
   }
 
-  function renderComboPartes() {
-    const cont = document.getElementById('combo-partes-lista');
+  function onSelectCombinacion() {
+    const nombre = document.getElementById('p2-combo-select').value;
+    const cont = document.getElementById('combo-medidas-partes');
+    const imgBox = document.getElementById('combo-preview-img-box');
     cont.innerHTML = '';
-    if (!state.comboParts.length) {
-      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste partes.</p>';
-      return;
+    if (!nombre) { imgBox.hidden = true; return; }
+    const combo = (state.config.combinaciones || []).find((c) => c.nombre === nombre);
+    if (!combo) { imgBox.hidden = true; return; }
+    if (combo.imagen) {
+      document.getElementById('combo-preview-img').src = combo.imagen;
+      imgBox.hidden = false;
+    } else {
+      imgBox.hidden = true;
     }
-    state.comboParts.forEach((parte, idx) => {
+    if (!combo.partes || !combo.partes.length) return;
+    const titulo = document.createElement('h4');
+    titulo.textContent = 'Medidas por parte';
+    titulo.style.cssText = 'margin:0.8rem 0 0.4rem;font-size:0.9rem;color:var(--color-text-muted)';
+    cont.appendChild(titulo);
+    combo.partes.forEach((parte, idx) => {
       const div = document.createElement('div');
-      div.className = 'combo-parte-item';
+      div.className = 'combo-medida-row';
       div.innerHTML = `
-        <span><strong>${parte.tipo}</strong>${parte.linea ? ' · ' + parte.linea : ''}${parte.vidrio ? ' · ' + parte.vidrio : ''} — ${parte.ancho} x ${parte.alto} mm</span>
-        <button type="button" data-idx="${idx}" aria-label="Eliminar">×</button>
+        <span class="combo-medida-label"><strong>${parte.tipo}</strong>${parte.linea ? ' · ' + parte.linea : ''}${parte.vidrio ? ' · ' + parte.vidrio : ''}</span>
+        <div class="combo-medida-inputs">
+          <div class="field">
+            <label>Ancho (mm)</label>
+            <input type="number" id="combo-medida-ancho-${idx}" min="1" step="1" />
+          </div>
+          <div class="field">
+            <label>Alto (mm)</label>
+            <input type="number" id="combo-medida-alto-${idx}" min="1" step="1" />
+          </div>
+        </div>
       `;
-      div.querySelector('button').addEventListener('click', () => {
-        state.comboParts.splice(idx, 1);
-        renderComboPartes();
-      });
       cont.appendChild(div);
     });
   }
 
-  function onAddParteCombinacion() {
-    const tipo = document.getElementById('combo-parte-tipo').value;
-    const linea = document.getElementById('combo-parte-linea').value;
-    const vidrio = document.getElementById('combo-parte-vidrio').value;
-    const ancho = parseFloat(document.getElementById('combo-parte-ancho').value);
-    const alto = parseFloat(document.getElementById('combo-parte-alto').value);
-    if (!tipo || !ancho || !alto) {
-      alert('Ingresá tipo, ancho y alto de la parte.');
-      return;
-    }
-    state.comboParts.push({ tipo, linea: linea || '', vidrio: vidrio || '', ancho, alto });
-    document.getElementById('combo-parte-ancho').value = '';
-    document.getElementById('combo-parte-alto').value = '';
-    renderComboPartes();
-  }
-
   function leerFormularioCombinacion() {
+    const nombre = document.getElementById('p2-combo-select').value;
+    const combo = (state.config.combinaciones || []).find((c) => c.nombre === nombre);
+    if (!combo) return null;
+    const parteMedidas = (combo.partes || []).map((parte, idx) => ({
+      tipo: parte.tipo,
+      linea: parte.linea || '',
+      vidrio: parte.vidrio || '',
+      ancho: parseFloat(document.getElementById(`combo-medida-ancho-${idx}`)?.value) || 0,
+      alto: parseFloat(document.getElementById(`combo-medida-alto-${idx}`)?.value) || 0,
+    }));
     return {
       esCombinacion: true,
-      nombre: document.getElementById('p2-combo-nombre').value.trim(),
+      nombre,
+      imagen: combo.imagen || null,
       color: document.getElementById('p2-combo-color').value,
-      ancho: parseFloat(document.getElementById('p2-combo-ancho').value),
-      alto: parseFloat(document.getElementById('p2-combo-alto').value),
       cantidad: parseInt(document.getElementById('p2-combo-cantidad').value, 10),
       precio: parseFloat(document.getElementById('p2-combo-precio').value),
-      partes: [...state.comboParts],
+      parteMedidas,
     };
   }
 
   function validarFormularioCombinacion(data) {
-    if (!data.nombre) return 'Ingresá el nombre de la tipología (ej: V1).';
+    if (!data) return 'Elegí una combinación de la lista.';
+    if (!data.nombre) return 'Elegí una combinación de la lista.';
     if (!data.color) return 'Elegí un color.';
-    if (!data.ancho || data.ancho <= 0) return 'Ingresá el ancho total.';
-    if (!data.alto || data.alto <= 0) return 'Ingresá el alto total.';
     if (!data.cantidad || data.cantidad <= 0) return 'Ingresá una cantidad válida.';
     if (!data.precio || data.precio <= 0) return 'Ingresá el precio bruto.';
-    if (!data.partes.length) return 'Agregá al menos una parte a la combinación.';
+    for (const p of data.parteMedidas) {
+      if (!p.ancho || !p.alto) return `Ingresá las medidas (ancho y alto) para "${p.tipo}".`;
+    }
     return null;
   }
 
   function resetFormularioCombinacion() {
-    document.getElementById('p2-combo-nombre').value = '';
-    document.getElementById('p2-combo-ancho').value = '';
-    document.getElementById('p2-combo-alto').value = '';
+    document.getElementById('p2-combo-select').value = '';
+    document.getElementById('combo-medidas-partes').innerHTML = '';
+    document.getElementById('combo-preview-img-box').hidden = true;
     document.getElementById('p2-combo-cantidad').value = '1';
     document.getElementById('p2-combo-precio').value = '';
-    state.comboParts = [];
-    renderComboPartes();
   }
 
   function descripcionItem(item) {
     if (item.esCombinacion) {
-      const partesDesc = (item.partes || [])
+      const partesSrc = item.parteMedidas || item.partes || [];
+      const partesDesc = partesSrc
         .map((p) => `${p.tipo}${p.linea ? ' ' + p.linea : ''} (${p.ancho}×${p.alto})`)
         .join(' + ');
-      const segs = [`${item.ancho}mm × ${item.alto}mm total`, `Cant: ${item.cantidad}`, `Partes: ${partesDesc || '—'}`];
+      const anchoTotal = partesSrc.reduce((s, p) => s + (p.ancho || 0), 0);
+      const altoTotal = partesSrc.reduce((mx, p) => Math.max(mx, p.alto || 0), 0);
+      const segs = [`${anchoTotal}mm × ${altoTotal}mm total`, `Cant: ${item.cantidad}`, `Partes: ${partesDesc || '—'}`];
       if (item.precio) segs.push(`Precio: $ ${formatMoney(item.precio)} c/u (Subtotal: $ ${formatMoney(item.precio * item.cantidad)})`);
       return segs.join(' · ');
     }
@@ -578,14 +586,19 @@
 
     if (item.esCombinacion) {
       switchModoPanel2('combo');
-      document.getElementById('p2-combo-nombre').value = item.nombre || '';
+      const comboSel = document.getElementById('p2-combo-select');
+      comboSel.value = item.nombre || '';
+      onSelectCombinacion();
+      const partesSrc = item.parteMedidas || item.partes || [];
+      partesSrc.forEach((p, idx) => {
+        const anchoEl = document.getElementById(`combo-medida-ancho-${idx}`);
+        const altoEl = document.getElementById(`combo-medida-alto-${idx}`);
+        if (anchoEl) anchoEl.value = p.ancho || '';
+        if (altoEl) altoEl.value = p.alto || '';
+      });
       document.getElementById('p2-combo-color').value = item.color || '';
-      document.getElementById('p2-combo-ancho').value = item.ancho || '';
-      document.getElementById('p2-combo-alto').value = item.alto || '';
       document.getElementById('p2-combo-cantidad').value = item.cantidad || 1;
       document.getElementById('p2-combo-precio').value = item.precio || '';
-      state.comboParts = item.partes ? [...item.partes] : [];
-      renderComboPartes();
     } else {
       switchModoPanel2('simple');
       document.getElementById('p2-tipo').value = item.tipo;
@@ -734,21 +747,28 @@
     if (item.esCombinacion) {
       const card = document.createElement('div');
       card.className = 'vp-ventana';
-      const partesHTML = (item.partes || []).map((p) => `
+      const partesSrc = item.parteMedidas || item.partes || [];
+      const anchoTotal = partesSrc.reduce((s, p) => s + (p.ancho || 0), 0);
+      const altoTotal = partesSrc.reduce((mx, p) => Math.max(mx, p.alto || 0), 0);
+      const partesHTML = partesSrc.map((p) => `
         <div class="vp-combo-parte">
           <strong>${p.tipo}${p.linea ? ' LÍNEA ' + p.linea : ''}</strong>
           <span>MEDIDAS: ${p.ancho} x ${p.alto} mm${p.vidrio ? ' — VIDRIO: ' + p.vidrio : ''}</span>
         </div>
       `).join('');
+      const imgHTML = item.imagen
+        ? `<img src="${item.imagen}" alt="${item.nombre}" style="width:110px;height:90px;object-fit:contain;background:#fff;border-radius:4px;" />`
+        : '';
       card.innerHTML = `
-        <div class="vp-combo-header">
-          <strong>Tipo ${item.nombre} (${item.ancho} x ${item.alto} mm)</strong>
+        <div class="vp-item-row">
+          ${imgHTML}
+          <div class="vp-item-info" style="${imgHTML ? '' : 'padding-left:0'}">
+            <strong>Tipo ${item.nombre} (${anchoTotal} x ${altoTotal} mm)</strong>
+            <span class="vp-spec-linea">COLOR: ${item.color}</span>
+            ${item.precio ? `<span class="vp-spec-linea">PRECIO BRUTO: $ ${formatMoney(item.precio)}</span>` : ''}
+          </div>
         </div>
         <div class="vp-combo-partes-list">${partesHTML}</div>
-        <div class="vp-combo-footer">
-          <span>COLOR: ${item.color}</span>
-          ${item.precio ? `<span>PRECIO BRUTO: $ ${formatMoney(item.precio)}</span>` : ''}
-        </div>
       `;
       return card;
     }
@@ -1734,6 +1754,11 @@
     populateSelect('base-linea', ['TODAS', ...c.lineas]);
     populateSelect('base-cierre', c.tiposManija);
     renderListaBasesEjemplo();
+
+    populateSelect('config-combo-parte-tipo', c.tiposAbertura, '— Tipo —');
+    populateSelect('config-combo-parte-linea', c.lineas, '— Sin línea —');
+    populateSelect('config-combo-parte-vidrio', c.tiposVidrio, '— Sin vidrio —');
+    renderCombinaciones();
   }
 
   function renderListaBasesEjemplo() {
@@ -1759,6 +1784,62 @@
         guardarYRenderConfig();
       });
       cont.appendChild(row);
+    });
+  }
+
+  function renderConfigComboParts() {
+    const cont = document.getElementById('config-combo-partes-lista');
+    cont.innerHTML = '';
+    if (!state.configComboParts.length) {
+      cont.innerHTML = '<p class="empty-msg" style="font-size:0.82rem">Todavía no agregaste partes.</p>';
+      return;
+    }
+    state.configComboParts.forEach((parte, idx) => {
+      const div = document.createElement('div');
+      div.className = 'combo-parte-item';
+      div.innerHTML = `
+        <span><strong>${parte.tipo}</strong>${parte.linea ? ' · ' + parte.linea : ''}${parte.vidrio ? ' · ' + parte.vidrio : ''}</span>
+        <button type="button" aria-label="Eliminar">×</button>
+      `;
+      div.querySelector('button').addEventListener('click', () => {
+        state.configComboParts.splice(idx, 1);
+        renderConfigComboParts();
+      });
+      cont.appendChild(div);
+    });
+  }
+
+  function renderCombinaciones() {
+    const c = state.config;
+    if (!c.combinaciones) c.combinaciones = [];
+    renderConfigComboParts();
+    const cont = document.getElementById('config-lista-combinaciones');
+    cont.innerHTML = '';
+    if (!c.combinaciones.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no guardaste ninguna combinación.</p>';
+      return;
+    }
+    c.combinaciones.forEach((combo, idx) => {
+      const div = document.createElement('div');
+      div.className = 'guardado-row';
+      const partesTexto = (combo.partes || [])
+        .map((p) => `${p.tipo}${p.linea ? ' · ' + p.linea : ''}${p.vidrio ? ' · ' + p.vidrio : ''}`)
+        .join(' + ');
+      div.innerHTML = `
+        <div class="guardado-info">
+          <strong>${combo.nombre}</strong><br/>
+          <span style="font-size:0.82rem;color:var(--color-text-muted)">${partesTexto || '—'}</span>
+        </div>
+        ${combo.imagen ? `<img src="${combo.imagen}" style="width:64px;height:52px;object-fit:contain;border-radius:4px;background:#fff;" alt="${combo.nombre}" />` : ''}
+        <div class="guardado-acciones">
+          <button type="button" class="btn btn-ghost btn-sm" data-action="eliminar-combo" data-idx="${idx}">Eliminar</button>
+        </div>
+      `;
+      div.querySelector('[data-action="eliminar-combo"]').addEventListener('click', () => {
+        c.combinaciones.splice(idx, 1);
+        guardarYRenderConfig();
+      });
+      cont.appendChild(div);
     });
   }
 
@@ -1945,6 +2026,48 @@
 
 
   function initConfigEvents() {
+    document.getElementById('btn-add-combo-parte-config').addEventListener('click', () => {
+      const tipo = document.getElementById('config-combo-parte-tipo').value;
+      if (!tipo) { alert('Elegí el tipo de abertura.'); return; }
+      const linea = document.getElementById('config-combo-parte-linea').value;
+      const vidrio = document.getElementById('config-combo-parte-vidrio').value;
+      state.configComboParts.push({ tipo, linea: linea || '', vidrio: vidrio || '' });
+      renderConfigComboParts();
+    });
+
+    document.getElementById('btn-guardar-combo').addEventListener('click', async () => {
+      const nombre = document.getElementById('config-combo-nombre').value.trim();
+      if (!nombre) { alert('Ingresá el nombre de la combinación (ej: V1).'); return; }
+      if (!state.configComboParts.length) { alert('Agregá al menos una parte a la combinación.'); return; }
+      let imagen = null;
+      const file = document.getElementById('config-combo-img-file').files[0];
+      if (file) {
+        try { imagen = await subirImagen(file); } catch (e) {
+          alert('No se pudo subir la imagen. Probá nuevamente.');
+          return;
+        }
+      }
+      if (!state.config.combinaciones) state.config.combinaciones = [];
+      const idx = state.config.combinaciones.findIndex((c) => c.nombre === nombre);
+      const existente = idx !== -1 ? state.config.combinaciones[idx] : null;
+      const combo = { nombre, partes: [...state.configComboParts], imagen: imagen || (existente ? existente.imagen : null) };
+      if (idx !== -1) state.config.combinaciones[idx] = combo;
+      else state.config.combinaciones.push(combo);
+      document.getElementById('config-combo-nombre').value = '';
+      document.getElementById('config-combo-img-file').value = '';
+      document.getElementById('config-preview-combo').innerHTML = '';
+      state.configComboParts = [];
+      guardarYRenderConfig();
+    });
+
+    document.getElementById('config-combo-img-file').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => renderPreviewImg('config-preview-combo', ev.target.result);
+      reader.readAsDataURL(file);
+    });
+
     document.getElementById('btn-descargar-backup').addEventListener('click', async () => {
       try {
         const resp = await fetch('/api/backup');

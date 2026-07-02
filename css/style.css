@@ -684,6 +684,48 @@ label {
   border-top: 1px solid var(--color-border);
 }
 
+/* --- Combinación: medidas por parte (panel2) --- */
+.combo-medida-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  background: var(--color-surface);
+}
+
+.combo-medida-label {
+  font-size: 0.88rem;
+  color: var(--color-text);
+}
+
+.combo-medida-inputs {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.combo-medida-inputs .field { flex: 1; margin: 0; }
+
+/* --- Combinaciones config: fila guardada --- */
+.guardado-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+  background: var(--color-surface);
+}
+
+.guardado-info { flex: 1; }
+
+.guardado-acciones { display: flex; gap: 0.4rem; }
+
+.btn-sm { font-size: 0.8rem; padding: 0.25rem 0.6rem; }
+
 /* --- Lista de ítems --- */
 .lista-items { display: flex; flex-direction: column; gap: 0.6rem; }
 
