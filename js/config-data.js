@@ -47,6 +47,17 @@ function claveManija(manija, color) {
   return `${manija}||${color}`;
 }
 
+function claveCombinacion(color, cajon) {
+  return `${color}||${cajon === 'si' ? 'si' : 'no'}`;
+}
+
+function imagenCombinacion(combo, color, cajon) {
+  if (!combo) return null;
+  const imgs = combo.imagenes || {};
+  // Retrocompatibilidad: si existía una única imagen vieja (combo.imagen), se usa como respaldo.
+  return imgs[claveCombinacion(color, cajon)] || combo.imagen || null;
+}
+
 function imagenAbertura(config, tipo, color, mosquitero, cajon) {
   const etiquetaMosquitero = mosquitero === 'si' ? 'con mosquitero' : 'sin mosquitero';
   const etiquetaCajon = cajon === 'si' ? 'con cajón' : 'sin cajón';

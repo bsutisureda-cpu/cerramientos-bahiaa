@@ -164,6 +164,8 @@
     document.getElementById('btn-modo-simple').addEventListener('click', () => switchModoPanel2('simple'));
     document.getElementById('btn-modo-combo').addEventListener('click', () => switchModoPanel2('combo'));
     document.getElementById('p2-combo-select').addEventListener('change', onSelectCombinacion);
+    document.getElementById('p2-combo-color').addEventListener('change', actualizarPreviewCombo);
+    document.getElementById('p2-combo-cajon').addEventListener('change', actualizarPreviewCombo);
     document.getElementById('btn-agregar-item').addEventListener('click', onAgregarOActualizarItem);
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicion);
     document.getElementById('btn-generar').addEventListener('click', onGenerarPresupuesto);
@@ -431,6 +433,22 @@
     }
   }
 
+  function actualizarPreviewCombo() {
+    const nombre = document.getElementById('p2-combo-select').value;
+    const imgBox = document.getElementById('combo-preview-img-box');
+    const combo = (state.config.combinaciones || []).find((c) => c.nombre === nombre);
+    if (!combo) { imgBox.hidden = true; return; }
+    const color = document.getElementById('p2-combo-color').value;
+    const cajon = document.getElementById('p2-combo-cajon').value;
+    const src = imagenCombinacion(combo, color, cajon);
+    if (src) {
+      document.getElementById('combo-preview-img').src = src;
+      imgBox.hidden = false;
+    } else {
+      imgBox.hidden = true;
+    }
+  }
+
   function onSelectCombinacion() {
     const nombre = document.getElementById('p2-combo-select').value;
     const cont = document.getElementById('combo-medidas-partes');
@@ -439,12 +457,7 @@
     if (!nombre) { imgBox.hidden = true; return; }
     const combo = (state.config.combinaciones || []).find((c) => c.nombre === nombre);
     if (!combo) { imgBox.hidden = true; return; }
-    if (combo.imagen) {
-      document.getElementById('combo-preview-img').src = combo.imagen;
-      imgBox.hidden = false;
-    } else {
-      imgBox.hidden = true;
-    }
+    actualizarPreviewCombo();
     if (!combo.partes || !combo.partes.length) return;
     const titulo = document.createElement('h4');
     titulo.textContent = 'Medidas por parte';
@@ -497,11 +510,14 @@
       ancho: parseFloat(document.getElementById(`combo-medida-ancho-${idx}`)?.value) || 0,
       alto: parseFloat(document.getElementById(`combo-medida-alto-${idx}`)?.value) || 0,
     }));
+    const color = document.getElementById('p2-combo-color').value;
+    const cajon = document.getElementById('p2-combo-cajon').value;
     return {
       esCombinacion: true,
       nombre,
-      imagen: combo.imagen || null,
-      color: document.getElementById('p2-combo-color').value,
+      imagen: imagenCombinacion(combo, color, cajon),
+      color,
+      cajon,
       cantidad: parseInt(document.getElementById('p2-combo-cantidad').value, 10),
       precio: parseFloat(document.getElementById('p2-combo-precio').value),
       parteMedidas,
@@ -524,6 +540,7 @@
     document.getElementById('p2-combo-select').value = '';
     document.getElementById('combo-medidas-partes').innerHTML = '';
     document.getElementById('combo-preview-img-box').hidden = true;
+    document.getElementById('p2-combo-cajon').value = 'no';
     document.getElementById('p2-combo-cantidad').value = '1';
     document.getElementById('p2-combo-precio').value = '';
   }
@@ -628,8 +645,10 @@
         if (altoEl) altoEl.value = p.alto || '';
       });
       document.getElementById('p2-combo-color').value = item.color || '';
+      document.getElementById('p2-combo-cajon').value = item.cajon || 'no';
       document.getElementById('p2-combo-cantidad').value = item.cantidad || 1;
       document.getElementById('p2-combo-precio').value = item.precio || '';
+      actualizarPreviewCombo();
     } else {
       switchModoPanel2('simple');
       document.getElementById('p2-tipo').value = item.tipo;
@@ -1848,25 +1867,76 @@
       cont.innerHTML = '<p class="empty-msg">Todavía no guardaste ninguna combinación.</p>';
       return;
     }
+    const colorOptions = c.colores.map((col) => `<option value="${col}">${col}</option>`).join('');
+
     c.combinaciones.forEach((combo, idx) => {
-      const div = document.createElement('div');
-      div.className = 'guardado-row';
+      if (!combo.imagenes) combo.imagenes = {};
       const partesTexto = (combo.partes || []).map((p) => p.tipo).join(' + ');
-      div.innerHTML = `
-        <div class="guardado-info">
-          <strong>${combo.nombre}</strong><br/>
-          <span style="font-size:0.82rem;color:var(--color-text-muted)">${partesTexto || '—'}</span>
+      const details = document.createElement('details');
+      details.className = 'config-checks-detalle';
+      details.innerHTML = `
+        <summary>${combo.nombre} <span style="font-weight:400;color:var(--color-text-muted)">— ${partesTexto || '—'}</span></summary>
+        <div class="config-img-form">
+          <select class="combo-img-color">${colorOptions}</select>
+          <select class="combo-img-cajon">
+            <option value="no">Sin cajón</option>
+            <option value="si">Con cajón</option>
+          </select>
+          <input type="file" class="combo-img-file" accept="image/*" />
+          <button type="button" class="btn btn-primary combo-img-guardar">Guardar imagen</button>
         </div>
-        ${combo.imagen ? `<img src="${combo.imagen}" style="width:64px;height:52px;object-fit:contain;border-radius:4px;background:#fff;" alt="${combo.nombre}" />` : ''}
-        <div class="guardado-acciones">
-          <button type="button" class="btn btn-ghost btn-sm" data-action="eliminar-combo" data-idx="${idx}">Eliminar</button>
+        <div class="config-galeria-asignadas combo-galeria"></div>
+        <div class="panel-actions">
+          <button type="button" class="btn btn-ghost btn-sm combo-eliminar">Eliminar combinación</button>
         </div>
       `;
-      div.querySelector('[data-action="eliminar-combo"]').addEventListener('click', () => {
+
+      const galeria = details.querySelector('.combo-galeria');
+      const claves = Object.keys(combo.imagenes);
+      if (!claves.length) {
+        galeria.innerHTML = '<p class="empty-msg">Todavía no asignaste imágenes.</p>';
+      } else {
+        claves.forEach((clave) => {
+          const partes = clave.split('||');
+          const etiqueta = `${partes[0]} · ${partes[1] === 'si' ? 'Con cajón' : 'Sin cajón'}`;
+          const item = document.createElement('div');
+          item.className = 'config-galeria-item';
+          item.innerHTML = `
+            <button type="button" aria-label="Eliminar">×</button>
+            <img src="${combo.imagenes[clave]}" alt="${etiqueta}" />
+            <span>${etiqueta}</span>
+          `;
+          item.querySelector('button').addEventListener('click', () => {
+            delete combo.imagenes[clave];
+            guardarYRenderConfig();
+          });
+          galeria.appendChild(item);
+        });
+      }
+
+      details.querySelector('.combo-img-guardar').addEventListener('click', async () => {
+        const color = details.querySelector('.combo-img-color').value;
+        const cajon = details.querySelector('.combo-img-cajon').value;
+        const file = details.querySelector('.combo-img-file').files[0];
+        if (!color || !file) {
+          alert('Elegí color y un archivo de imagen.');
+          return;
+        }
+        try {
+          combo.imagenes[claveCombinacion(color, cajon)] = await subirImagen(file);
+        } catch (e) {
+          alert('No se pudo subir la imagen. Probá nuevamente.');
+          return;
+        }
+        guardarYRenderConfig();
+      });
+
+      details.querySelector('.combo-eliminar').addEventListener('click', () => {
         c.combinaciones.splice(idx, 1);
         guardarYRenderConfig();
       });
-      cont.appendChild(div);
+
+      cont.appendChild(details);
     });
   }
 
@@ -2060,37 +2130,23 @@
       renderConfigComboParts();
     });
 
-    document.getElementById('btn-guardar-combo').addEventListener('click', async () => {
+    document.getElementById('btn-guardar-combo').addEventListener('click', () => {
       const nombre = document.getElementById('config-combo-nombre').value.trim();
       if (!nombre) { alert('Ingresá el nombre de la combinación (ej: V1).'); return; }
       if (!state.configComboParts.length) { alert('Agregá al menos una parte a la combinación.'); return; }
-      let imagen = null;
-      const file = document.getElementById('config-combo-img-file').files[0];
-      if (file) {
-        try { imagen = await subirImagen(file); } catch (e) {
-          alert('No se pudo subir la imagen. Probá nuevamente.');
-          return;
-        }
-      }
       if (!state.config.combinaciones) state.config.combinaciones = [];
       const idx = state.config.combinaciones.findIndex((c) => c.nombre === nombre);
       const existente = idx !== -1 ? state.config.combinaciones[idx] : null;
-      const combo = { nombre, partes: [...state.configComboParts], imagen: imagen || (existente ? existente.imagen : null) };
+      const combo = {
+        nombre,
+        partes: [...state.configComboParts],
+        imagenes: existente ? (existente.imagenes || {}) : {},
+      };
       if (idx !== -1) state.config.combinaciones[idx] = combo;
       else state.config.combinaciones.push(combo);
       document.getElementById('config-combo-nombre').value = '';
-      document.getElementById('config-combo-img-file').value = '';
-      document.getElementById('config-preview-combo').innerHTML = '';
       state.configComboParts = [];
       guardarYRenderConfig();
-    });
-
-    document.getElementById('config-combo-img-file').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (ev) => renderPreviewImg('config-preview-combo', ev.target.result);
-      reader.readAsDataURL(file);
     });
 
     document.getElementById('btn-descargar-backup').addEventListener('click', async () => {

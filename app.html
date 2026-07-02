@@ -198,6 +198,13 @@
               <select id="p2-combo-color"></select>
             </div>
             <div class="field">
+              <label for="p2-combo-cajon">¿Lleva cajón?</label>
+              <select id="p2-combo-cajon">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+            <div class="field">
               <label for="p2-combo-cantidad">Cantidad *</label>
               <input type="number" id="p2-combo-cantidad" min="1" step="1" value="1" />
             </div>
@@ -547,14 +554,12 @@
           <button type="button" id="btn-add-combo-parte-config" class="btn btn-ghost">+ Parte</button>
         </div>
 
-        <h4>Imagen</h4>
-        <div class="config-img-form">
-          <input type="file" id="config-combo-img-file" accept="image/*" />
+        <div class="panel-actions">
           <button type="button" id="btn-guardar-combo" class="btn btn-primary">Guardar combinación</button>
         </div>
-        <div id="config-preview-combo" class="config-preview config-preview-inline"></div>
 
         <h4>Combinaciones guardadas</h4>
+        <p class="empty-msg">Abrí cada combinación para asignarle imágenes según el color y si lleva cajón o no.</p>
         <div id="config-lista-combinaciones"></div>
       </section>
 
