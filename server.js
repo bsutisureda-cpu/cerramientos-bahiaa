@@ -167,6 +167,11 @@ app.post('/api/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+// Público: solo la URL del logo, para mostrarlo en la pantalla de login.
+app.get('/api/logo', (req, res) => {
+  res.json({ logo: leerConfig().empresaLogo || null });
+});
+
 app.get('/api/config', requireAuth, (req, res) => {
   res.json(leerConfig());
 });

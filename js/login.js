@@ -3,6 +3,17 @@
   const errorMsg = document.getElementById('login-error');
   const btn = document.getElementById('login-btn');
 
+  fetch('/api/logo')
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.logo) {
+        const img = document.getElementById('login-logo');
+        img.src = data.logo;
+        img.hidden = false;
+      }
+    })
+    .catch(() => {});
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.hidden = true;

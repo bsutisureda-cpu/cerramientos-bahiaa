@@ -193,6 +193,13 @@ label {
   box-shadow: 0 24px 60px rgba(2, 8, 20, 0.45);
 }
 
+.login-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.4rem;
+}
+
 .login-titulo {
   font-size: 1.25rem;
   font-weight: 800;
@@ -201,10 +208,12 @@ label {
   margin: 0;
 }
 
-.login-subtitulo {
-  font-size: 0.85rem;
-  color: var(--color-text-muted);
-  margin: 0.15rem 0 1.4rem;
+.login-logo {
+  max-height: 78px;
+  max-width: 170px;
+  object-fit: contain;
+  flex-shrink: 0;
+  margin: 0 auto;
 }
 
 .login-card form label:first-of-type { margin-top: 0; }
