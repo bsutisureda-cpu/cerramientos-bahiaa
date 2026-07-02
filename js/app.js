@@ -268,7 +268,7 @@
     populateSelect('p2-tipo', state.config.tiposAbertura);
     populateSelect('p2-color', state.config.colores);
     populateSelect('p2-linea', state.config.lineas);
-    populateSelect('p2-manija', state.config.tiposManija, 'Ninguna');
+    populateSelect('p2-manija', ['SIN CIERRE', ...state.config.tiposManija], 'Ninguna');
     populateSelect('p2-color-manija', state.config.colores);
     populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
     populateSelect('p2-combo-color', state.config.colores);
@@ -289,8 +289,16 @@
 
     document.getElementById('p2-img-abertura').src = imagenAbertura(state.config, tipo, color, mosquitero, cajon);
 
+    const colorManijaSelect = document.getElementById('p2-color-manija');
+    if (manija === 'SIN CIERRE') {
+      colorManijaSelect.value = '';
+      colorManijaSelect.disabled = true;
+    } else {
+      colorManijaSelect.disabled = false;
+    }
+
     const manijaBox = document.getElementById('p2-img-manija-box');
-    if (manija) {
+    if (manija && manija !== 'SIN CIERRE') {
       manijaBox.hidden = false;
       document.getElementById('p2-img-manija').src = imagenManija(state.config, manija, colorManija);
     } else {
@@ -327,12 +335,13 @@
   // Panel 2 -> Panel 3 (agregar / editar ítem)
   // ---------------------------------------------------------------------
   function leerFormularioItem() {
+    const manija = document.getElementById('p2-manija').value;
     return {
       tipo: document.getElementById('p2-tipo').value,
       color: document.getElementById('p2-color').value,
       linea: document.getElementById('p2-linea').value,
-      manija: document.getElementById('p2-manija').value,
-      colorManija: document.getElementById('p2-color-manija').value,
+      manija,
+      colorManija: manija === 'SIN CIERRE' ? '' : document.getElementById('p2-color-manija').value,
       vidrio: document.getElementById('p2-vidrio').value,
       cajon: document.getElementById('p2-cajon').value,
       mosquitero: document.getElementById('p2-mosquitero').value,
@@ -456,6 +465,10 @@
             <select id="combo-medida-vidrio-${idx}"></select>
           </div>
           <div class="field">
+            <label>Cierre</label>
+            <select id="combo-medida-cierre-${idx}"></select>
+          </div>
+          <div class="field">
             <label>Ancho (mm)</label>
             <input type="number" id="combo-medida-ancho-${idx}" min="1" step="1" />
           </div>
@@ -468,6 +481,7 @@
       cont.appendChild(div);
       populateSelect(`combo-medida-linea-${idx}`, state.config.lineas, '— Sin línea —');
       populateSelect(`combo-medida-vidrio-${idx}`, state.config.tiposVidrio, '— Sin vidrio —');
+      populateSelect(`combo-medida-cierre-${idx}`, ['SIN CIERRE', ...state.config.tiposManija], '—');
     });
   }
 
@@ -479,6 +493,7 @@
       tipo: parte.tipo,
       linea: document.getElementById(`combo-medida-linea-${idx}`)?.value || '',
       vidrio: document.getElementById(`combo-medida-vidrio-${idx}`)?.value || '',
+      cierre: document.getElementById(`combo-medida-cierre-${idx}`)?.value || '',
       ancho: parseFloat(document.getElementById(`combo-medida-ancho-${idx}`)?.value) || 0,
       alto: parseFloat(document.getElementById(`combo-medida-alto-${idx}`)?.value) || 0,
     }));
@@ -603,10 +618,12 @@
       partesSrc.forEach((p, idx) => {
         const lineaEl = document.getElementById(`combo-medida-linea-${idx}`);
         const vidrioEl = document.getElementById(`combo-medida-vidrio-${idx}`);
+        const cierreEl = document.getElementById(`combo-medida-cierre-${idx}`);
         const anchoEl = document.getElementById(`combo-medida-ancho-${idx}`);
         const altoEl = document.getElementById(`combo-medida-alto-${idx}`);
         if (lineaEl) lineaEl.value = p.linea || '';
         if (vidrioEl) vidrioEl.value = p.vidrio || '';
+        if (cierreEl) cierreEl.value = p.cierre || '';
         if (anchoEl) anchoEl.value = p.ancho || '';
         if (altoEl) altoEl.value = p.alto || '';
       });
@@ -767,7 +784,7 @@
       const partesHTML = partesSrc.map((p) => `
         <div class="vp-combo-parte">
           <strong>${p.tipo}${p.linea ? ' LÍNEA ' + p.linea : ''}</strong>
-          <span>MEDIDAS: ${p.ancho} x ${p.alto} mm${p.vidrio ? ' — VIDRIO: ' + p.vidrio : ''}</span>
+          <span>MEDIDAS: ${p.ancho} x ${p.alto} mm${p.vidrio ? ' — VIDRIO: ' + p.vidrio : ''}${p.cierre ? ' — CIERRE: ' + p.cierre : ''}</span>
         </div>
       `).join('');
       const imgHTML = item.imagen
@@ -788,7 +805,7 @@
     }
 
     const imgAbertura = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
-    const imgManija = item.manija ? imagenManija(state.config, item.manija, item.colorManija) : null;
+    const imgManija = item.manija && item.manija !== 'SIN CIERRE' ? imagenManija(state.config, item.manija, item.colorManija) : null;
     const imgVidrio = item.vidrio ? imagenVidrio(state.config, item.vidrio) : null;
 
     const card = document.createElement('div');
