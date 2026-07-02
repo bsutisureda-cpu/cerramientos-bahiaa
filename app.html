@@ -527,6 +527,34 @@
         <div id="config-aberturas-grupos"></div>
       </section>
 
+      <!-- Combinaciones -->
+      <section class="panel panel-full">
+        <h3>Combinaciones</h3>
+        <p class="empty-msg">Definí las combinaciones que usás (V1, P1, etc.) con sus formas. Al crear un presupuesto elegís la combinación y completás línea, vidrio y medidas de cada parte.</p>
+
+        <div class="field">
+          <label for="config-combo-nombre">Nombre de la combinación *</label>
+          <input type="text" id="config-combo-nombre" placeholder="V1" />
+        </div>
+
+        <h4>Partes (formas)</h4>
+        <div id="config-combo-partes-lista"></div>
+        <div class="config-img-form">
+          <select id="config-combo-parte-tipo"></select>
+          <button type="button" id="btn-add-combo-parte-config" class="btn btn-ghost">+ Parte</button>
+        </div>
+
+        <h4>Imagen</h4>
+        <div class="config-img-form">
+          <input type="file" id="config-combo-img-file" accept="image/*" />
+          <button type="button" id="btn-guardar-combo" class="btn btn-primary">Guardar combinación</button>
+        </div>
+        <div id="config-preview-combo" class="config-preview config-preview-inline"></div>
+
+        <h4>Combinaciones guardadas</h4>
+        <div id="config-lista-combinaciones"></div>
+      </section>
+
       <!-- Tipos de cierre + imagen por cierre+color -->
       <section class="panel panel-full">
         <h3>Tipos de cierre</h3>
@@ -581,35 +609,6 @@
           <button type="button" id="btn-guardar-img-vidrio" class="btn btn-primary">Guardar imagen</button>
         </div>
         <div id="config-galeria-vidrio" class="config-galeria-asignadas"></div>
-      </section>
-      <!-- Combinaciones -->
-      <section class="panel panel-full">
-        <h3>Combinaciones</h3>
-        <p class="empty-msg">Definí las combinaciones que usás (V1, P1, etc.) con sus partes. Al crear un presupuesto podés elegirlas y escribir las medidas de cada parte.</p>
-
-        <div class="field">
-          <label for="config-combo-nombre">Nombre de la combinación *</label>
-          <input type="text" id="config-combo-nombre" placeholder="V1" />
-        </div>
-
-        <h4>Partes de la combinación</h4>
-        <div id="config-combo-partes-lista"></div>
-        <div class="config-img-form">
-          <select id="config-combo-parte-tipo"></select>
-          <select id="config-combo-parte-linea"></select>
-          <select id="config-combo-parte-vidrio"></select>
-          <button type="button" id="btn-add-combo-parte-config" class="btn btn-ghost">+ Parte</button>
-        </div>
-
-        <h4>Imagen</h4>
-        <div class="config-img-form">
-          <input type="file" id="config-combo-img-file" accept="image/*" />
-          <button type="button" id="btn-guardar-combo" class="btn btn-primary">Guardar combinación</button>
-        </div>
-        <div id="config-preview-combo" class="config-preview config-preview-inline"></div>
-
-        <h4>Combinaciones guardadas</h4>
-        <div id="config-lista-combinaciones"></div>
       </section>
 
       <!-- Backup -->

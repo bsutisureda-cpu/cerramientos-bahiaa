@@ -445,8 +445,16 @@
       const div = document.createElement('div');
       div.className = 'combo-medida-row';
       div.innerHTML = `
-        <span class="combo-medida-label"><strong>${parte.tipo}</strong>${parte.linea ? ' · ' + parte.linea : ''}${parte.vidrio ? ' · ' + parte.vidrio : ''}</span>
+        <span class="combo-medida-label"><strong>${parte.tipo}</strong></span>
         <div class="combo-medida-inputs">
+          <div class="field">
+            <label>Línea</label>
+            <select id="combo-medida-linea-${idx}"></select>
+          </div>
+          <div class="field">
+            <label>Vidrio</label>
+            <select id="combo-medida-vidrio-${idx}"></select>
+          </div>
           <div class="field">
             <label>Ancho (mm)</label>
             <input type="number" id="combo-medida-ancho-${idx}" min="1" step="1" />
@@ -458,6 +466,8 @@
         </div>
       `;
       cont.appendChild(div);
+      populateSelect(`combo-medida-linea-${idx}`, state.config.lineas, '— Sin línea —');
+      populateSelect(`combo-medida-vidrio-${idx}`, state.config.tiposVidrio, '— Sin vidrio —');
     });
   }
 
@@ -467,8 +477,8 @@
     if (!combo) return null;
     const parteMedidas = (combo.partes || []).map((parte, idx) => ({
       tipo: parte.tipo,
-      linea: parte.linea || '',
-      vidrio: parte.vidrio || '',
+      linea: document.getElementById(`combo-medida-linea-${idx}`)?.value || '',
+      vidrio: document.getElementById(`combo-medida-vidrio-${idx}`)?.value || '',
       ancho: parseFloat(document.getElementById(`combo-medida-ancho-${idx}`)?.value) || 0,
       alto: parseFloat(document.getElementById(`combo-medida-alto-${idx}`)?.value) || 0,
     }));
@@ -591,8 +601,12 @@
       onSelectCombinacion();
       const partesSrc = item.parteMedidas || item.partes || [];
       partesSrc.forEach((p, idx) => {
+        const lineaEl = document.getElementById(`combo-medida-linea-${idx}`);
+        const vidrioEl = document.getElementById(`combo-medida-vidrio-${idx}`);
         const anchoEl = document.getElementById(`combo-medida-ancho-${idx}`);
         const altoEl = document.getElementById(`combo-medida-alto-${idx}`);
+        if (lineaEl) lineaEl.value = p.linea || '';
+        if (vidrioEl) vidrioEl.value = p.vidrio || '';
         if (anchoEl) anchoEl.value = p.ancho || '';
         if (altoEl) altoEl.value = p.alto || '';
       });
@@ -1756,8 +1770,6 @@
     renderListaBasesEjemplo();
 
     populateSelect('config-combo-parte-tipo', c.tiposAbertura, '— Tipo —');
-    populateSelect('config-combo-parte-linea', c.lineas, '— Sin línea —');
-    populateSelect('config-combo-parte-vidrio', c.tiposVidrio, '— Sin vidrio —');
     renderCombinaciones();
   }
 
@@ -1798,7 +1810,7 @@
       const div = document.createElement('div');
       div.className = 'combo-parte-item';
       div.innerHTML = `
-        <span><strong>${parte.tipo}</strong>${parte.linea ? ' · ' + parte.linea : ''}${parte.vidrio ? ' · ' + parte.vidrio : ''}</span>
+        <span><strong>${parte.tipo}</strong></span>
         <button type="button" aria-label="Eliminar">×</button>
       `;
       div.querySelector('button').addEventListener('click', () => {
@@ -1822,9 +1834,7 @@
     c.combinaciones.forEach((combo, idx) => {
       const div = document.createElement('div');
       div.className = 'guardado-row';
-      const partesTexto = (combo.partes || [])
-        .map((p) => `${p.tipo}${p.linea ? ' · ' + p.linea : ''}${p.vidrio ? ' · ' + p.vidrio : ''}`)
-        .join(' + ');
+      const partesTexto = (combo.partes || []).map((p) => p.tipo).join(' + ');
       div.innerHTML = `
         <div class="guardado-info">
           <strong>${combo.nombre}</strong><br/>
@@ -2029,9 +2039,7 @@
     document.getElementById('btn-add-combo-parte-config').addEventListener('click', () => {
       const tipo = document.getElementById('config-combo-parte-tipo').value;
       if (!tipo) { alert('Elegí el tipo de abertura.'); return; }
-      const linea = document.getElementById('config-combo-parte-linea').value;
-      const vidrio = document.getElementById('config-combo-parte-vidrio').value;
-      state.configComboParts.push({ tipo, linea: linea || '', vidrio: vidrio || '' });
+      state.configComboParts.push({ tipo });
       renderConfigComboParts();
     });
 
