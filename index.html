@@ -11,18 +11,23 @@
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body class="login-body">
-  <main class="login-card">
-    <form id="login-form" autocomplete="off">
-      <label for="usuario">Usuario</label>
-      <input type="text" id="usuario" name="usuario" autocomplete="username" required />
+  <aside class="login-left">
+    <main class="login-card">
+      <p class="login-titulo">Cerramientos Bahía</p>
+      <p class="login-subtitulo">Sistema de presupuestos</p>
+      <form id="login-form" autocomplete="off">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" name="usuario" autocomplete="username" required />
 
-      <label for="clave">Contraseña</label>
-      <input type="password" id="clave" name="clave" autocomplete="current-password" required />
+        <label for="clave">Contraseña</label>
+        <input type="password" id="clave" name="clave" autocomplete="current-password" required />
 
-      <button type="submit" id="login-btn">Ingresar</button>
-      <p id="login-error" class="error-msg" hidden></p>
-    </form>
-  </main>
+        <button type="submit" id="login-btn">Ingresar</button>
+        <p id="login-error" class="error-msg" hidden></p>
+      </form>
+    </main>
+  </aside>
+  <div class="login-right" aria-hidden="true"></div>
   <script src="js/login.js"></script>
 </body>
 </html>
