@@ -9,6 +9,8 @@
     calendario: {},
     calVista: new Date(),
     calDiaSeleccionado: null,
+    modoPanel2: 'simple',
+    comboParts: [],
   };
 
   // ---------------------------------------------------------------------
@@ -159,6 +161,9 @@
       document.getElementById(id).addEventListener('change', aplicarBaseEjemplo)
     );
 
+    document.getElementById('btn-modo-simple').addEventListener('click', () => switchModoPanel2('simple'));
+    document.getElementById('btn-modo-combo').addEventListener('click', () => switchModoPanel2('combo'));
+    document.getElementById('btn-add-parte-combo').addEventListener('click', onAddParteCombinacion);
     document.getElementById('btn-agregar-item').addEventListener('click', onAgregarOActualizarItem);
     document.getElementById('btn-cancelar-edicion').addEventListener('click', cancelarEdicion);
     document.getElementById('btn-generar').addEventListener('click', onGenerarPresupuesto);
@@ -266,6 +271,10 @@
     populateSelect('p2-manija', state.config.tiposManija, 'Ninguna');
     populateSelect('p2-color-manija', state.config.colores);
     populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
+    populateSelect('p2-combo-color', state.config.colores);
+    populateSelect('combo-parte-tipo', state.config.tiposAbertura);
+    populateSelect('combo-parte-linea', state.config.lineas, '— Sin línea —');
+    populateSelect('combo-parte-vidrio', state.config.tiposVidrio, '— Sin vidrio —');
   }
 
   // ---------------------------------------------------------------------
@@ -348,16 +357,28 @@
 
   function onAgregarOActualizarItem() {
     const errorEl = document.getElementById('p2-error');
-    const data = leerFormularioItem();
-    const error = validarFormularioItem(data);
 
-    if (error) {
-      errorEl.textContent = error;
-      errorEl.hidden = false;
+    if (state.modoPanel2 === 'combo') {
+      const data = leerFormularioCombinacion();
+      const error = validarFormularioCombinacion(data);
+      if (error) { errorEl.textContent = error; errorEl.hidden = false; return; }
+      errorEl.hidden = true;
+      if (state.editingItemId) {
+        const idx = state.items.findIndex((it) => it.id === state.editingItemId);
+        if (idx !== -1) state.items[idx] = { ...data, id: state.editingItemId };
+        cancelarEdicion();
+      } else {
+        state.items.push({ ...data, id: uid() });
+        resetFormularioCombinacion();
+      }
+      renderListaItems();
       return;
     }
-    errorEl.hidden = true;
 
+    const data = leerFormularioItem();
+    const error = validarFormularioItem(data);
+    if (error) { errorEl.textContent = error; errorEl.hidden = false; return; }
+    errorEl.hidden = true;
     if (state.editingItemId) {
       const idx = state.items.findIndex((it) => it.id === state.editingItemId);
       if (idx !== -1) state.items[idx] = { ...data, id: state.editingItemId };
@@ -365,7 +386,6 @@
     } else {
       state.items.push({ ...data, id: uid() });
     }
-
     renderListaItems();
     resetFormularioItem();
   }
@@ -385,12 +405,108 @@
 
   function cancelarEdicion() {
     state.editingItemId = null;
-    document.getElementById('panel2-titulo').textContent = 'Agregar abertura';
-    document.getElementById('btn-agregar-item').textContent = 'Agregar al presupuesto';
+    state.comboParts = [];
+    switchModoPanel2('simple');
     document.getElementById('btn-cancelar-edicion').hidden = true;
   }
 
+  function switchModoPanel2(modo) {
+    state.modoPanel2 = modo;
+    document.getElementById('panel2-simple-fields').hidden = (modo !== 'simple');
+    document.getElementById('panel2-combo-fields').hidden = (modo !== 'combo');
+    document.getElementById('btn-modo-simple').className = modo === 'simple' ? 'btn btn-primary' : 'btn btn-ghost';
+    document.getElementById('btn-modo-combo').className = modo === 'combo' ? 'btn btn-primary' : 'btn btn-ghost';
+    if (modo === 'simple') {
+      document.getElementById('panel2-titulo').textContent = 'Agregar abertura';
+      document.getElementById('btn-agregar-item').textContent = 'Agregar al presupuesto';
+    } else {
+      document.getElementById('panel2-titulo').textContent = 'Agregar combinación';
+      document.getElementById('btn-agregar-item').textContent = 'Agregar combinación';
+      renderComboPartes();
+    }
+  }
+
+  function renderComboPartes() {
+    const cont = document.getElementById('combo-partes-lista');
+    cont.innerHTML = '';
+    if (!state.comboParts.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste partes.</p>';
+      return;
+    }
+    state.comboParts.forEach((parte, idx) => {
+      const div = document.createElement('div');
+      div.className = 'combo-parte-item';
+      div.innerHTML = `
+        <span><strong>${parte.tipo}</strong>${parte.linea ? ' · ' + parte.linea : ''}${parte.vidrio ? ' · ' + parte.vidrio : ''} — ${parte.ancho} x ${parte.alto} mm</span>
+        <button type="button" data-idx="${idx}" aria-label="Eliminar">×</button>
+      `;
+      div.querySelector('button').addEventListener('click', () => {
+        state.comboParts.splice(idx, 1);
+        renderComboPartes();
+      });
+      cont.appendChild(div);
+    });
+  }
+
+  function onAddParteCombinacion() {
+    const tipo = document.getElementById('combo-parte-tipo').value;
+    const linea = document.getElementById('combo-parte-linea').value;
+    const vidrio = document.getElementById('combo-parte-vidrio').value;
+    const ancho = parseFloat(document.getElementById('combo-parte-ancho').value);
+    const alto = parseFloat(document.getElementById('combo-parte-alto').value);
+    if (!tipo || !ancho || !alto) {
+      alert('Ingresá tipo, ancho y alto de la parte.');
+      return;
+    }
+    state.comboParts.push({ tipo, linea: linea || '', vidrio: vidrio || '', ancho, alto });
+    document.getElementById('combo-parte-ancho').value = '';
+    document.getElementById('combo-parte-alto').value = '';
+    renderComboPartes();
+  }
+
+  function leerFormularioCombinacion() {
+    return {
+      esCombinacion: true,
+      nombre: document.getElementById('p2-combo-nombre').value.trim(),
+      color: document.getElementById('p2-combo-color').value,
+      ancho: parseFloat(document.getElementById('p2-combo-ancho').value),
+      alto: parseFloat(document.getElementById('p2-combo-alto').value),
+      cantidad: parseInt(document.getElementById('p2-combo-cantidad').value, 10),
+      precio: parseFloat(document.getElementById('p2-combo-precio').value),
+      partes: [...state.comboParts],
+    };
+  }
+
+  function validarFormularioCombinacion(data) {
+    if (!data.nombre) return 'Ingresá el nombre de la tipología (ej: V1).';
+    if (!data.color) return 'Elegí un color.';
+    if (!data.ancho || data.ancho <= 0) return 'Ingresá el ancho total.';
+    if (!data.alto || data.alto <= 0) return 'Ingresá el alto total.';
+    if (!data.cantidad || data.cantidad <= 0) return 'Ingresá una cantidad válida.';
+    if (!data.precio || data.precio <= 0) return 'Ingresá el precio bruto.';
+    if (!data.partes.length) return 'Agregá al menos una parte a la combinación.';
+    return null;
+  }
+
+  function resetFormularioCombinacion() {
+    document.getElementById('p2-combo-nombre').value = '';
+    document.getElementById('p2-combo-ancho').value = '';
+    document.getElementById('p2-combo-alto').value = '';
+    document.getElementById('p2-combo-cantidad').value = '1';
+    document.getElementById('p2-combo-precio').value = '';
+    state.comboParts = [];
+    renderComboPartes();
+  }
+
   function descripcionItem(item) {
+    if (item.esCombinacion) {
+      const partesDesc = (item.partes || [])
+        .map((p) => `${p.tipo}${p.linea ? ' ' + p.linea : ''} (${p.ancho}×${p.alto})`)
+        .join(' + ');
+      const segs = [`${item.ancho}mm × ${item.alto}mm total`, `Cant: ${item.cantidad}`, `Partes: ${partesDesc || '—'}`];
+      if (item.precio) segs.push(`Precio: $ ${formatMoney(item.precio)} c/u (Subtotal: $ ${formatMoney(item.precio * item.cantidad)})`);
+      return segs.join(' · ');
+    }
     const partes = [`${item.ancho}cm x ${item.alto}cm`, `Cant: ${item.cantidad}`];
     if (item.linea) partes.push(`Línea: ${item.linea}`);
     partes.push(`Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}`);
@@ -416,20 +532,34 @@
 
     cont.innerHTML = '';
     state.items.forEach((item) => {
-      const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
       const div = document.createElement('div');
       div.className = 'item-card';
-      div.innerHTML = `
-        <img src="${img}" alt="${item.tipo}" />
-        <div class="item-info">
-          <strong>${item.tipo} · ${item.color}</strong>
-          <span class="item-detalles">${descripcionItem(item)}</span>
-        </div>
-        <div class="item-card-actions">
-          <button type="button" data-action="editar" data-id="${item.id}">Editar</button>
-          <button type="button" data-action="eliminar" data-id="${item.id}">Eliminar</button>
-        </div>
-      `;
+      if (item.esCombinacion) {
+        div.innerHTML = `
+          <div class="item-card-combo-badge">COMBO</div>
+          <div class="item-info">
+            <strong>${item.nombre} · ${item.color}</strong>
+            <span class="item-detalles">${descripcionItem(item)}</span>
+          </div>
+          <div class="item-card-actions">
+            <button type="button" data-action="editar" data-id="${item.id}">Editar</button>
+            <button type="button" data-action="eliminar" data-id="${item.id}">Eliminar</button>
+          </div>
+        `;
+      } else {
+        const img = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
+        div.innerHTML = `
+          <img src="${img}" alt="${item.tipo}" />
+          <div class="item-info">
+            <strong>${item.tipo} · ${item.color}</strong>
+            <span class="item-detalles">${descripcionItem(item)}</span>
+          </div>
+          <div class="item-card-actions">
+            <button type="button" data-action="editar" data-id="${item.id}">Editar</button>
+            <button type="button" data-action="eliminar" data-id="${item.id}">Eliminar</button>
+          </div>
+        `;
+      }
       cont.appendChild(div);
     });
 
@@ -444,26 +574,38 @@
   function editarItem(id) {
     const item = state.items.find((it) => it.id === id);
     if (!item) return;
-
     state.editingItemId = id;
-    document.getElementById('p2-tipo').value = item.tipo;
-    document.getElementById('p2-color').value = item.color;
-    document.getElementById('p2-linea').value = item.linea || '';
-    document.getElementById('p2-manija').value = item.manija || '';
-    document.getElementById('p2-color-manija').value = item.colorManija || '';
-    document.getElementById('p2-vidrio').value = item.vidrio || '';
-    document.getElementById('p2-cajon').value = item.cajon;
-    document.getElementById('p2-mosquitero').value = item.mosquitero;
-    document.getElementById('p2-ancho').value = item.ancho;
-    document.getElementById('p2-alto').value = item.alto;
-    document.getElementById('p2-cantidad').value = item.cantidad;
-    document.getElementById('p2-precio').value = item.precio || '';
-    actualizarPreviewImagenes();
 
-    document.getElementById('panel2-titulo').textContent = 'Editar abertura';
+    if (item.esCombinacion) {
+      switchModoPanel2('combo');
+      document.getElementById('p2-combo-nombre').value = item.nombre || '';
+      document.getElementById('p2-combo-color').value = item.color || '';
+      document.getElementById('p2-combo-ancho').value = item.ancho || '';
+      document.getElementById('p2-combo-alto').value = item.alto || '';
+      document.getElementById('p2-combo-cantidad').value = item.cantidad || 1;
+      document.getElementById('p2-combo-precio').value = item.precio || '';
+      state.comboParts = item.partes ? [...item.partes] : [];
+      renderComboPartes();
+    } else {
+      switchModoPanel2('simple');
+      document.getElementById('p2-tipo').value = item.tipo;
+      document.getElementById('p2-color').value = item.color;
+      document.getElementById('p2-linea').value = item.linea || '';
+      document.getElementById('p2-manija').value = item.manija || '';
+      document.getElementById('p2-color-manija').value = item.colorManija || '';
+      document.getElementById('p2-vidrio').value = item.vidrio || '';
+      document.getElementById('p2-cajon').value = item.cajon;
+      document.getElementById('p2-mosquitero').value = item.mosquitero;
+      document.getElementById('p2-ancho').value = item.ancho;
+      document.getElementById('p2-alto').value = item.alto;
+      document.getElementById('p2-cantidad').value = item.cantidad;
+      document.getElementById('p2-precio').value = item.precio || '';
+      actualizarPreviewImagenes();
+    }
+
+    document.getElementById('panel2-titulo').textContent = 'Editar';
     document.getElementById('btn-agregar-item').textContent = 'Guardar cambios';
     document.getElementById('btn-cancelar-edicion').hidden = false;
-
     document.getElementById('panel2-titulo').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -589,6 +731,28 @@
   }
 
   function crearVentanaCard(item) {
+    if (item.esCombinacion) {
+      const card = document.createElement('div');
+      card.className = 'vp-ventana';
+      const partesHTML = (item.partes || []).map((p) => `
+        <div class="vp-combo-parte">
+          <strong>${p.tipo}${p.linea ? ' LÍNEA ' + p.linea : ''}</strong>
+          <span>MEDIDAS: ${p.ancho} x ${p.alto} mm${p.vidrio ? ' — VIDRIO: ' + p.vidrio : ''}</span>
+        </div>
+      `).join('');
+      card.innerHTML = `
+        <div class="vp-combo-header">
+          <strong>Tipo ${item.nombre} (${item.ancho} x ${item.alto} mm)</strong>
+        </div>
+        <div class="vp-combo-partes-list">${partesHTML}</div>
+        <div class="vp-combo-footer">
+          <span>COLOR: ${item.color}</span>
+          ${item.precio ? `<span>PRECIO BRUTO: $ ${formatMoney(item.precio)}</span>` : ''}
+        </div>
+      `;
+      return card;
+    }
+
     const imgAbertura = imagenAbertura(state.config, item.tipo, item.color, item.mosquitero, item.cajon);
     const imgManija = item.manija ? imagenManija(state.config, item.manija, item.colorManija) : null;
     const imgVidrio = item.vidrio ? imagenVidrio(state.config, item.vidrio) : null;

@@ -94,82 +94,147 @@
       <!-- PANEL 2: Configuración de la abertura -->
       <section class="panel panel-config" aria-label="Configuración de la abertura">
         <h2 id="panel2-titulo">Agregar abertura</h2>
-        <div class="field-grid">
-          <div class="field">
-            <label for="p2-tipo">Tipo de abertura *</label>
-            <select id="p2-tipo"></select>
+
+        <div class="panel2-modo-toggle">
+          <button type="button" id="btn-modo-simple" class="btn btn-primary">Abertura simple</button>
+          <button type="button" id="btn-modo-combo" class="btn btn-ghost">Combinación</button>
+        </div>
+
+        <!-- MODO SIMPLE -->
+        <div id="panel2-simple-fields">
+          <div class="field-grid">
+            <div class="field">
+              <label for="p2-tipo">Tipo de abertura *</label>
+              <select id="p2-tipo"></select>
+            </div>
+            <div class="field">
+              <label for="p2-color">Color *</label>
+              <select id="p2-color"></select>
+            </div>
+            <div class="field">
+              <label for="p2-linea">Línea</label>
+              <select id="p2-linea"></select>
+            </div>
+            <div class="field">
+              <label for="p2-manija">Tipo de cierre</label>
+              <select id="p2-manija">
+                <option value="">Ninguna</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="p2-color-manija">Color de cierre</label>
+              <select id="p2-color-manija"></select>
+            </div>
+            <div class="field">
+              <label for="p2-vidrio">Tipo de vidrio</label>
+              <select id="p2-vidrio">
+                <option value="">Ninguno</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="p2-cajon">¿Lleva cajón?</label>
+              <select id="p2-cajon">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="p2-mosquitero">¿Lleva mosquitero?</label>
+              <select id="p2-mosquitero">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="p2-ancho">Ancho (cm) *</label>
+              <input type="number" id="p2-ancho" min="1" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="p2-alto">Alto (cm) *</label>
+              <input type="number" id="p2-alto" min="1" step="0.1" />
+            </div>
+            <div class="field">
+              <label for="p2-cantidad">Cantidad *</label>
+              <input type="number" id="p2-cantidad" min="1" step="1" value="1" />
+            </div>
+            <div class="field">
+              <label for="p2-precio">Precio Bruto $ (por unidad) *</label>
+              <input type="number" id="p2-precio" min="0" step="0.01" placeholder="0.00" />
+            </div>
           </div>
-          <div class="field">
-            <label for="p2-color">Color *</label>
-            <select id="p2-color"></select>
-          </div>
-          <div class="field">
-            <label for="p2-linea">Línea</label>
-            <select id="p2-linea"></select>
-          </div>
-          <div class="field">
-            <label for="p2-manija">Tipo de cierre</label>
-            <select id="p2-manija">
-              <option value="">Ninguna</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="p2-color-manija">Color de cierre</label>
-            <select id="p2-color-manija"></select>
-          </div>
-          <div class="field">
-            <label for="p2-vidrio">Tipo de vidrio</label>
-            <select id="p2-vidrio">
-              <option value="">Ninguno</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="p2-cajon">¿Lleva cajón?</label>
-            <select id="p2-cajon">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="p2-mosquitero">¿Lleva mosquitero?</label>
-            <select id="p2-mosquitero">
-              <option value="no">No</option>
-              <option value="si">Sí</option>
-            </select>
-          </div>
-          <div class="field">
-            <label for="p2-ancho">Ancho (cm) *</label>
-            <input type="number" id="p2-ancho" min="1" step="0.1" />
-          </div>
-          <div class="field">
-            <label for="p2-alto">Alto (cm) *</label>
-            <input type="number" id="p2-alto" min="1" step="0.1" />
-          </div>
-          <div class="field">
-            <label for="p2-cantidad">Cantidad *</label>
-            <input type="number" id="p2-cantidad" min="1" step="1" value="1" />
-          </div>
-          <div class="field">
-            <label for="p2-precio">Precio Bruto $ (por unidad) *</label>
-            <input type="number" id="p2-precio" min="0" step="0.01" placeholder="0.00" />
+          <div class="field field-full">
+            <label>Imágenes (asignadas en Configuración según tipo/cierre/vidrio + color)</label>
+            <div class="preview-imagenes">
+              <div class="preview-img-box">
+                <img id="p2-img-abertura" alt="Imagen abertura" />
+                <span>Abertura</span>
+              </div>
+              <div class="preview-img-box" id="p2-img-manija-box" hidden>
+                <img id="p2-img-manija" alt="Imagen cierre" />
+                <span>Cierre</span>
+              </div>
+              <div class="preview-img-box" id="p2-img-vidrio-box" hidden>
+                <img id="p2-img-vidrio" alt="Imagen vidrio" />
+                <span>Vidrio</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="field field-full">
-          <label>Imágenes (asignadas en Configuración según tipo/cierre/vidrio + color)</label>
-          <div class="preview-imagenes">
-            <div class="preview-img-box">
-              <img id="p2-img-abertura" alt="Imagen abertura" />
-              <span>Abertura</span>
+        <!-- MODO COMBINACIÓN -->
+        <div id="panel2-combo-fields" hidden>
+          <div class="field-grid">
+            <div class="field">
+              <label for="p2-combo-nombre">Nombre / tipología * (ej: V1)</label>
+              <input type="text" id="p2-combo-nombre" placeholder="V1" />
             </div>
-            <div class="preview-img-box" id="p2-img-manija-box" hidden>
-              <img id="p2-img-manija" alt="Imagen cierre" />
-              <span>Cierre</span>
+            <div class="field">
+              <label for="p2-combo-color">Color *</label>
+              <select id="p2-combo-color"></select>
             </div>
-            <div class="preview-img-box" id="p2-img-vidrio-box" hidden>
-              <img id="p2-img-vidrio" alt="Imagen vidrio" />
-              <span>Vidrio</span>
+            <div class="field">
+              <label for="p2-combo-ancho">Ancho total (mm) *</label>
+              <input type="number" id="p2-combo-ancho" min="1" step="1" />
             </div>
+            <div class="field">
+              <label for="p2-combo-alto">Alto total (mm) *</label>
+              <input type="number" id="p2-combo-alto" min="1" step="1" />
+            </div>
+            <div class="field">
+              <label for="p2-combo-cantidad">Cantidad *</label>
+              <input type="number" id="p2-combo-cantidad" min="1" step="1" value="1" />
+            </div>
+            <div class="field">
+              <label for="p2-combo-precio">Precio Bruto $ (por unidad) *</label>
+              <input type="number" id="p2-combo-precio" min="0" step="0.01" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="combo-partes-section">
+            <h4>Partes de la combinación</h4>
+            <div id="combo-partes-lista"></div>
+            <div class="field-grid combo-parte-agregar">
+              <div class="field">
+                <label for="combo-parte-tipo">Tipo</label>
+                <select id="combo-parte-tipo"></select>
+              </div>
+              <div class="field">
+                <label for="combo-parte-linea">Línea</label>
+                <select id="combo-parte-linea"></select>
+              </div>
+              <div class="field">
+                <label for="combo-parte-vidrio">Vidrio</label>
+                <select id="combo-parte-vidrio"></select>
+              </div>
+              <div class="field">
+                <label for="combo-parte-ancho">Ancho (mm)</label>
+                <input type="number" id="combo-parte-ancho" min="1" step="1" />
+              </div>
+              <div class="field">
+                <label for="combo-parte-alto">Alto (mm)</label>
+                <input type="number" id="combo-parte-alto" min="1" step="1" />
+              </div>
+            </div>
+            <button type="button" id="btn-add-parte-combo" class="btn btn-ghost">+ Agregar parte</button>
           </div>
         </div>
 
