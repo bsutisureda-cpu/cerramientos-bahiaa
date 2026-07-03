@@ -800,12 +800,27 @@
       const partesSrc = item.parteMedidas || item.partes || [];
       const anchoTotal = partesSrc.reduce((s, p) => s + (p.ancho || 0), 0);
       const altoTotal = partesSrc.reduce((mx, p) => Math.max(mx, p.alto || 0), 0);
-      const partesHTML = partesSrc.map((p) => `
+      const partesHTML = partesSrc.map((p) => {
+        const imgCierre = p.cierre && p.cierre !== 'SIN CIERRE' ? imagenManija(state.config, p.cierre, item.color) : null;
+        const imgVidrio = p.vidrio ? imagenVidrio(state.config, p.vidrio) : null;
+        const extraRow = imgCierre || imgVidrio
+          ? `<div class="vp-extra-row">
+              <div class="vp-extra-col">
+                ${imgCierre ? `<img src="${imgCierre}" alt="${p.cierre}" /><span>${p.cierre}</span>` : ''}
+              </div>
+              <div class="vp-extra-col">
+                ${imgVidrio ? `<img src="${imgVidrio}" alt="${p.vidrio}" /><span>${p.vidrio}</span>` : ''}
+              </div>
+            </div>`
+          : '';
+        return `
         <div class="vp-combo-parte">
           <strong>${p.tipo}${p.linea ? ' LÍNEA ' + p.linea : ''}</strong>
           <span>MEDIDAS: ${p.ancho} x ${p.alto} mm${p.vidrio ? ' — VIDRIO: ' + p.vidrio : ''}${p.cierre ? ' — CIERRE: ' + p.cierre : ''}</span>
+          ${extraRow}
         </div>
-      `).join('');
+      `;
+      }).join('');
       const imgHTML = item.imagen
         ? `<img src="${item.imagen}" alt="${item.nombre}" style="width:110px;height:90px;object-fit:contain;background:#fff;border-radius:4px;" />`
         : '';
