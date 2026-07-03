@@ -37,6 +37,7 @@
       <!-- PANEL 1: Datos generales -->
       <section class="panel panel-general" aria-label="Datos generales del presupuesto">
         <h2>Información</h2>
+        <button type="button" id="btn-nuevo-presupuesto" class="btn btn-ghost btn-sm">+ Nuevo presupuesto</button>
         <div class="field-grid">
           <div class="field field-full">
             <label for="p1-cliente-select">Cliente registrado</label>
@@ -308,7 +309,13 @@
         <section class="panel panel-full">
           <h3>Presupuestos guardados</h3>
           <div class="config-img-form">
-            <input type="text" id="guardados-filtro-cliente" placeholder="Buscar por cliente..." />
+            <input type="text" id="guardados-filtro-cliente" placeholder="Buscar por cliente o N.º..." />
+            <select id="guardados-filtro-estado">
+              <option value="">Todos los estados</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="aprobado">Aprobado</option>
+              <option value="rechazado">Rechazado</option>
+            </select>
             <input type="date" id="guardados-filtro-fecha" />
             <button type="button" id="btn-limpiar-filtros-guardados" class="btn btn-ghost">Limpiar filtros</button>
           </div>

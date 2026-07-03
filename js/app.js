@@ -104,6 +104,28 @@
     return String(last + 1);
   }
 
+  function nuevoPresupuesto() {
+    if (state.items.length && !confirm('¿Empezar un presupuesto nuevo? Se van a limpiar los datos y los ítems actuales.')) return;
+    document.getElementById('p1-cliente-select').value = '';
+    document.getElementById('p1-nombre').value = '';
+    document.getElementById('p1-telefono').value = '';
+    document.getElementById('p1-direccion').value = '';
+    document.getElementById('p1-localidad').value = '';
+    document.getElementById('p1-arquitecto').value = '';
+    document.getElementById('p1-validez').value = '15';
+    document.getElementById('p1-fecha').value = todayISO();
+    document.getElementById('p1-iva').value = '21';
+    document.getElementById('p1-descuento').value = '';
+    document.getElementById('p1-extra').value = '';
+    document.getElementById('p1-numero').value = nextNumero();
+    state.items = [];
+    cancelarEdicion();
+    renderListaItems();
+    document.getElementById('generar-error').hidden = true;
+    activarNav('nav-crear');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function todayISO() {
     const d = new Date();
     return d.toISOString().slice(0, 10);
@@ -178,10 +200,14 @@
     document.getElementById('btn-cerrar-pdf-preview').addEventListener('click', cerrarVistaPreviaPDF);
     document.getElementById('btn-descargar-pdf').addEventListener('click', descargarPDFActual);
 
+    document.getElementById('btn-nuevo-presupuesto').addEventListener('click', nuevoPresupuesto);
+
     document.getElementById('guardados-filtro-cliente').addEventListener('input', renderListaGuardados);
+    document.getElementById('guardados-filtro-estado').addEventListener('change', renderListaGuardados);
     document.getElementById('guardados-filtro-fecha').addEventListener('change', renderListaGuardados);
     document.getElementById('btn-limpiar-filtros-guardados').addEventListener('click', () => {
       document.getElementById('guardados-filtro-cliente').value = '';
+      document.getElementById('guardados-filtro-estado').value = '';
       document.getElementById('guardados-filtro-fecha').value = '';
       renderListaGuardados();
     });
@@ -1138,11 +1164,17 @@
       return;
     }
 
-    const filtroCliente = document.getElementById('guardados-filtro-cliente').value.trim().toLowerCase();
+    const filtroTexto = document.getElementById('guardados-filtro-cliente').value.trim().toLowerCase();
+    const filtroEstado = document.getElementById('guardados-filtro-estado').value;
     const filtroFecha = document.getElementById('guardados-filtro-fecha').value;
 
     const filtrados = state.presupuestos.filter((p) => {
-      if (filtroCliente && !(p.panel1.nombre || '').toLowerCase().includes(filtroCliente)) return false;
+      if (filtroTexto) {
+        const nombre = (p.panel1.nombre || '').toLowerCase();
+        const numero = String(p.numero || '').toLowerCase();
+        if (!nombre.includes(filtroTexto) && !numero.includes(filtroTexto)) return false;
+      }
+      if (filtroEstado && (p.estado || 'pendiente') !== filtroEstado) return false;
       if (filtroFecha && p.panel1.fecha !== filtroFecha) return false;
       return true;
     });

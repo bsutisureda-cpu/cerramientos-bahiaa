@@ -417,6 +417,22 @@ label {
   margin: 1.1rem 0 0.5rem;
 }
 
+.panel-general { position: relative; }
+
+#btn-nuevo-presupuesto {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.4rem;
+}
+
+@media (max-width: 520px) {
+  #btn-nuevo-presupuesto {
+    position: static;
+    display: block;
+    margin: 0 0 0.9rem auto;
+  }
+}
+
 .editor-grid {
   display: grid;
   grid-template-columns: 1fr;
