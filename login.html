@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ingresar — Cerramientos Bahía</title>
+<meta name="robots" content="noindex" />
+<link rel="icon" type="image/jpeg" href="img/favicon.jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body class="login-body">
+  <aside class="login-left">
+    <main class="login-card">
+      <div class="login-card-header">
+        <p class="login-titulo">Cerramientos Bahía</p>
+        <img id="login-logo" class="login-logo" alt="Logo" hidden />
+      </div>
+      <form id="login-form" autocomplete="off">
+        <label for="usuario">Usuario</label>
+        <input type="text" id="usuario" name="usuario" autocomplete="username" required />
+
+        <label for="clave">Contraseña</label>
+        <input type="password" id="clave" name="clave" autocomplete="current-password" required />
+
+        <button type="submit" id="login-btn">Ingresar</button>
+        <p id="login-error" class="error-msg" hidden></p>
+      </form>
+      <p style="margin-top:18px;text-align:center;font-size:13px;">
+        <a href="index.html" style="color:inherit;opacity:.65;text-decoration:none;">← Volver al sitio</a>
+      </p>
+    </main>
+  </aside>
+  <div class="login-right" aria-hidden="true"></div>
+  <script src="js/login.js"></script>
+</body>
+</html>
