@@ -225,25 +225,6 @@ app.post('/api/calendario', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-// Formulario público de contacto de la landing: guarda los mensajes en el volumen.
-const CONTACTOS_FILE = path.join(DATA_DIR, 'contactos.json');
-app.post('/api/contacto', (req, res) => {
-  const { nombre, email, mensaje } = req.body || {};
-  if (!nombre || !email || !mensaje) {
-    res.status(400).json({ ok: false, error: 'Completá todos los campos.' });
-    return;
-  }
-  const lista = leerJSONArray(CONTACTOS_FILE);
-  lista.push({
-    nombre: String(nombre).slice(0, 200),
-    email: String(email).slice(0, 200),
-    mensaje: String(mensaje).slice(0, 3000),
-    fecha: new Date().toISOString(),
-  });
-  guardarJSONArray(CONTACTOS_FILE, lista);
-  res.json({ ok: true });
-});
-
 app.get('/api/backup', requireAuth, (req, res) => {
   const backup = {
     exportadoEn: new Date().toISOString(),
@@ -251,7 +232,6 @@ app.get('/api/backup', requireAuth, (req, res) => {
     clientes: leerJSONArray(CLIENTES_FILE),
     presupuestos: leerJSONArray(PRESUPUESTOS_FILE),
     calendario: leerJSONObjeto(CALENDARIO_FILE),
-    contactos: leerJSONArray(CONTACTOS_FILE),
   };
   const fecha = new Date().toISOString().slice(0, 10);
   res.setHeader('Content-Disposition', `attachment; filename="backup-cerramientos-${fecha}.json"`);

@@ -79,7 +79,7 @@
       document.getElementById('app-root').hidden = false;
       initApp();
     } catch (e) {
-      window.location.href = 'login.html';
+      window.location.href = 'index.html';
     }
   }
 
@@ -89,7 +89,7 @@
     } catch (e) {
       /* sigue de todas formas */
     }
-    window.location.href = 'login.html';
+    window.location.href = 'index.html';
   });
 
   // ---------------------------------------------------------------------
