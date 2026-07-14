@@ -297,7 +297,7 @@
     populateSelect('p2-color', state.config.colores);
     populateSelect('p2-linea', state.config.lineas);
     populateSelect('p2-manija', ['SIN CIERRE', ...state.config.tiposManija], 'Ninguna');
-    populateSelect('p2-color-manija', state.config.colores);
+    populateSelect('p2-color-manija', ['Blanco', 'Negro']);
     populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
     populateSelect('p2-combo-color', state.config.colores);
     populateSelect('p2-combo-select', (state.config.combinaciones || []).map((c) => c.nombre), '— Elegí una combinación —');
@@ -1830,7 +1830,7 @@
     });
 
     populateSelect('config-img-manija', c.tiposManija);
-    populateSelect('config-img-color-manija', c.colores);
+    populateSelect('config-img-color-manija', ['Blanco', 'Negro']);
     renderChecksVidrio(c.tiposVidrio);
     renderGruposAbertura();
 
