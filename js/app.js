@@ -781,11 +781,10 @@
 
     const cont = document.getElementById('vp-lista-items');
     cont.innerHTML = '';
+    // Una tarjeta por ítem: si hay varias unidades se indica la cantidad,
+    // en vez de repetir la misma tarjeta.
     state.items.forEach((item) => {
-      const unidades = Math.max(1, item.cantidad || 1);
-      for (let i = 0; i < unidades; i++) {
-        cont.appendChild(crearVentanaCard(item));
-      }
+      cont.appendChild(crearVentanaCard(item));
     });
 
     actualizarTotales(calcularTotalBrutoItems(), datos.ivaPorcentaje, datos.descuentoPorcentaje);
@@ -828,6 +827,7 @@
       const card = document.createElement('div');
       card.className = 'vp-ventana';
       const partesSrc = item.parteMedidas || item.partes || [];
+      const cantCombo = Math.max(1, item.cantidad || 1);
       const anchoTotal = partesSrc.reduce((s, p) => s + (p.ancho || 0), 0);
       const altoTotal = partesSrc.reduce((mx, p) => Math.max(mx, p.alto || 0), 0);
       const partesHTML = partesSrc.map((p) => {
@@ -860,7 +860,9 @@
           <div class="vp-item-info" style="${imgHTML ? '' : 'padding-left:0'}">
             <strong>Tipo ${item.nombre} (${anchoTotal} x ${altoTotal} mm)</strong>
             <span class="vp-spec-linea">COLOR: ${item.color}</span>
-            ${item.precio ? `<span class="vp-spec-linea">PRECIO BRUTO: $ ${formatMoney(item.precio)}</span>` : ''}
+            ${cantCombo > 1 ? `<span class="vp-spec-linea">CANTIDAD: ${cantCombo} unidades</span>` : ''}
+            ${item.precio ? `<span class="vp-spec-linea">PRECIO BRUTO: $ ${formatMoney(item.precio)}${cantCombo > 1 ? ' c/u' : ''}</span>` : ''}
+            ${item.precio && cantCombo > 1 ? `<span class="vp-spec-linea">SUBTOTAL: $ ${formatMoney(item.precio * cantCombo)}</span>` : ''}
           </div>
         </div>
         <div class="vp-combo-partes-list">${partesHTML}</div>
@@ -915,7 +917,16 @@
     if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
     if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
     if (item.tapajuntas === 'si') lineas.push('CON TAPAJUNTAS');
-    if (item.precio) lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)}`);
+    const cant = Math.max(1, item.cantidad || 1);
+    if (cant > 1) lineas.push(`CANTIDAD: ${cant} unidades`);
+    if (item.precio) {
+      if (cant > 1) {
+        lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)} c/u`);
+        lineas.push(`SUBTOTAL: $ ${formatMoney(item.precio * cant)}`);
+      } else {
+        lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)}`);
+      }
+    }
     return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
   }
 
