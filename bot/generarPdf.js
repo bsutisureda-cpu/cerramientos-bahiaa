@@ -30,6 +30,9 @@ async function generarPdf({ panel1, items, guardar = true, baseUrl, secret }) {
 
   const navegador = await puppeteer.launch({
     headless: 'new',
+    // En Railway puede convenir usar un Chromium del sistema en vez del que
+    // baja puppeteer: se define con PUPPETEER_EXECUTABLE_PATH.
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 

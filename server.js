@@ -271,4 +271,17 @@ app.post('/api/upload', requireAuth, upload.single('file'), (req, res) => {
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(__dirname));
 
-app.listen(PORT, () => console.log(`Servidor en http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Servidor en http://localhost:${PORT}`);
+
+  // Bot de Telegram (Excel de Winmaker -> PDF). Sólo arranca si hay token.
+  // Le habla a la app por localhost, así no depende de la URL pública.
+  try {
+    require('./bot/telegram').iniciarBot({
+      baseUrl: `http://127.0.0.1:${PORT}`,
+      secret: SECRET,
+    });
+  } catch (e) {
+    console.error('[bot] no pude iniciarlo:', e.message);
+  }
+});
