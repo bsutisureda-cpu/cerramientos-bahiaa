@@ -2362,5 +2362,57 @@
   }
 
   // ---------------------------------------------------------------------
+  // API para el bot: carga un presupuesto y deja la hoja lista para imprimir.
+  // La usa el navegador invisible del servidor; no se toca desde la interfaz.
+  // ---------------------------------------------------------------------
+  function esperarImagenes() {
+    const imgs = [...document.querySelectorAll('#hoja-presupuesto img')];
+    return Promise.all(
+      imgs.map((img) =>
+        img.complete
+          ? Promise.resolve()
+          : new Promise((res) => {
+              img.addEventListener('load', res, { once: true });
+              img.addEventListener('error', res, { once: true });
+            })
+      )
+    );
+  }
+
+  window.presupuestoAPI = {
+    // datos = { panel1: {...}, items: [...], guardar: true }
+    async render(datos) {
+      const p = (datos && datos.panel1) || {};
+      const setVal = (id, valor) => { document.getElementById(id).value = valor == null ? '' : valor; };
+
+      setVal('p1-cliente-select', p.clienteId || '');
+      setVal('p1-nombre', p.nombre);
+      setVal('p1-telefono', p.telefono);
+      setVal('p1-direccion', p.direccion);
+      setVal('p1-localidad', p.localidad);
+      setVal('p1-arquitecto', p.arquitecto);
+      setVal('p1-numero', p.numero || nextNumero());
+      setVal('p1-validez', p.validez || '15');
+      setVal('p1-fecha', p.fecha || todayISO());
+      setVal('p1-iva', p.ivaPorcentaje || 21);
+      setVal('p1-descuento', p.descuentoPorcentaje || '');
+      setVal('p1-extra', p.extra);
+
+      state.items = (datos && datos.items ? datos.items : []).map((it) => ({ ...it, id: it.id || uid() }));
+      renderListaItems();
+
+      onGenerarPresupuesto();
+
+      const error = document.getElementById('generar-error');
+      if (!error.hidden) throw new Error(error.textContent || 'No se pudo generar el presupuesto.');
+
+      if (datos && datos.guardar) await onGuardarPresupuesto();
+
+      await esperarImagenes();
+      return { numero: document.getElementById('p1-numero').value };
+    },
+    proximoNumero() { return nextNumero(); },
+  };
+
   checkSession();
 })();

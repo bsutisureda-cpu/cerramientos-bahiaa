@@ -1,10 +1,12 @@
 // ---------------------------------------------------------------------------
-// Lector de los Excel de presupuesto que genera Lepton (la app de cotización).
+// Lector de los Excel de presupuesto que genera Winmaker (la app de cotización).
+// La pestaña de la hoja suele llamarse "lepton" (nombre interno de la plantilla
+// de Winmaker), pero no dependemos de ese nombre para leerla.
 // Devuelve los datos crudos, sin traducir todavía a los tipos de nuestra app.
-// (La traducción Lepton -> app se hace después, con la tabla de equivalencias.)
+// (La traducción Winmaker -> app se hace después, con la tabla de equivalencias.)
 // ---------------------------------------------------------------------------
 
-// Lepton separa los campos del detalle con un punto + espacio duro ( ).
+// Winmaker separa los campos del detalle con un punto + espacio duro ( ).
 const SEP = /\. /;
 
 function limpiar(txt) {
@@ -42,7 +44,7 @@ function buscarCampo(segmentos, etiqueta) {
   return '';
 }
 
-// Desarma el texto "Detalle" de un ítem de Lepton.
+// Desarma el texto "Detalle" de un ítem de Winmaker.
 // Ej: "Tipo v1 (1500 x 1200 mm):. PRODUCTO: CORREDIZA 2 GUIAS LINEA MONACO TOP .
 //      MEDIDAS: 1.50 x 1.20 mts.. Interiores:VIDRIO: FLOAT 4MM+CAMARA 12MM+FLOAT 4MM..
 //      COLOR: NEGRO . CON TAPAJUNTAS ."
@@ -152,4 +154,35 @@ function parsearFilas(filas) {
   return { ...encabezado, items, total };
 }
 
-module.exports = { parsearFilas, parsearDetalle, aNumero, limpiar };
+// Lee el .xlsx (el archivo que llega por Telegram) y lo pasa por parsearFilas.
+async function leerArchivo(buffer) {
+  const ExcelJS = require('exceljs');
+  const wb = new ExcelJS.Workbook();
+  await wb.xlsx.load(buffer);
+
+  const ws = wb.worksheets[0];
+  if (!ws) throw new Error('El archivo no tiene ninguna hoja.');
+
+  const filas = [];
+  ws.eachRow({ includeEmpty: true }, (row, nro) => {
+    const celdas = [];
+    row.eachCell({ includeEmpty: true }, (cell, col) => {
+      let v = cell.value;
+      if (v && typeof v === 'object') {
+        // Celdas con formato o fórmula: nos quedamos con el texto visible.
+        if (v.richText) v = v.richText.map((t) => t.text).join('');
+        else if (v.text !== undefined) v = v.text;
+        else if (v.result !== undefined) v = v.result;
+        else v = '';
+      }
+      celdas[col - 1] = v == null ? '' : String(v);
+    });
+    filas[nro - 1] = celdas;
+  });
+
+  for (let i = 0; i < filas.length; i++) if (!filas[i]) filas[i] = [];
+
+  return parsearFilas(filas);
+}
+
+module.exports = { parsearFilas, parsearDetalle, leerArchivo, aNumero, limpiar };
