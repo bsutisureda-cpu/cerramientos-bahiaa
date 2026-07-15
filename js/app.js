@@ -373,6 +373,7 @@
       vidrio: document.getElementById('p2-vidrio').value,
       cajon: document.getElementById('p2-cajon').value,
       mosquitero: document.getElementById('p2-mosquitero').value,
+      tapajuntas: document.getElementById('p2-tapajuntas').value,
       ancho: parseFloat(document.getElementById('p2-ancho').value),
       alto: parseFloat(document.getElementById('p2-alto').value),
       cantidad: parseInt(document.getElementById('p2-cantidad').value, 10),
@@ -432,6 +433,7 @@
     document.getElementById('p2-precio').value = '';
     document.getElementById('p2-cajon').value = 'no';
     document.getElementById('p2-mosquitero').value = 'no';
+    document.getElementById('p2-tapajuntas').value = 'no';
     document.getElementById('p2-manija').value = '';
     document.getElementById('p2-vidrio').value = '';
     aplicarBaseEjemplo();
@@ -587,6 +589,7 @@
     if (item.linea) partes.push(`Línea: ${item.linea}`);
     partes.push(`Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}`);
     partes.push(`Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}`);
+    if (item.tapajuntas === 'si') partes.push('Con tapajuntas');
     if (item.manija) partes.push(`Cierre: ${item.manija}${item.colorManija ? ' (' + item.colorManija + ')' : ''}`);
     if (item.vidrio) partes.push(`Vidrio: ${item.vidrio}`);
     if (item.precio) {
@@ -685,6 +688,7 @@
       document.getElementById('p2-vidrio').value = item.vidrio || '';
       document.getElementById('p2-cajon').value = item.cajon;
       document.getElementById('p2-mosquitero').value = item.mosquitero;
+      document.getElementById('p2-tapajuntas').value = item.tapajuntas || 'no';
       document.getElementById('p2-ancho').value = item.ancho;
       document.getElementById('p2-alto').value = item.alto;
       document.getElementById('p2-cantidad').value = item.cantidad;
@@ -910,6 +914,7 @@
     if (item.manija) lineas.push(`CIERRE: ${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`);
     if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
     if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
+    if (item.tapajuntas === 'si') lineas.push('CON TAPAJUNTAS');
     if (item.precio) lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)}`);
     return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
   }
