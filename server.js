@@ -50,6 +50,17 @@ const DEFAULT_CONFIG = {
   valores: { cierre: {}, vidrio: {}, perfil: {} },
   cotizacionDolar: 0,
   combinaciones: [],
+  // Traducción de lo que escribe Winmaker -> los valores de esta app.
+  // "productos" se puede escribir con el texto completo o sin la línea.
+  equivalencias: {
+    productos: {
+      // Confirmado por el dueño: si no aclara hojas, es de una.
+      'VENTANA DE ABRIR': 'Ventana de abrir 1 hoja',
+    },
+    vidrios: {},
+    colores: {},
+    cierres: {},
+  },
 };
 
 function leerConfig() {
