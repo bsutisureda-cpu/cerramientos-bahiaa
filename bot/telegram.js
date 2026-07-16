@@ -7,7 +7,7 @@
 // long polling, así no hace falta configurar webhooks ni URLs públicas.
 // ---------------------------------------------------------------------------
 const { leerArchivo } = require('./parseExcel');
-const { traducir } = require('./mapear');
+const { traducir, agruparIdenticos } = require('./mapear');
 const { generarPdf, cookieDeSesion } = require('./generarPdf');
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
@@ -79,6 +79,14 @@ async function preguntarSiguiente(chatId, ses) {
 
 async function finalizar(chatId, ses) {
   sesiones.delete(chatId);
+
+  // Las ventanas idénticas se muestran una sola vez, con la cantidad sumada.
+  const antes = ses.items.length;
+  const items = agruparIdenticos(ses.items);
+  if (items.length < antes) {
+    await decir(chatId, `ℹ️ Junté ${antes} ítems en ${items.length}: había repetidos idénticos.`);
+  }
+
   await decir(chatId, '⏳ Armando el presupuesto y generando el PDF...');
 
   try {
@@ -89,7 +97,7 @@ async function finalizar(chatId, ses) {
         arquitecto: ses.wm.referencia || '',
         extra: ses.wm.nota || '',
       },
-      items: ses.items,
+      items,
       guardar: true, // queda registrado en Presupuestos guardados
       baseUrl: ses.baseUrl,
       secret: ses.secret,

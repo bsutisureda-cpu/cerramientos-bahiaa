@@ -236,4 +236,38 @@ function traducir(presupuestoWM, config) {
   return { items, dudas };
 }
 
-module.exports = { traducir, normalizar, detectarLinea, detectarTipo, detectarVidrio, detectarColor, detectarCierre };
+// ---------------------------------------------------------------------------
+// Junta los ítems que son idénticos en todo (tipo, medidas, color, vidrio,
+// cierre, extras y precio) en uno solo, sumando las cantidades. Así el
+// presupuesto no repite dos veces la misma ventana.
+// Si el precio difiere, NO se juntan (son cosas distintas para el cliente).
+// Se usa después de resolver las dudas, cuando los ítems ya están completos.
+// ---------------------------------------------------------------------------
+function agruparIdenticos(items) {
+  const salida = [];
+  const porClave = new Map();
+
+  for (const it of items) {
+    const clave = JSON.stringify([
+      it.tipo, it.linea, it.color, it.vidrio, it.manija, it.colorManija,
+      it.cajon, it.mosquitero, it.tapajuntas, it.ancho, it.alto, it.precio,
+    ]);
+
+    const ya = porClave.get(clave);
+    if (ya) {
+      ya.cantidad = (ya.cantidad || 1) + (it.cantidad || 1);
+      // Dejamos constancia de qué códigos de Winmaker se juntaron.
+      if (it._codigoWM && ya._codigoWM && !String(ya._codigoWM).includes(it._codigoWM)) {
+        ya._codigoWM = `${ya._codigoWM}+${it._codigoWM}`;
+      }
+    } else {
+      const copia = { ...it };
+      porClave.set(clave, copia);
+      salida.push(copia);
+    }
+  }
+
+  return salida;
+}
+
+module.exports = { traducir, agruparIdenticos, normalizar, detectarLinea, detectarTipo, detectarVidrio, detectarColor, detectarCierre };
