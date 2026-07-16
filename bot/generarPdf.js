@@ -10,13 +10,15 @@
 const crypto = require('crypto');
 const fs = require('fs');
 
+// Puppeteer es un módulo ESM: hay que cargarlo con import() dinámico.
+// Con require() falla en Node 18/20 (que es lo que corre en Railway), aunque
+// funcione en Node 24. Se carga una sola vez y se reutiliza.
 let puppeteer = null;
-let errorAlCargar = null;
-try {
-  puppeteer = require('puppeteer');
-} catch (e) {
-  // Se avisa recién al usarlo, para que el resto de la app arranque igual.
-  errorAlCargar = e.message;
+async function cargarPuppeteer() {
+  if (puppeteer) return puppeteer;
+  const mod = await import('puppeteer');
+  puppeteer = mod.default || mod;
+  return puppeteer;
 }
 
 // Busca un Chromium instalado en el sistema (en Railway lo instala nixpacks.toml).
@@ -32,11 +34,16 @@ function buscarChromium() {
   for (const ruta of candidatos) {
     try { if (fs.existsSync(ruta)) return ruta; } catch (e) { /* seguimos */ }
   }
-  try {
-    const { execSync } = require('child_process');
-    const ruta = execSync('command -v chromium || command -v chromium-browser', { encoding: 'utf8' }).trim();
-    if (ruta) return ruta;
-  } catch (e) { /* no hay chromium en el PATH */ }
+  if (process.platform !== 'win32') {
+    try {
+      const { execSync } = require('child_process');
+      const ruta = execSync('command -v chromium || command -v chromium-browser', {
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'ignore'],
+      }).trim();
+      if (ruta) return ruta;
+    } catch (e) { /* no hay chromium en el PATH */ }
+  }
   return undefined;
 }
 
@@ -48,14 +55,17 @@ function cookieDeSesion(secret, horas = 1) {
 }
 
 async function generarPdf({ panel1, items, guardar = true, baseUrl, secret }) {
-  if (!puppeteer) {
-    throw new Error(`No pude cargar puppeteer. Error real: ${errorAlCargar}`);
+  let pptr;
+  try {
+    pptr = await cargarPuppeteer();
+  } catch (e) {
+    throw new Error(`No pude cargar puppeteer: ${e.message}`);
   }
 
   const chromium = buscarChromium();
   console.log('[pdf] Chromium:', chromium || '(el que trae puppeteer)');
 
-  const navegador = await puppeteer.launch({
+  const navegador = await pptr.launch({
     headless: 'new',
     executablePath: chromium,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
