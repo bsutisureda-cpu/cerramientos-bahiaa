@@ -8,12 +8,36 @@
 // paga por consumo, así que no conviene dejarlo prendido).
 // ---------------------------------------------------------------------------
 const crypto = require('crypto');
+const fs = require('fs');
 
 let puppeteer = null;
+let errorAlCargar = null;
 try {
   puppeteer = require('puppeteer');
 } catch (e) {
   // Se avisa recién al usarlo, para que el resto de la app arranque igual.
+  errorAlCargar = e.message;
+}
+
+// Busca un Chromium instalado en el sistema (en Railway lo instala nixpacks.toml).
+// Si no encuentra ninguno, devuelve undefined y se usa el que baja puppeteer.
+function buscarChromium() {
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) return process.env.PUPPETEER_EXECUTABLE_PATH;
+  const candidatos = [
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/google-chrome',
+    '/root/.nix-profile/bin/chromium',
+  ];
+  for (const ruta of candidatos) {
+    try { if (fs.existsSync(ruta)) return ruta; } catch (e) { /* seguimos */ }
+  }
+  try {
+    const { execSync } = require('child_process');
+    const ruta = execSync('command -v chromium || command -v chromium-browser', { encoding: 'utf8' }).trim();
+    if (ruta) return ruta;
+  } catch (e) { /* no hay chromium en el PATH */ }
+  return undefined;
 }
 
 // Cookie de sesión válida, firmada igual que en server.js.
@@ -25,14 +49,15 @@ function cookieDeSesion(secret, horas = 1) {
 
 async function generarPdf({ panel1, items, guardar = true, baseUrl, secret }) {
   if (!puppeteer) {
-    throw new Error('Falta instalar puppeteer (npm install puppeteer) para generar el PDF.');
+    throw new Error(`No pude cargar puppeteer. Error real: ${errorAlCargar}`);
   }
+
+  const chromium = buscarChromium();
+  console.log('[pdf] Chromium:', chromium || '(el que trae puppeteer)');
 
   const navegador = await puppeteer.launch({
     headless: 'new',
-    // En Railway puede convenir usar un Chromium del sistema en vez del que
-    // baja puppeteer: se define con PUPPETEER_EXECUTABLE_PATH.
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    executablePath: chromium,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
