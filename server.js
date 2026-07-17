@@ -271,7 +271,7 @@ app.post('/api/upload', requireAuth, upload.single('file'), (req, res) => {
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(__dirname));
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);
 
   // Bot de Telegram (Excel de Winmaker -> PDF). Sólo arranca si hay token.
@@ -285,3 +285,15 @@ app.listen(PORT, () => {
     console.error('[bot] no pude iniciarlo:', e.message);
   }
 });
+
+// Cierre ordenado: Railway manda SIGTERM al reemplazar un deploy por otro.
+// Si no salimos con código 0, Railway lo cuenta como crash y manda mails de
+// "Deployment crashed" aunque la app nunca haya fallado.
+function cerrarOrdenado(senal) {
+  console.log(`Recibí ${senal}: cerrando el servidor.`);
+  server.close(() => process.exit(0));
+  // El loop del bot sigue vivo aunque el servidor cierre: salimos igual.
+  setTimeout(() => process.exit(0), 5000).unref();
+}
+process.on('SIGTERM', () => cerrarOrdenado('SIGTERM'));
+process.on('SIGINT', () => cerrarOrdenado('SIGINT'));
