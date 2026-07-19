@@ -1051,23 +1051,24 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
   overflow: hidden;
 }
 
-.vp-body { padding: 1.4rem 2rem 2rem; }
+.vp-body { padding: 2rem 2.2rem 2.2rem; }
 
-/* --- Banda superior con logo y contacto --- */
-.vp-band {
+/* --- Membrete: logo + empresa a la izquierda, contacto a la derecha --- */
+.vp-head {
   display: flex;
-  align-items: center;
+  justify-content: space-between;
+  align-items: flex-end;
   gap: 1rem;
-  background: linear-gradient(120deg, var(--color-primary-dark), var(--color-primary));
-  color: #fff;
-  padding: 1.1rem 1.6rem;
+  border-bottom: 2px solid var(--color-primary-dark);
+  padding-bottom: 1rem;
+  margin-bottom: 1.4rem;
 }
 
+.vp-head-brand { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
+
 .vp-logo-box {
-  width: 56px;
-  height: 56px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.1);
+  width: 64px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1077,148 +1078,217 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
 
 .vp-logo { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-.vp-band-center { flex: 1; min-width: 0; }
-.vp-empresa-handle { font-weight: 700; font-size: 0.95rem; margin: 0; letter-spacing: 0.02em; }
-.vp-empresa-email { font-size: 0.8rem; margin: 0.15rem 0 0; opacity: 0.85; }
-
-.vp-band-right {
-  text-align: right;
-  font-size: 0.85rem;
-  line-height: 1.5;
-  white-space: pre-line;
+.vp-head-nombre {
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-primary-dark);
+  margin: 0;
 }
-.vp-band-right :first-line { font-weight: 700; }
+.vp-head-handle { font-size: 0.78rem; color: var(--color-text-muted); margin: 0.2rem 0 0; letter-spacing: 0.03em; }
+
+.vp-head-contacto {
+  text-align: right;
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+}
+.vp-head-contacto p { margin: 0; }
+.vp-head-tel { white-space: pre-line; font-variant-numeric: tabular-nums; }
 
 /* --- Subheader (título + número + fecha/validez) --- */
 .vp-subheader {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  border-bottom: 2px solid var(--color-primary);
-  padding-bottom: 1rem;
-  margin-bottom: 1.2rem;
+  align-items: baseline;
+  padding-bottom: 0.9rem;
+  margin-bottom: 1.1rem;
   flex-wrap: wrap;
   gap: 0.6rem;
 }
 
-.vp-empresa-nombre {
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-primary);
-  margin: 0 0 0.1rem;
-}
-
 .vp-subheader h2 {
-  font-size: 1.6rem;
-  letter-spacing: 0.02em;
-  color: var(--color-primary-dark);
+  font-size: 1.45rem;
+  letter-spacing: 0.01em;
+  color: var(--color-text);
+  margin: 0;
 }
 
-.vp-numero {
-  display: inline-block;
-  color: var(--color-primary-dark);
-  font-weight: 700;
-  background: #eaf2f3;
-  border-radius: 5px;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.9rem;
-}
+.vp-numero { font-weight: 400; color: var(--color-text-muted); }
 
-.vp-meta { text-align: right; font-size: 0.9rem; }
-.vp-meta p { margin: 0.15rem 0; }
+.vp-meta { text-align: right; font-size: 0.85rem; }
+.vp-meta p { margin: 0.1rem 0; }
+.vp-meta-k {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-text-muted);
+  margin-right: 0.4rem;
+}
 
 /* --- Datos del cliente --- */
 .vp-datos-cliente {
   margin-bottom: 1.4rem;
-  font-size: 0.95rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 1rem;
+  font-size: 0.92rem;
+  border: 1px solid var(--color-border);
+  padding: 0.75rem 1rem;
+  background: #fafbfc;
 }
 .vp-datos-cliente p { margin: 0.2rem 0; }
-
-.vp-items h3 {
-  font-size: 0.95rem;
+.vp-datos-cliente strong {
+  display: inline-block;
+  min-width: 6.2rem;
+  font-size: 0.68rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--color-primary-dark);
-  margin-bottom: 0.7rem;
-  border-bottom: 1px solid var(--color-border);
-  padding-bottom: 0.3rem;
+  letter-spacing: 0.09em;
+  color: var(--color-text-muted);
 }
 
-.vp-lista-items { display: flex; flex-direction: column; gap: 1rem; }
+.vp-items h3 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  margin-bottom: 0.6rem;
+}
+
+.vp-lista-items { display: flex; flex-direction: column; gap: 0.9rem; }
 
 .vp-ventana {
   border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #f4f6f7;
+  background: #fff;
   overflow: hidden;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
+
+.vp-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  padding: 0.55rem 1rem;
+  background: #f2f4f6;
+  border-bottom: 1px solid var(--color-border);
+}
+.vp-item-num {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+.vp-item-titulo { font-weight: 700; font-size: 0.95rem; color: var(--color-text); flex: 1; }
+.vp-item-cant { font-size: 0.82rem; color: var(--color-text-muted); white-space: nowrap; }
 
 .vp-item-row {
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 1.1rem;
-  align-items: start;
+  grid-template-columns: 120px 1fr auto;
+  gap: 1rem;
+  align-items: center;
   background: #fff;
 }
 
-.vp-item-row img {
+.vp-item-row > img {
   width: 120px;
   height: 100%;
-  min-height: 100px;
+  min-height: 110px;
   object-fit: contain;
   background: #fff;
+  padding: 0.4rem;
 }
 
-.vp-item-row .vp-item-info { font-size: 0.85rem; line-height: 1.6; padding: 0.8rem 0.8rem 0.8rem 0; }
-.vp-item-row .vp-item-info strong {
-  display: block;
-  font-size: 0.95rem;
-  color: var(--color-primary-dark);
-  margin-bottom: 0.3rem;
-  text-transform: uppercase;
-}
-.vp-item-row .vp-item-info .vp-spec-linea { display: block; color: var(--color-text); }
-
-.vp-extra-row {
+.vp-specs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  padding: 0.7rem 0.9rem;
+  gap: 0.45rem 1.2rem;
+  margin: 0;
+  padding: 0.8rem 0;
+}
+.vp-specs > div { min-width: 0; }
+.vp-specs dt {
+  font-size: 0.66rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+.vp-specs dd { font-size: 0.88rem; margin: 0.05rem 0 0; color: var(--color-text); }
+
+.vp-item-precio {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.2rem;
+  padding: 0.8rem 1rem;
+  border-left: 1px solid var(--color-border);
+  min-width: 150px;
+  font-variant-numeric: tabular-nums;
+}
+.vp-precio-unit { font-size: 0.78rem; color: var(--color-text-muted); white-space: nowrap; }
+.vp-precio-sub { font-size: 0.98rem; font-weight: 700; color: var(--color-text); white-space: nowrap; }
+
+.vp-extra-row {
+  display: flex;
+  gap: 2rem;
+  padding: 0.55rem 1rem;
   border-top: 1px solid var(--color-border);
+  background: #fafbfc;
 }
 
 .vp-extra-col {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
-  font-size: 0.82rem;
-  font-weight: 600;
+  gap: 0.55rem;
+  font-size: 0.78rem;
   color: var(--color-text-muted);
-  min-height: 56px;
 }
+.vp-extra-col:empty { display: none; }
 
 .vp-extra-col img {
-  width: 70px;
-  height: 55px;
+  width: 56px;
+  height: 44px;
   object-fit: contain;
   background: #fff;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
 }
 
 .vp-totales {
-  margin-top: 1rem;
-  padding: 0.8rem 0;
-  border-top: 2px solid var(--color-primary);
-  border-bottom: 2px solid var(--color-primary);
-  text-align: right;
+  margin-top: 1.2rem;
+  display: flex;
+  justify-content: flex-end;
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
-.vp-totales p {
-  margin: 0.2rem 0;
+.vp-totales-caja { width: 300px; max-width: 100%; font-variant-numeric: tabular-nums; }
+.vp-totales-caja p {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0;
+  padding: 0.35rem 0;
+  font-size: 0.9rem;
+}
+.vp-totales-caja p > span:first-child {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-text-muted);
+  align-self: center;
+}
+.vp-totales-caja .vp-total-final {
+  border-top: 2px solid var(--color-primary-dark);
+  margin-top: 0.3rem;
+  padding-top: 0.55rem;
+  font-size: 1.08rem;
+  font-weight: 700;
+}
+.vp-totales-caja .vp-total-final > span:first-child {
+  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 700;
 }
 
 .vp-mensaje-final {

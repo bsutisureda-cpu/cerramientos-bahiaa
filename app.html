@@ -262,26 +262,28 @@
       </div>
 
       <div class="hoja" id="hoja-presupuesto">
-        <header class="vp-band">
-          <div class="vp-logo-box">
-            <img id="vp-logo" class="vp-logo" alt="Logo" hidden />
+        <div class="vp-body">
+        <header class="vp-head">
+          <div class="vp-head-brand">
+            <div class="vp-logo-box">
+              <img id="vp-logo" class="vp-logo" alt="Logo" hidden />
+            </div>
+            <div>
+              <p id="vp-empresa-nombre" class="vp-head-nombre"></p>
+              <p id="vp-empresa-handle" class="vp-head-handle"></p>
+            </div>
           </div>
-          <div class="vp-band-center">
-            <p id="vp-empresa-handle" class="vp-empresa-handle"></p>
-            <p id="vp-empresa-email" class="vp-empresa-email"></p>
+          <div class="vp-head-contacto">
+            <p id="vp-empresa-telefonos" class="vp-head-tel"></p>
+            <p id="vp-empresa-email" class="vp-head-mail"></p>
           </div>
-          <div class="vp-band-right" id="vp-empresa-telefonos"></div>
         </header>
 
-        <div class="vp-body">
         <div class="vp-subheader">
-          <div>
-            <p id="vp-empresa-nombre" class="vp-empresa-nombre"></p>
-            <h2>Presupuesto</h2>
-          </div>
+          <h2>Presupuesto <span id="vp-numero" class="vp-numero"></span></h2>
           <div class="vp-meta">
-            <p><strong>Fecha:</strong> <span id="vp-fecha"></span></p>
-            <p><strong>Validez:</strong> <span id="vp-validez"></span></p>
+            <p><span class="vp-meta-k">Fecha</span> <span id="vp-fecha"></span></p>
+            <p><span class="vp-meta-k">Validez</span> <span id="vp-validez"></span></p>
           </div>
         </div>
 
@@ -297,10 +299,12 @@
         </section>
 
         <section class="vp-totales" id="vp-totales-box" hidden>
-          <p><strong>Total Bruto :</strong> <span id="vp-total-bruto-out"></span></p>
-          <p id="vp-descuento-fila" hidden><strong>Descuento (<span id="vp-descuento-porcentaje-out"></span>%):</strong> <span id="vp-descuento-out"></span></p>
-          <p><strong>IVA (<span id="vp-iva-porcentaje-out"></span>%) $:</strong> <span id="vp-iva-out"></span></p>
-          <p><strong>Total $:</strong> <span id="vp-total-out"></span></p>
+          <div class="vp-totales-caja">
+            <p><span>Subtotal</span> <span id="vp-total-bruto-out"></span></p>
+            <p id="vp-descuento-fila" hidden><span>Descuento (<span id="vp-descuento-porcentaje-out"></span>%)</span> <span id="vp-descuento-out"></span></p>
+            <p><span>IVA <span id="vp-iva-porcentaje-out"></span>%</span> <span id="vp-iva-out"></span></p>
+            <p class="vp-total-final"><span>Total</span> <span id="vp-total-out"></span></p>
+          </div>
         </section>
 
         <section class="vp-mensaje-final" id="vp-mensaje-final-box">
