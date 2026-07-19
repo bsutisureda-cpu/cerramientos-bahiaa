@@ -280,6 +280,7 @@ const server = app.listen(PORT, () => {
     require('./bot/telegram').iniciarBot({
       baseUrl: `http://127.0.0.1:${PORT}`,
       secret: SECRET,
+      dataDir: DATA_DIR,
     });
   } catch (e) {
     console.error('[bot] no pude iniciarlo:', e.message);
@@ -294,6 +295,17 @@ const server = app.listen(PORT, () => {
     });
   } catch (e) {
     console.error('[backup] no pude iniciarlo:', e.message);
+  }
+
+  // Seguimiento: avisa de los presupuestos que siguen sin respuesta.
+  try {
+    require('./bot/seguimiento').iniciarSeguimiento({
+      baseUrl: `http://127.0.0.1:${PORT}`,
+      secret: SECRET,
+      dataDir: DATA_DIR,
+    });
+  } catch (e) {
+    console.error('[seguimiento] no pude iniciarlo:', e.message);
   }
 });
 
