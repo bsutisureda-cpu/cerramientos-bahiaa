@@ -284,6 +284,17 @@ const server = app.listen(PORT, () => {
   } catch (e) {
     console.error('[bot] no pude iniciarlo:', e.message);
   }
+
+  // Backup automático de los datos, por Telegram (los datos viven en un solo disco).
+  try {
+    require('./bot/backup').iniciarBackupAutomatico({
+      baseUrl: `http://127.0.0.1:${PORT}`,
+      secret: SECRET,
+      dataDir: DATA_DIR,
+    });
+  } catch (e) {
+    console.error('[backup] no pude iniciarlo:', e.message);
+  }
 });
 
 // Cierre ordenado: Railway manda SIGTERM al reemplazar un deploy por otro.

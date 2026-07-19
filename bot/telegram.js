@@ -190,7 +190,21 @@ async function procesar(update, ctx) {
   if (msg.document) return onDocumento(chatId, msg.document, ctx);
 
   if (msg.text && msg.text.startsWith('/start')) {
-    return decir(chatId, '👋 Mandame el Excel de Winmaker y te devuelvo el PDF del presupuesto.');
+    return decir(
+      chatId,
+      '👋 Mandame el Excel de Winmaker y te devuelvo el PDF del presupuesto.\n\n' +
+        'También podés pedirme /backup para tener el respaldo de los datos.'
+    );
+  }
+
+  if (msg.text && msg.text.startsWith('/backup')) {
+    await decir(chatId, '📦 Armando el respaldo...');
+    try {
+      await require('./backup').enviarBackup({ baseUrl: ctx.baseUrl, secret: ctx.secret, manual: true });
+    } catch (e) {
+      await decir(chatId, `❌ No pude armar el backup: ${e.message}`);
+    }
+    return;
   }
 
   return decir(chatId, 'Mandame el Excel del presupuesto (.xlsx) y te devuelvo el PDF.');
