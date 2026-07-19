@@ -1059,9 +1059,9 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
   justify-content: space-between;
   align-items: flex-end;
   gap: 1rem;
-  border-bottom: 2px solid var(--color-primary-dark);
-  padding-bottom: 1rem;
-  margin-bottom: 1.4rem;
+  background: var(--color-primary);
+  margin: -2rem -2.2rem 1.4rem;
+  padding: 1.5rem 2.2rem;
 }
 
 .vp-head-brand { display: flex; align-items: center; gap: 0.9rem; min-width: 0; }
@@ -1083,16 +1083,16 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--color-primary-dark);
+  color: #fff;
   margin: 0;
 }
-.vp-head-handle { font-size: 0.78rem; color: var(--color-text-muted); margin: 0.2rem 0 0; letter-spacing: 0.03em; }
+.vp-head-handle { font-size: 0.78rem; color: rgba(255, 255, 255, 0.72); margin: 0.2rem 0 0; letter-spacing: 0.03em; }
 
 .vp-head-contacto {
   text-align: right;
   font-size: 0.78rem;
   line-height: 1.55;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.85);
 }
 .vp-head-contacto p { margin: 0; }
 .vp-head-tel { white-space: pre-line; font-variant-numeric: tabular-nums; }
@@ -1175,7 +1175,8 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
 .vp-item-num {
   font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 0.75rem;
-  color: var(--color-text-muted);
+  font-weight: 700;
+  color: var(--color-primary);
 }
 .vp-item-titulo { font-weight: 700; font-size: 0.95rem; color: var(--color-text); flex: 1; }
 .vp-item-cant { font-size: 0.82rem; color: var(--color-text-muted); white-space: nowrap; }
@@ -1279,11 +1280,12 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
   align-self: center;
 }
 .vp-totales-caja .vp-total-final {
-  border-top: 2px solid var(--color-primary-dark);
+  border-top: 2px solid var(--color-primary);
   margin-top: 0.3rem;
   padding-top: 0.55rem;
   font-size: 1.08rem;
   font-weight: 700;
+  color: var(--color-primary);
 }
 .vp-totales-caja .vp-total-final > span:first-child {
   color: var(--color-text);
@@ -1513,6 +1515,8 @@ input[type="file"]::file-selector-button:hover { background: #f1f5f9; }
     padding: 0;
     max-width: none;
     margin: 0;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   @page {
