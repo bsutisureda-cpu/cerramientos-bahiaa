@@ -499,6 +499,29 @@
         </div>
       </section>
 
+      <!-- Traducciones de Winmaker -->
+      <section class="panel panel-full">
+        <h3>Traducciones de Winmaker</h3>
+        <p class="config-ayuda">
+          Si en el Excel de Winmaker una palabra viene escrita distinta o con un error
+          (por ejemplo <strong>OCILOBATIENTE</strong> en vez de Oscilobatiente), acá le
+          enseñás al bot qué significa. Lo cargás una vez y no vuelve a preguntar por eso.
+        </p>
+        <div class="config-lista-simple" id="config-lista-equivalencias"></div>
+        <div class="config-add-row config-equiv-row">
+          <select id="config-equiv-cat" aria-label="Categoría">
+            <option value="productos">Abertura</option>
+            <option value="colores">Color</option>
+            <option value="vidrios">Vidrio</option>
+            <option value="cierres">Cierre</option>
+          </select>
+          <input type="text" id="config-equiv-origen" placeholder="Lo que dice Winmaker..." />
+          <span class="config-equiv-flecha" aria-hidden="true">→</span>
+          <select id="config-equiv-destino" aria-label="Significa"></select>
+          <button type="button" id="btn-add-equiv" class="btn btn-ghost">Agregar</button>
+        </div>
+      </section>
+
       <!-- Colores -->
       <section class="panel">
         <h3>Colores</h3>

@@ -690,6 +690,30 @@ label {
 
 .config-add-row input { flex: 1; }
 
+.config-ayuda {
+  font-size: 0.86rem;
+  color: var(--color-text-muted, #666);
+  margin: 0 0 0.75rem;
+  line-height: 1.45;
+}
+
+.config-equiv-row {
+  flex-wrap: wrap;
+  align-items: center;
+}
+.config-equiv-row select { flex: 0 0 auto; }
+.config-equiv-row input { flex: 1 1 160px; }
+.config-equiv-flecha {
+  color: var(--color-text-muted, #888);
+  font-weight: 700;
+}
+.config-chip-equiv { border-radius: 12px; }
+.config-equiv-cat-tag {
+  color: var(--color-text-muted, #888);
+  font-style: normal;
+  font-size: 0.78rem;
+}
+
 .config-img-form {
   display: flex;
   gap: 0.5rem;

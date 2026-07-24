@@ -1803,6 +1803,73 @@
     return true;
   }
 
+  // --- Traducciones de Winmaker (equivalencias) ---------------------------
+  // Cada categoría dice: cómo se llama para el usuario y de qué lista salen
+  // los valores válidos a los que puede traducir.
+  const EQUIV_CATS = {
+    productos: { etiqueta: 'Abertura', destinos: (c) => c.tiposAbertura },
+    colores: { etiqueta: 'Color', destinos: (c) => c.colores },
+    vidrios: { etiqueta: 'Vidrio', destinos: (c) => c.tiposVidrio },
+    cierres: { etiqueta: 'Cierre', destinos: (c) => ['SIN CIERRE', ...c.tiposManija] },
+  };
+
+  // Configs viejas pueden no tener equivalencias: se completa sin romper.
+  function equivalenciasConfig() {
+    const c = state.config;
+    if (!c.equivalencias || typeof c.equivalencias !== 'object') c.equivalencias = {};
+    Object.keys(EQUIV_CATS).forEach((cat) => {
+      if (!c.equivalencias[cat] || typeof c.equivalencias[cat] !== 'object') {
+        c.equivalencias[cat] = {};
+      }
+    });
+    return c.equivalencias;
+  }
+
+  // El destino puede estar guardado como texto o como {tipo, linea}: se muestra parejo.
+  function textoDestinoEquiv(valor) {
+    if (valor && typeof valor === 'object') return valor.tipo || '';
+    return valor;
+  }
+
+  function renderEquivalencias() {
+    const c = state.config;
+    const equivs = equivalenciasConfig();
+
+    // El desplegable de "significa" sigue a la categoría elegida.
+    const catSel = document.getElementById('config-equiv-cat');
+    const cat = EQUIV_CATS[catSel.value] ? catSel.value : 'productos';
+    populateSelect('config-equiv-destino', EQUIV_CATS[cat].destinos(c));
+
+    // Lista de todas las traducciones ya cargadas, de todas las categorías.
+    const cont = document.getElementById('config-lista-equivalencias');
+    cont.innerHTML = '';
+    const filas = [];
+    Object.keys(EQUIV_CATS).forEach((catKey) => {
+      Object.keys(equivs[catKey]).forEach((origen) => {
+        filas.push({ catKey, origen, destino: textoDestinoEquiv(equivs[catKey][origen]) });
+      });
+    });
+
+    if (!filas.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no cargaste ninguna traducción.</p>';
+      return;
+    }
+
+    filas.forEach(({ catKey, origen, destino }) => {
+      const chip = document.createElement('span');
+      chip.className = 'config-chip config-chip-equiv';
+      chip.innerHTML =
+        `<strong>${origen}</strong> → ${destino} ` +
+        `<em class="config-equiv-cat-tag">(${EQUIV_CATS[catKey].etiqueta})</em> ` +
+        '<button type="button" aria-label="Eliminar">×</button>';
+      chip.querySelector('button').addEventListener('click', () => {
+        delete equivalenciasConfig()[catKey][origen];
+        guardarYRenderConfig();
+      });
+      cont.appendChild(chip);
+    });
+  }
+
   function actualizarLogoSidebar() {
     const logo = document.getElementById('sidebar-logo');
     if (state.config.empresaLogo) {
@@ -1851,6 +1918,8 @@
       delete c.valores.vidrio[v];
       guardarYRenderConfig();
     });
+
+    renderEquivalencias();
 
     populateSelect('config-img-manija', c.tiposManija);
     populateSelect('config-img-color-manija', ['Blanco', 'Negro']);
@@ -2287,6 +2356,18 @@
         input.value = '';
         guardarYRenderConfig();
       }
+    });
+    // Al cambiar la categoría, el desplegable "significa" muestra otros valores.
+    document.getElementById('config-equiv-cat').addEventListener('change', renderEquivalencias);
+    document.getElementById('btn-add-equiv').addEventListener('click', () => {
+      const cat = document.getElementById('config-equiv-cat').value;
+      const origenInput = document.getElementById('config-equiv-origen');
+      const destino = document.getElementById('config-equiv-destino').value;
+      const origen = (origenInput.value || '').trim().toUpperCase();
+      if (!EQUIV_CATS[cat] || !origen || !destino) return;
+      equivalenciasConfig()[cat][origen] = destino;
+      origenInput.value = '';
+      guardarYRenderConfig();
     });
     document.getElementById('btn-add-manija').addEventListener('click', () => {
       const input = document.getElementById('config-nueva-manija');
