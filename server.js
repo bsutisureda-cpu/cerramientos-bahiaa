@@ -150,6 +150,18 @@ function requireAuth(req, res, next) {
 const app = express();
 app.use(express.json({ limit: '2mb' }));
 
+// Esta app es interna: no queremos que aparezca en Google ni en ningún buscador.
+// La cabecera vale para todo lo que sirve el server (páginas, imágenes, archivos).
+app.use((req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  next();
+});
+
+// Además, el archivo que los buscadores leen primero para saber qué pueden mirar.
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+});
+
 app.post('/api/login', (req, res) => {
   if (!USUARIO || !CLAVE) {
     res.status(500).json({ ok: false, error: 'Faltan configurar las variables de entorno USUARIO y CLAVE.' });
