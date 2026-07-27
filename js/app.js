@@ -182,11 +182,14 @@
     ['p2-tipo', 'p2-linea'].forEach((id) =>
       document.getElementById(id).addEventListener('change', aplicarBaseEjemplo)
     );
-    // Al cambiar la línea, el desplegable de Cierre muestra solo las manijas de esa línea.
-    document.getElementById('p2-linea').addEventListener('change', () => {
-      refrescarManijasP2();
-      actualizarPreviewImagenes();
-    });
+    // Al cambiar la línea o la abertura, el desplegable de Cierre muestra solo
+    // las manijas permitidas para esa combinación.
+    ['p2-linea', 'p2-tipo'].forEach((id) =>
+      document.getElementById(id).addEventListener('change', () => {
+        refrescarManijasP2();
+        actualizarPreviewImagenes();
+      })
+    );
 
     document.getElementById('btn-modo-simple').addEventListener('click', () => switchModoPanel2('simple'));
     document.getElementById('btn-modo-combo').addEventListener('click', () => switchModoPanel2('combo'));
@@ -308,31 +311,45 @@
     populateSelect('p2-combo-select', (state.config.combinaciones || []).map((c) => c.nombre), '— Elegí una combinación —');
   }
 
-  // Config vieja puede no tener manijaLineas: se completa sin romper.
+  // Config vieja puede no tener estos mapas: se completan sin romper.
   function ensureManijaLineas() {
     const c = state.config;
     if (!c.manijaLineas || typeof c.manijaLineas !== 'object') c.manijaLineas = {};
     return c.manijaLineas;
   }
 
-  // Manijas (cierres) disponibles para una línea. Sin restricción = todas.
-  function manijasParaLinea(linea) {
-    const todas = state.config.tiposManija || [];
-    if (!linea) return todas;
-    const map = state.config.manijaLineas || {};
-    return todas.filter((m) => {
-      const ls = map[m];
-      return !ls || !ls.length || ls.includes(linea);
-    });
+  function ensureManijaAberturas() {
+    const c = state.config;
+    if (!c.manijaAberturas || typeof c.manijaAberturas !== 'object') c.manijaAberturas = {};
+    return c.manijaAberturas;
   }
 
-  // Rellena el desplegable de Cierre según la línea elegida, sin perder una
-  // manija válida. `incluir` fuerza que una manija aparezca aunque esté
-  // restringida (se usa al editar un ítem viejo para no perder su cierre).
+  // ¿La manija está permitida para ese valor? Sin restricción = sí.
+  function permiteRestriccion(map, manija, valor) {
+    if (!valor) return true;
+    const lista = map[manija];
+    return !lista || !lista.length || lista.includes(valor);
+  }
+
+  // Manijas (cierres) disponibles para una línea + tipo de abertura.
+  // Tiene que cumplir las dos restricciones. Sin asignar = disponible siempre.
+  function manijasDisponibles(linea, tipo) {
+    const todas = state.config.tiposManija || [];
+    const mapL = state.config.manijaLineas || {};
+    const mapA = state.config.manijaAberturas || {};
+    return todas.filter(
+      (m) => permiteRestriccion(mapL, m, linea) && permiteRestriccion(mapA, m, tipo)
+    );
+  }
+
+  // Rellena el desplegable de Cierre según la línea y la abertura elegidas, sin
+  // perder una manija válida. `incluir` fuerza que una manija aparezca aunque
+  // esté restringida (se usa al editar un ítem viejo para no perder su cierre).
   function refrescarManijasP2(incluir) {
     const linea = document.getElementById('p2-linea').value;
+    const tipo = document.getElementById('p2-tipo').value;
     const previa = incluir || document.getElementById('p2-manija').value;
-    let lista = manijasParaLinea(linea);
+    let lista = manijasDisponibles(linea, tipo);
     if (previa && previa !== 'SIN CIERRE' && !lista.includes(previa) &&
         (state.config.tiposManija || []).includes(previa)) {
       lista = [previa, ...lista];
@@ -1842,25 +1859,23 @@
     return true;
   }
 
-  // --- Manijas (cierres) con sus líneas -----------------------------------
-  // Prende/apaga una línea para una manija. "Todas" se guarda como sin entrada
-  // (o lista vacía); al restringir, se guarda solo la lista de líneas elegidas.
-  function toggleManijaLinea(manija, linea) {
-    const map = ensureManijaLineas();
-    const todasLineas = state.config.lineas || [];
+  // --- Manijas (cierres) con sus líneas y aberturas ------------------------
+  // Prende/apaga un valor para una manija. "Todas" se guarda como sin entrada
+  // (o lista vacía); al restringir, se guarda solo la lista de valores elegidos.
+  function toggleManijaRestriccion(map, manija, valor, universo) {
     const actual = map[manija];
     const estaEnTodas = !actual || !actual.length;
     let ls;
     if (estaEnTodas) {
       // Estaba en todas: al tocar una, se restringe a las demás.
-      ls = todasLineas.filter((l) => l !== linea);
-    } else if (actual.includes(linea)) {
-      ls = actual.filter((l) => l !== linea);
+      ls = universo.filter((v) => v !== valor);
+    } else if (actual.includes(valor)) {
+      ls = actual.filter((v) => v !== valor);
     } else {
-      ls = [...actual, linea];
+      ls = [...actual, valor];
     }
-    // Si quedaron todas (o ninguna), vuelve a "todas las líneas".
-    if (!ls.length || todasLineas.every((l) => ls.includes(l))) {
+    // Si quedaron todas (o ninguna), vuelve a "todas".
+    if (!ls.length || universo.every((v) => ls.includes(v))) {
       delete map[manija];
     } else {
       map[manija] = ls;
@@ -1868,9 +1883,43 @@
     guardarYRenderConfig();
   }
 
+  // Si se borra una línea o abertura, se saca de las manijas que la tuvieran.
+  function limpiarRestriccion(map, valor) {
+    Object.keys(map).forEach((m) => {
+      map[m] = (map[m] || []).filter((v) => v !== valor);
+      if (!map[m].length) delete map[m];
+    });
+  }
+
+  // Dibuja una fila de botoncitos (líneas o aberturas) para una manija.
+  function filaRestriccion(manija, opciones, asignadas, textos, onToggle) {
+    const box = document.createElement('div');
+    box.className = 'manija-lineas';
+    if (!opciones.length) {
+      box.innerHTML = `<span class="manija-lineas-nota">${textos.vacio}</span>`;
+      return box;
+    }
+    const enTodas = !asignadas || !asignadas.length;
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'manija-lineas-nota';
+    etiqueta.textContent = enTodas ? textos.todas : textos.solo;
+    box.appendChild(etiqueta);
+    opciones.forEach((valor) => {
+      const activa = enTodas || asignadas.includes(valor);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'linea-toggle' + (activa ? ' activa' : '');
+      chip.textContent = valor;
+      chip.addEventListener('click', () => onToggle(valor));
+      box.appendChild(chip);
+    });
+    return box;
+  }
+
   function renderManijasConLineas() {
     const c = state.config;
-    const map = ensureManijaLineas();
+    const mapL = ensureManijaLineas();
+    const mapA = ensureManijaAberturas();
     const cont = document.getElementById('config-lista-manijas');
     cont.innerHTML = '';
 
@@ -1880,9 +1929,6 @@
     }
 
     c.tiposManija.forEach((manija) => {
-      const asignadas = map[manija];
-      const enTodas = !asignadas || !asignadas.length;
-
       const fila = document.createElement('div');
       fila.className = 'manija-fila';
 
@@ -1900,32 +1946,33 @@
         c.tiposManija = c.tiposManija.filter((x) => x !== manija);
         delete c.valores.cierre[manija];
         delete ensureManijaLineas()[manija];
+        delete ensureManijaAberturas()[manija];
         guardarYRenderConfig();
       });
       head.appendChild(nombre);
       head.appendChild(del);
       fila.appendChild(head);
 
-      const lineasBox = document.createElement('div');
-      lineasBox.className = 'manija-lineas';
-      if (!c.lineas.length) {
-        lineasBox.innerHTML = '<span class="manija-lineas-nota">Agregá líneas primero para poder asignarlas.</span>';
-      } else {
-        const etiqueta = document.createElement('span');
-        etiqueta.className = 'manija-lineas-nota';
-        etiqueta.textContent = enTodas ? 'En todas las líneas:' : 'Solo en:';
-        lineasBox.appendChild(etiqueta);
-        c.lineas.forEach((linea) => {
-          const activa = enTodas || asignadas.includes(linea);
-          const chip = document.createElement('button');
-          chip.type = 'button';
-          chip.className = 'linea-toggle' + (activa ? ' activa' : '');
-          chip.textContent = linea;
-          chip.addEventListener('click', () => toggleManijaLinea(manija, linea));
-          lineasBox.appendChild(chip);
-        });
-      }
-      fila.appendChild(lineasBox);
+      fila.appendChild(filaRestriccion(
+        manija, c.lineas, mapL[manija],
+        {
+          todas: 'En todas las líneas:',
+          solo: 'Solo en las líneas:',
+          vacio: 'Agregá líneas primero para poder asignarlas.',
+        },
+        (linea) => toggleManijaRestriccion(ensureManijaLineas(), manija, linea, c.lineas)
+      ));
+
+      fila.appendChild(filaRestriccion(
+        manija, c.tiposAbertura, mapA[manija],
+        {
+          todas: 'En todas las aberturas:',
+          solo: 'Solo en las aberturas:',
+          vacio: 'Agregá tipos de abertura primero para poder asignarlos.',
+        },
+        (tipo) => toggleManijaRestriccion(ensureManijaAberturas(), manija, tipo, c.tiposAbertura)
+      ));
+
       cont.appendChild(fila);
     });
   }
@@ -2024,12 +2071,7 @@
     });
     renderListaChips('config-lista-lineas', c.lineas, (v) => {
       c.lineas = c.lineas.filter((x) => x !== v);
-      // Al borrar una línea, se limpia de las manijas que la tuvieran asignada.
-      const map = ensureManijaLineas();
-      Object.keys(map).forEach((m) => {
-        map[m] = (map[m] || []).filter((l) => l !== v);
-        if (!map[m].length) delete map[m];
-      });
+      limpiarRestriccion(ensureManijaLineas(), v);
       guardarYRenderConfig();
     });
     renderListaChips('config-lista-perfiles', c.perfiles, (v) => {
@@ -2039,6 +2081,7 @@
     });
     renderListaChips('config-lista-aberturas', c.tiposAbertura, (v) => {
       c.tiposAbertura = c.tiposAbertura.filter((x) => x !== v);
+      limpiarRestriccion(ensureManijaAberturas(), v);
       guardarYRenderConfig();
     });
     renderManijasConLineas();

@@ -39,8 +39,10 @@ const DEFAULT_CONFIG = {
   empresaTelefonos: '291 4433628\n291 4405181\n291 4235443',
   tiposAbertura: ['Corrediza', 'Batiente', 'Banderola', 'Paño fijo', 'Oscilobatiente', 'Puerta'],
   tiposManija: [],
-  // Líneas a las que se limita cada manija. Sin entrada = disponible en todas.
+  // Líneas y aberturas a las que se limita cada manija.
+  // Sin entrada = disponible en todas.
   manijaLineas: {},
+  manijaAberturas: {},
   tiposVidrio: [],
   colores: ['Blanco', 'Negro', 'Símil madera', 'Anodizado negro', 'Anodizado gris'],
   lineas: ['M3', 'M5', 'M7'],
