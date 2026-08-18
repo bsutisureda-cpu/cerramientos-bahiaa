@@ -190,13 +190,44 @@ async function procesar(update, ctx) {
   if (msg.document) return onDocumento(chatId, msg.document, ctx);
 
   if (msg.text && msg.text.startsWith('/start')) {
-    return decir(chatId, '👋 Mandame el Excel de Winmaker y te devuelvo el PDF del presupuesto.');
+    return decir(
+      chatId,
+      '👋 Mandame el Excel de Winmaker y te devuelvo el PDF del presupuesto.\n\n' +
+        'Comandos:\n' +
+        '/backup — respaldo de los datos\n' +
+        '/seguimiento — presupuestos que siguen sin respuesta'
+    );
+  }
+
+  if (msg.text && msg.text.startsWith('/backup')) {
+    await decir(chatId, '📦 Armando el respaldo...');
+    try {
+      await require('./backup').enviarBackup({ baseUrl: ctx.baseUrl, secret: ctx.secret, manual: true });
+    } catch (e) {
+      await decir(chatId, `❌ No pude armar el backup: ${e.message}`);
+    }
+    return;
+  }
+
+  if (msg.text && msg.text.startsWith('/seguimiento')) {
+    try {
+      await require('./seguimiento').revisarSeguimiento({
+        baseUrl: ctx.baseUrl,
+        secret: ctx.secret,
+        dataDir: ctx.dataDir,
+        manual: true,
+        chatId,
+      });
+    } catch (e) {
+      await decir(chatId, `❌ No pude revisar el seguimiento: ${e.message}`);
+    }
+    return;
   }
 
   return decir(chatId, 'Mandame el Excel del presupuesto (.xlsx) y te devuelvo el PDF.');
 }
 
-function iniciarBot({ baseUrl, secret }) {
+function iniciarBot({ baseUrl, secret, dataDir }) {
   if (!TOKEN) {
     console.log('[bot] TELEGRAM_TOKEN no configurado: el bot queda apagado.');
     return;
@@ -205,7 +236,7 @@ function iniciarBot({ baseUrl, secret }) {
     console.log('[bot] TELEGRAM_ALLOWED vacío: el bot no le va a responder a nadie.');
   }
 
-  const ctx = { baseUrl, secret };
+  const ctx = { baseUrl, secret, dataDir };
   let offset = 0;
   let fallando = false;
 

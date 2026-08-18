@@ -39,6 +39,10 @@ const DEFAULT_CONFIG = {
   empresaTelefonos: '291 4433628\n291 4405181\n291 4235443',
   tiposAbertura: ['Corrediza', 'Batiente', 'Banderola', 'Paño fijo', 'Oscilobatiente', 'Puerta'],
   tiposManija: [],
+  // Líneas y aberturas a las que se limita cada manija.
+  // Sin entrada = disponible en todas.
+  manijaLineas: {},
+  manijaAberturas: {},
   tiposVidrio: [],
   colores: ['Blanco', 'Negro', 'Símil madera', 'Anodizado negro', 'Anodizado gris'],
   lineas: ['M3', 'M5', 'M7'],
@@ -145,6 +149,18 @@ function requireAuth(req, res, next) {
 // --- App ---
 const app = express();
 app.use(express.json({ limit: '2mb' }));
+
+// Esta app es interna: no queremos que aparezca en Google ni en ningún buscador.
+// La cabecera vale para todo lo que sirve el server (páginas, imágenes, archivos).
+app.use((req, res, next) => {
+  res.set('X-Robots-Tag', 'noindex, nofollow, noarchive, nosnippet');
+  next();
+});
+
+// Además, el archivo que los buscadores leen primero para saber qué pueden mirar.
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send('User-agent: *\nDisallow: /\n');
+});
 
 app.post('/api/login', (req, res) => {
   if (!USUARIO || !CLAVE) {
@@ -271,7 +287,7 @@ app.post('/api/upload', requireAuth, upload.single('file'), (req, res) => {
 app.use('/uploads', express.static(UPLOADS_DIR));
 app.use(express.static(__dirname));
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Servidor en http://localhost:${PORT}`);
 
   // Bot de Telegram (Excel de Winmaker -> PDF). Sólo arranca si hay token.
@@ -280,8 +296,43 @@ app.listen(PORT, () => {
     require('./bot/telegram').iniciarBot({
       baseUrl: `http://127.0.0.1:${PORT}`,
       secret: SECRET,
+      dataDir: DATA_DIR,
     });
   } catch (e) {
     console.error('[bot] no pude iniciarlo:', e.message);
   }
+
+  // Backup automático de los datos, por Telegram (los datos viven en un solo disco).
+  try {
+    require('./bot/backup').iniciarBackupAutomatico({
+      baseUrl: `http://127.0.0.1:${PORT}`,
+      secret: SECRET,
+      dataDir: DATA_DIR,
+    });
+  } catch (e) {
+    console.error('[backup] no pude iniciarlo:', e.message);
+  }
+
+  // Seguimiento: avisa de los presupuestos que siguen sin respuesta.
+  try {
+    require('./bot/seguimiento').iniciarSeguimiento({
+      baseUrl: `http://127.0.0.1:${PORT}`,
+      secret: SECRET,
+      dataDir: DATA_DIR,
+    });
+  } catch (e) {
+    console.error('[seguimiento] no pude iniciarlo:', e.message);
+  }
 });
+
+// Cierre ordenado: Railway manda SIGTERM al reemplazar un deploy por otro.
+// Si no salimos con código 0, Railway lo cuenta como crash y manda mails de
+// "Deployment crashed" aunque la app nunca haya fallado.
+function cerrarOrdenado(senal) {
+  console.log(`Recibí ${senal}: cerrando el servidor.`);
+  server.close(() => process.exit(0));
+  // El loop del bot sigue vivo aunque el servidor cierre: salimos igual.
+  setTimeout(() => process.exit(0), 5000).unref();
+}
+process.on('SIGTERM', () => cerrarOrdenado('SIGTERM'));
+process.on('SIGINT', () => cerrarOrdenado('SIGINT'));

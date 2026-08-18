@@ -182,6 +182,14 @@
     ['p2-tipo', 'p2-linea'].forEach((id) =>
       document.getElementById(id).addEventListener('change', aplicarBaseEjemplo)
     );
+    // Al cambiar la línea o la abertura, el desplegable de Cierre muestra solo
+    // las manijas permitidas para esa combinación.
+    ['p2-linea', 'p2-tipo'].forEach((id) =>
+      document.getElementById(id).addEventListener('change', () => {
+        refrescarManijasP2();
+        actualizarPreviewImagenes();
+      })
+    );
 
     document.getElementById('btn-modo-simple').addEventListener('click', () => switchModoPanel2('simple'));
     document.getElementById('btn-modo-combo').addEventListener('click', () => switchModoPanel2('combo'));
@@ -296,11 +304,57 @@
     populateSelect('p2-tipo', state.config.tiposAbertura);
     populateSelect('p2-color', state.config.colores);
     populateSelect('p2-linea', state.config.lineas);
-    populateSelect('p2-manija', ['SIN CIERRE', ...state.config.tiposManija], 'Ninguna');
+    refrescarManijasP2();
     populateSelect('p2-color-manija', ['Blanco', 'Negro']);
     populateSelect('p2-vidrio', state.config.tiposVidrio, 'Ninguno');
     populateSelect('p2-combo-color', state.config.colores);
     populateSelect('p2-combo-select', (state.config.combinaciones || []).map((c) => c.nombre), '— Elegí una combinación —');
+  }
+
+  // Config vieja puede no tener estos mapas: se completan sin romper.
+  function ensureManijaLineas() {
+    const c = state.config;
+    if (!c.manijaLineas || typeof c.manijaLineas !== 'object') c.manijaLineas = {};
+    return c.manijaLineas;
+  }
+
+  function ensureManijaAberturas() {
+    const c = state.config;
+    if (!c.manijaAberturas || typeof c.manijaAberturas !== 'object') c.manijaAberturas = {};
+    return c.manijaAberturas;
+  }
+
+  // ¿La manija está permitida para ese valor? Sin restricción = sí.
+  function permiteRestriccion(map, manija, valor) {
+    if (!valor) return true;
+    const lista = map[manija];
+    return !lista || !lista.length || lista.includes(valor);
+  }
+
+  // Manijas (cierres) disponibles para una línea + tipo de abertura.
+  // Tiene que cumplir las dos restricciones. Sin asignar = disponible siempre.
+  function manijasDisponibles(linea, tipo) {
+    const todas = state.config.tiposManija || [];
+    const mapL = state.config.manijaLineas || {};
+    const mapA = state.config.manijaAberturas || {};
+    return todas.filter(
+      (m) => permiteRestriccion(mapL, m, linea) && permiteRestriccion(mapA, m, tipo)
+    );
+  }
+
+  // Rellena el desplegable de Cierre según la línea y la abertura elegidas, sin
+  // perder una manija válida. `incluir` fuerza que una manija aparezca aunque
+  // esté restringida (se usa al editar un ítem viejo para no perder su cierre).
+  function refrescarManijasP2(incluir) {
+    const linea = document.getElementById('p2-linea').value;
+    const tipo = document.getElementById('p2-tipo').value;
+    const previa = incluir || document.getElementById('p2-manija').value;
+    let lista = manijasDisponibles(linea, tipo);
+    if (previa && previa !== 'SIN CIERRE' && !lista.includes(previa) &&
+        (state.config.tiposManija || []).includes(previa)) {
+      lista = [previa, ...lista];
+    }
+    populateSelect('p2-manija', ['SIN CIERRE', ...lista], 'Ninguna');
   }
 
   // ---------------------------------------------------------------------
@@ -683,6 +737,8 @@
       document.getElementById('p2-tipo').value = item.tipo;
       document.getElementById('p2-color').value = item.color;
       document.getElementById('p2-linea').value = item.linea || '';
+      // Filtra por la línea del ítem, pero sin perder su cierre aunque esté restringido.
+      refrescarManijasP2(item.manija);
       document.getElementById('p2-manija').value = item.manija || '';
       document.getElementById('p2-color-manija').value = item.colorManija || '';
       document.getElementById('p2-vidrio').value = item.vidrio || '';
@@ -758,11 +814,14 @@
     state.datosActuales = datos;
     document.getElementById('vp-empresa-nombre').textContent = state.config.empresaNombre || '';
     const logo = document.getElementById('vp-logo');
+    const logoBox = document.querySelector('.vp-logo-box');
     if (state.config.empresaLogo) {
       logo.src = state.config.empresaLogo;
       logo.hidden = false;
+      logoBox.style.display = '';
     } else {
       logo.hidden = true;
+      logoBox.style.display = 'none';
     }
     document.getElementById('vp-empresa-handle').textContent = state.config.empresaHandle || '';
     document.getElementById('vp-empresa-email').textContent = state.config.empresaEmail || '';
@@ -772,6 +831,7 @@
     document.getElementById('vp-mensaje-final').textContent = mensajeFinal;
     document.getElementById('vp-mensaje-final-box').hidden = !mensajeFinal;
 
+    document.getElementById('vp-numero').textContent = datos.numero ? `N.º ${datos.numero}` : '';
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
 
@@ -783,15 +843,15 @@
     cont.innerHTML = '';
     // Una tarjeta por ítem: si hay varias unidades se indica la cantidad,
     // en vez de repetir la misma tarjeta.
-    state.items.forEach((item) => {
-      cont.appendChild(crearVentanaCard(item));
+    state.items.forEach((item, idx) => {
+      cont.appendChild(crearVentanaCard(item, idx));
     });
 
     actualizarTotales(calcularTotalBrutoItems(), datos.ivaPorcentaje, datos.descuentoPorcentaje);
   }
 
   function formatMoney(n) {
-    return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    return n.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
   function calcularTotalBrutoItems() {
@@ -817,12 +877,34 @@
     }
 
     document.getElementById('vp-iva-porcentaje-out').textContent = ivaPorcentaje;
-    document.getElementById('vp-iva-out').textContent = formatMoney(iva);
-    document.getElementById('vp-total-out').textContent = formatMoney(total);
+    document.getElementById('vp-iva-out').textContent = `$ ${formatMoney(iva)}`;
+    document.getElementById('vp-total-out').textContent = `$ ${formatMoney(total)}`;
     document.getElementById('vp-totales-box').hidden = !totalBruto;
   }
 
-  function crearVentanaCard(item) {
+  // Encabezado de la tarjeta: número de ítem, título y cantidad.
+  function itemHeadHTML(idx, titulo, cantidad) {
+    const cant = Math.max(1, cantidad || 1);
+    return `
+      <div class="vp-item-head">
+        <span class="vp-item-num">${String(idx + 1).padStart(2, '0')}</span>
+        <span class="vp-item-titulo">${titulo}</span>
+        ${cant > 1 ? `<span class="vp-item-cant">${cant} unidades</span>` : ''}
+      </div>`;
+  }
+
+  // Columna de precio: unitario x cantidad y subtotal, alineados a la derecha.
+  function itemPrecioHTML(precio, cantidad) {
+    if (!precio) return '';
+    const cant = Math.max(1, cantidad || 1);
+    return `
+      <div class="vp-item-precio">
+        ${cant > 1 ? `<span class="vp-precio-unit">${cant} × $ ${formatMoney(precio)}</span>` : ''}
+        <span class="vp-precio-sub">$ ${formatMoney(precio * cant)}</span>
+      </div>`;
+  }
+
+  function crearVentanaCard(item, idx) {
     if (item.esCombinacion) {
       const card = document.createElement('div');
       card.className = 'vp-ventana';
@@ -835,35 +917,28 @@
         const imgVidrio = p.vidrio ? imagenVidrio(state.config, p.vidrio) : null;
         const extraRow = imgCierre || imgVidrio
           ? `<div class="vp-extra-row">
-              <div class="vp-extra-col">
-                ${imgCierre ? `<img src="${imgCierre}" alt="${p.cierre}" /><span>${p.cierre}</span>` : ''}
-              </div>
-              <div class="vp-extra-col">
-                ${imgVidrio ? `<img src="${imgVidrio}" alt="${p.vidrio}" /><span>${p.vidrio}</span>` : ''}
-              </div>
+              ${imgCierre ? `<div class="vp-extra-col"><img src="${imgCierre}" alt="${p.cierre}" /><span>${p.cierre}</span></div>` : ''}
+              ${imgVidrio ? `<div class="vp-extra-col"><img src="${imgVidrio}" alt="${p.vidrio}" /><span>${p.vidrio}</span></div>` : ''}
             </div>`
           : '';
         return `
         <div class="vp-combo-parte">
-          <strong>${p.tipo}${p.linea ? ' LÍNEA ' + p.linea : ''}</strong>
-          <span>MEDIDAS: ${p.ancho} x ${p.alto} mm${p.vidrio ? ' — VIDRIO: ' + p.vidrio : ''}${p.cierre ? ' — CIERRE: ' + p.cierre : ''}</span>
+          <strong>${p.tipo}${p.linea ? ' · Línea ' + p.linea : ''}</strong>
+          <span>${p.ancho} × ${p.alto} mm${p.vidrio ? ' · Vidrio ' + p.vidrio : ''}${p.cierre ? ' · Cierre ' + p.cierre : ''}</span>
           ${extraRow}
         </div>
       `;
       }).join('');
-      const imgHTML = item.imagen
-        ? `<img src="${item.imagen}" alt="${item.nombre}" style="width:110px;height:90px;object-fit:contain;background:#fff;border-radius:4px;" />`
-        : '';
+      const imgHTML = item.imagen ? `<img src="${item.imagen}" alt="${item.nombre}" />` : '<span></span>';
       card.innerHTML = `
+        ${itemHeadHTML(idx, `Tipo ${item.nombre}`, cantCombo)}
         <div class="vp-item-row">
           ${imgHTML}
-          <div class="vp-item-info" style="${imgHTML ? '' : 'padding-left:0'}">
-            <strong>Tipo ${item.nombre} (${anchoTotal} x ${altoTotal} mm)</strong>
-            <span class="vp-spec-linea">COLOR: ${item.color}</span>
-            ${cantCombo > 1 ? `<span class="vp-spec-linea">CANTIDAD: ${cantCombo} unidades</span>` : ''}
-            ${item.precio ? `<span class="vp-spec-linea">PRECIO BRUTO: $ ${formatMoney(item.precio)}${cantCombo > 1 ? ' c/u' : ''}</span>` : ''}
-            ${item.precio && cantCombo > 1 ? `<span class="vp-spec-linea">SUBTOTAL: $ ${formatMoney(item.precio * cantCombo)}</span>` : ''}
-          </div>
+          <dl class="vp-specs">
+            <div><dt>Medidas totales</dt><dd>${anchoTotal} × ${altoTotal} mm</dd></div>
+            <div><dt>Color</dt><dd>${item.color}</dd></div>
+          </dl>
+          ${itemPrecioHTML(item.precio, cantCombo)}
         </div>
         <div class="vp-combo-partes-list">${partesHTML}</div>
       `;
@@ -877,22 +952,17 @@
     const card = document.createElement('div');
     card.className = 'vp-ventana';
     card.innerHTML = `
+      ${itemHeadHTML(idx, `${item.tipo}${item.linea ? ' · Línea ' + item.linea : ''}`, item.cantidad)}
       <div class="vp-item-row">
         <img src="${imgAbertura}" alt="${item.tipo}" />
-        <div class="vp-item-info">
-          <strong>${item.tipo} (${item.ancho} x ${item.alto} mm)</strong>
-          ${specsItem(item)}
-        </div>
+        <dl class="vp-specs">${specsItem(item)}</dl>
+        ${itemPrecioHTML(item.precio, item.cantidad)}
       </div>
       ${
         imgManija || imgVidrio
           ? `<div class="vp-extra-row">
-              <div class="vp-extra-col">
-                ${imgManija ? `<img src="${imgManija}" alt="${item.manija}" /><span>${item.manija}</span>` : ''}
-              </div>
-              <div class="vp-extra-col">
-                ${imgVidrio ? `<img src="${imgVidrio}" alt="${item.vidrio}" /><span>${item.vidrio}</span>` : ''}
-              </div>
+              ${imgManija ? `<div class="vp-extra-col"><img src="${imgManija}" alt="${item.manija}" /><span>${item.manija}</span></div>` : ''}
+              ${imgVidrio ? `<div class="vp-extra-col"><img src="${imgVidrio}" alt="${item.vidrio}" /><span>${item.vidrio}</span></div>` : ''}
             </div>`
           : ''
       }
@@ -906,28 +976,21 @@
     fila.style.display = valor ? '' : 'none';
   }
 
+  // Pares etiqueta/valor de las especificaciones del ítem (sin el precio,
+  // que va en su propia columna).
   function specsItem(item) {
-    const lineas = [
-      `PRODUCTO: ${item.tipo}${item.linea ? ' LÍNEA ' + item.linea : ''}`,
-      `MEDIDAS: ${item.ancho} x ${item.alto} mm`,
-    ];
-    if (item.vidrio) lineas.push(`VIDRIO: ${item.vidrio}`);
-    lineas.push(`COLOR: ${item.color}`);
-    if (item.manija) lineas.push(`CIERRE: ${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`);
-    if (item.cajon === 'si') lineas.push('LLEVA CAJÓN');
-    if (item.mosquitero === 'si') lineas.push('LLEVA MOSQUITERO');
-    if (item.tapajuntas === 'si') lineas.push('CON TAPAJUNTAS');
-    const cant = Math.max(1, item.cantidad || 1);
-    if (cant > 1) lineas.push(`CANTIDAD: ${cant} unidades`);
-    if (item.precio) {
-      if (cant > 1) {
-        lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)} c/u`);
-        lineas.push(`SUBTOTAL: $ ${formatMoney(item.precio * cant)}`);
-      } else {
-        lineas.push(`PRECIO BRUTO: $ ${formatMoney(item.precio)}`);
-      }
+    const pares = [['Medidas', `${item.ancho} × ${item.alto} mm`]];
+    if (item.vidrio) pares.push(['Vidrio', item.vidrio]);
+    if (item.color) pares.push(['Color', item.color]);
+    if (item.manija && item.manija !== 'SIN CIERRE') {
+      pares.push(['Cierre', `${item.manija}${item.colorManija ? ' · ' + item.colorManija : ''}`]);
     }
-    return lineas.map((l) => `<span class="vp-spec-linea">${l}</span>`).join('');
+    const incluye = [];
+    if (item.mosquitero === 'si') incluye.push('Mosquitero');
+    if (item.cajon === 'si') incluye.push('Cajón');
+    if (item.tapajuntas === 'si') incluye.push('Tapajuntas');
+    if (incluye.length) pares.push(['Incluye', incluye.join(' · ')]);
+    return pares.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
   }
 
   function volverAEditar() {
@@ -1796,6 +1859,191 @@
     return true;
   }
 
+  // --- Manijas (cierres) con sus líneas y aberturas ------------------------
+  // Prende/apaga un valor para una manija. "Todas" se guarda como sin entrada
+  // (o lista vacía); al restringir, se guarda solo la lista de valores elegidos.
+  function toggleManijaRestriccion(map, manija, valor, universo) {
+    const actual = map[manija];
+    const estaEnTodas = !actual || !actual.length;
+    let ls;
+    if (estaEnTodas) {
+      // Estaba en todas: al tocar una, se restringe a las demás.
+      ls = universo.filter((v) => v !== valor);
+    } else if (actual.includes(valor)) {
+      ls = actual.filter((v) => v !== valor);
+    } else {
+      ls = [...actual, valor];
+    }
+    // Si quedaron todas (o ninguna), vuelve a "todas".
+    if (!ls.length || universo.every((v) => ls.includes(v))) {
+      delete map[manija];
+    } else {
+      map[manija] = ls;
+    }
+    guardarYRenderConfig();
+  }
+
+  // Si se borra una línea o abertura, se saca de las manijas que la tuvieran.
+  function limpiarRestriccion(map, valor) {
+    Object.keys(map).forEach((m) => {
+      map[m] = (map[m] || []).filter((v) => v !== valor);
+      if (!map[m].length) delete map[m];
+    });
+  }
+
+  // Dibuja una fila de botoncitos (líneas o aberturas) para una manija.
+  function filaRestriccion(manija, opciones, asignadas, textos, onToggle) {
+    const box = document.createElement('div');
+    box.className = 'manija-lineas';
+    if (!opciones.length) {
+      box.innerHTML = `<span class="manija-lineas-nota">${textos.vacio}</span>`;
+      return box;
+    }
+    const enTodas = !asignadas || !asignadas.length;
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'manija-lineas-nota';
+    etiqueta.textContent = enTodas ? textos.todas : textos.solo;
+    box.appendChild(etiqueta);
+    opciones.forEach((valor) => {
+      const activa = enTodas || asignadas.includes(valor);
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'linea-toggle' + (activa ? ' activa' : '');
+      chip.textContent = valor;
+      chip.addEventListener('click', () => onToggle(valor));
+      box.appendChild(chip);
+    });
+    return box;
+  }
+
+  function renderManijasConLineas() {
+    const c = state.config;
+    const mapL = ensureManijaLineas();
+    const mapA = ensureManijaAberturas();
+    const cont = document.getElementById('config-lista-manijas');
+    cont.innerHTML = '';
+
+    if (!c.tiposManija.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no agregaste ningún cierre.</p>';
+      return;
+    }
+
+    c.tiposManija.forEach((manija) => {
+      const fila = document.createElement('div');
+      fila.className = 'manija-fila';
+
+      const head = document.createElement('div');
+      head.className = 'manija-fila-head';
+      const nombre = document.createElement('span');
+      nombre.className = 'manija-nombre';
+      nombre.textContent = manija;
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'manija-del';
+      del.setAttribute('aria-label', 'Eliminar');
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        c.tiposManija = c.tiposManija.filter((x) => x !== manija);
+        delete c.valores.cierre[manija];
+        delete ensureManijaLineas()[manija];
+        delete ensureManijaAberturas()[manija];
+        guardarYRenderConfig();
+      });
+      head.appendChild(nombre);
+      head.appendChild(del);
+      fila.appendChild(head);
+
+      fila.appendChild(filaRestriccion(
+        manija, c.lineas, mapL[manija],
+        {
+          todas: 'En todas las líneas:',
+          solo: 'Solo en las líneas:',
+          vacio: 'Agregá líneas primero para poder asignarlas.',
+        },
+        (linea) => toggleManijaRestriccion(ensureManijaLineas(), manija, linea, c.lineas)
+      ));
+
+      fila.appendChild(filaRestriccion(
+        manija, c.tiposAbertura, mapA[manija],
+        {
+          todas: 'En todas las aberturas:',
+          solo: 'Solo en las aberturas:',
+          vacio: 'Agregá tipos de abertura primero para poder asignarlos.',
+        },
+        (tipo) => toggleManijaRestriccion(ensureManijaAberturas(), manija, tipo, c.tiposAbertura)
+      ));
+
+      cont.appendChild(fila);
+    });
+  }
+
+  // --- Traducciones de Winmaker (equivalencias) ---------------------------
+  // Cada categoría dice: cómo se llama para el usuario y de qué lista salen
+  // los valores válidos a los que puede traducir.
+  const EQUIV_CATS = {
+    productos: { etiqueta: 'Abertura', destinos: (c) => c.tiposAbertura },
+    colores: { etiqueta: 'Color', destinos: (c) => c.colores },
+    vidrios: { etiqueta: 'Vidrio', destinos: (c) => c.tiposVidrio },
+    cierres: { etiqueta: 'Cierre', destinos: (c) => ['SIN CIERRE', ...c.tiposManija] },
+  };
+
+  // Configs viejas pueden no tener equivalencias: se completa sin romper.
+  function equivalenciasConfig() {
+    const c = state.config;
+    if (!c.equivalencias || typeof c.equivalencias !== 'object') c.equivalencias = {};
+    Object.keys(EQUIV_CATS).forEach((cat) => {
+      if (!c.equivalencias[cat] || typeof c.equivalencias[cat] !== 'object') {
+        c.equivalencias[cat] = {};
+      }
+    });
+    return c.equivalencias;
+  }
+
+  // El destino puede estar guardado como texto o como {tipo, linea}: se muestra parejo.
+  function textoDestinoEquiv(valor) {
+    if (valor && typeof valor === 'object') return valor.tipo || '';
+    return valor;
+  }
+
+  function renderEquivalencias() {
+    const c = state.config;
+    const equivs = equivalenciasConfig();
+
+    // El desplegable de "significa" sigue a la categoría elegida.
+    const catSel = document.getElementById('config-equiv-cat');
+    const cat = EQUIV_CATS[catSel.value] ? catSel.value : 'productos';
+    populateSelect('config-equiv-destino', EQUIV_CATS[cat].destinos(c));
+
+    // Lista de todas las traducciones ya cargadas, de todas las categorías.
+    const cont = document.getElementById('config-lista-equivalencias');
+    cont.innerHTML = '';
+    const filas = [];
+    Object.keys(EQUIV_CATS).forEach((catKey) => {
+      Object.keys(equivs[catKey]).forEach((origen) => {
+        filas.push({ catKey, origen, destino: textoDestinoEquiv(equivs[catKey][origen]) });
+      });
+    });
+
+    if (!filas.length) {
+      cont.innerHTML = '<p class="empty-msg">Todavía no cargaste ninguna traducción.</p>';
+      return;
+    }
+
+    filas.forEach(({ catKey, origen, destino }) => {
+      const chip = document.createElement('span');
+      chip.className = 'config-chip config-chip-equiv';
+      chip.innerHTML =
+        `<strong>${origen}</strong> → ${destino} ` +
+        `<em class="config-equiv-cat-tag">(${EQUIV_CATS[catKey].etiqueta})</em> ` +
+        '<button type="button" aria-label="Eliminar">×</button>';
+      chip.querySelector('button').addEventListener('click', () => {
+        delete equivalenciasConfig()[catKey][origen];
+        guardarYRenderConfig();
+      });
+      cont.appendChild(chip);
+    });
+  }
+
   function actualizarLogoSidebar() {
     const logo = document.getElementById('sidebar-logo');
     if (state.config.empresaLogo) {
@@ -1823,6 +2071,7 @@
     });
     renderListaChips('config-lista-lineas', c.lineas, (v) => {
       c.lineas = c.lineas.filter((x) => x !== v);
+      limpiarRestriccion(ensureManijaLineas(), v);
       guardarYRenderConfig();
     });
     renderListaChips('config-lista-perfiles', c.perfiles, (v) => {
@@ -1832,18 +2081,17 @@
     });
     renderListaChips('config-lista-aberturas', c.tiposAbertura, (v) => {
       c.tiposAbertura = c.tiposAbertura.filter((x) => x !== v);
+      limpiarRestriccion(ensureManijaAberturas(), v);
       guardarYRenderConfig();
     });
-    renderListaChips('config-lista-manijas', c.tiposManija, (v) => {
-      c.tiposManija = c.tiposManija.filter((x) => x !== v);
-      delete c.valores.cierre[v];
-      guardarYRenderConfig();
-    });
+    renderManijasConLineas();
     renderListaChips('config-lista-vidrios', c.tiposVidrio, (v) => {
       c.tiposVidrio = c.tiposVidrio.filter((x) => x !== v);
       delete c.valores.vidrio[v];
       guardarYRenderConfig();
     });
+
+    renderEquivalencias();
 
     populateSelect('config-img-manija', c.tiposManija);
     populateSelect('config-img-color-manija', ['Blanco', 'Negro']);
@@ -2280,6 +2528,18 @@
         input.value = '';
         guardarYRenderConfig();
       }
+    });
+    // Al cambiar la categoría, el desplegable "significa" muestra otros valores.
+    document.getElementById('config-equiv-cat').addEventListener('change', renderEquivalencias);
+    document.getElementById('btn-add-equiv').addEventListener('click', () => {
+      const cat = document.getElementById('config-equiv-cat').value;
+      const origenInput = document.getElementById('config-equiv-origen');
+      const destino = document.getElementById('config-equiv-destino').value;
+      const origen = (origenInput.value || '').trim().toUpperCase();
+      if (!EQUIV_CATS[cat] || !origen || !destino) return;
+      equivalenciasConfig()[cat][origen] = destino;
+      origenInput.value = '';
+      guardarYRenderConfig();
     });
     document.getElementById('btn-add-manija').addEventListener('click', () => {
       const input = document.getElementById('config-nueva-manija');
