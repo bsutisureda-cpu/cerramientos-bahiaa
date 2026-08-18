@@ -34,6 +34,18 @@ function aNumero(txt) {
   return isNaN(n) ? 0 : n;
 }
 
+// Convierte "1.50 x 1.20 mts" (o "0.30 x 1.20 mts", o "300 x 700 mm") a mm.
+// Si no trae unidad, se asume metros (así lo escribe Winmaker en "MEDIDAS").
+function medidasAmm(texto) {
+  const m = String(texto == null ? '' : texto).match(/([\d.,]+)\s*x\s*([\d.,]+)\s*(mm|mts|mt|m)?/i);
+  if (!m) return null;
+  const unidad = (m[3] || '').toLowerCase();
+  const factor = unidad === 'mm' ? 1 : 1000; // metros -> mm por defecto
+  const ancho = Math.round(aNumero(m[1]) * factor);
+  const alto = Math.round(aNumero(m[2]) * factor);
+  return { ancho, alto };
+}
+
 // Busca un campo tipo "COLOR: NEGRO" dentro de los segmentos del detalle.
 function buscarCampo(segmentos, etiqueta) {
   const re = new RegExp('^' + etiqueta + '\\s*:\\s*(.+)$', 'i');
@@ -52,15 +64,18 @@ function parsearDetalle(detalleRaw) {
   const detalle = String(detalleRaw == null ? '' : detalleRaw);
   const segmentos = detalle.split(SEP).map(limpiar).filter(Boolean);
 
-  // Encabezado: "Tipo v1 (1500 x 1200 mm):"
+  // Encabezado: "Tipo v1 (1500 x 1200 mm):" — de acá sacamos el nombre y, como
+  // respaldo, las medidas (pero la fuente principal es el campo MEDIDAS).
   let nombre = '';
   let ancho = 0;
   let alto = 0;
-  const enc = detalle.match(/Tipo\s+([^\s(]+)\s*\((\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*mm\)/i);
+  const enc = detalle.match(/Tipo\s+([^\s(]+)\s*\(([\d.,]+)\s*x\s*([\d.,]+)\s*(mm|mts|mt|m)?\)/i);
   if (enc) {
     nombre = limpiar(enc[1]);
-    ancho = aNumero(enc[2]);
-    alto = aNumero(enc[3]);
+    const u = (enc[4] || '').toLowerCase();
+    const factor = (u === 'mts' || u === 'mt' || u === 'm') ? 1000 : 1; // sin unidad => mm
+    ancho = Math.round(aNumero(enc[2]) * factor);
+    alto = Math.round(aNumero(enc[3]) * factor);
   }
 
   // "Interiores:VIDRIO: ..." -> normalizamos para poder buscar VIDRIO
@@ -69,6 +84,14 @@ function parsearDetalle(detalleRaw) {
   const producto = buscarCampo(segsNorm, 'PRODUCTO');
   const vidrio = buscarCampo(segsNorm, 'VIDRIO');
   const color = buscarCampo(segsNorm, 'COLOR');
+
+  // Fuente principal de las medidas: el campo "MEDIDAS: X x Y mts" (en metros).
+  // Es más confiable que el encabezado; sólo caemos al encabezado si falta.
+  const med = medidasAmm(buscarCampo(segsNorm, 'MEDIDAS'));
+  if (med) {
+    if (med.ancho > 0) ancho = med.ancho;
+    if (med.alto > 0) alto = med.alto;
+  }
 
   // El cierre viene como texto suelto: "CIERRE UN PUNTO CON MANIJA ACODADA"
   let cierre = '';
