@@ -179,7 +179,8 @@ function claseCombinada(producto) {
 // los tipos de abertura creados en la app (con sus imágenes).
 const COMBINADAS_DEFAULT = {
   oscilobatiente: 'Patagonica oscilobatiente',
-  'ventana de abrir': 'Patagonica ventana de abrir',
+  // La de ventana de abrir es la Patagónica que ya está cargada (con sus fotos).
+  'ventana de abrir': 'Patagonica',
 };
 
 function combinadas(config) {
