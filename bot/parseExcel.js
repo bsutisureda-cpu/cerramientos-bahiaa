@@ -81,17 +81,52 @@ function parsearDetalle(detalleRaw) {
   // "Interiores:VIDRIO: ..." -> normalizamos para poder buscar VIDRIO
   const segsNorm = segmentos.map((s) => s.replace(/^Interiores\s*:\s*/i, ''));
 
-  const producto = buscarCampo(segsNorm, 'PRODUCTO');
-  const vidrio = buscarCampo(segsNorm, 'VIDRIO');
+  // Recorremos los segmentos EN ORDEN para armar las partes. Cada "PRODUCTO:"
+  // abre una parte; sus "MEDIDAS:" y "VIDRIO:" son los que vienen hasta el
+  // próximo "PRODUCTO:". Así soportamos aberturas combinadas (varios productos).
+  const partes = [];
+  let actual = null;
+  for (const s of segsNorm) {
+    const mProd = s.match(/^PRODUCTO\s*:\s*(.+)$/i);
+    if (mProd) {
+      actual = { producto: limpiar(mProd[1]), ancho: 0, alto: 0, vidrio: '' };
+      partes.push(actual);
+      continue;
+    }
+    if (!actual) continue;
+    const mMed = s.match(/^MEDIDAS\s*:\s*(.+)$/i);
+    if (mMed) {
+      const m = medidasAmm(mMed[1]);
+      if (m) { actual.ancho = m.ancho; actual.alto = m.alto; }
+      continue;
+    }
+    const mVid = s.match(/^VIDRIO\s*:\s*(.+)$/i);
+    if (mVid) { actual.vidrio = limpiar(mVid[1]); continue; }
+  }
+
+  // "MARCO UNIFICADO" no es una abertura: es el marco total de la combinación.
+  // Nos quedamos con su medida como total y lo sacamos de las partes reales.
+  const esMarco = (p) => /MARCO\s+UNIFICADO/i.test(p.producto);
+  const marco = partes.find(esMarco);
+  const partesReales = partes.filter((p) => !esMarco(p));
+
   const color = buscarCampo(segsNorm, 'COLOR');
 
-  // Fuente principal de las medidas: el campo "MEDIDAS: X x Y mts" (en metros).
-  // Es más confiable que el encabezado; sólo caemos al encabezado si falta.
-  const med = medidasAmm(buscarCampo(segsNorm, 'MEDIDAS'));
-  if (med) {
-    if (med.ancho > 0) ancho = med.ancho;
-    if (med.alto > 0) alto = med.alto;
+  // Medida total: la del marco unificado; si no, la del encabezado; si no, la
+  // suma de anchos y el alto máximo de las partes.
+  if (marco && marco.ancho > 0) { ancho = marco.ancho; alto = marco.alto; }
+  else {
+    const med = medidasAmm(buscarCampo(segsNorm, 'MEDIDAS'));
+    if (med && med.ancho > 0 && partesReales.length <= 1) { ancho = med.ancho; alto = med.alto; }
+    else if (partesReales.length) {
+      const sum = partesReales.reduce((a, p) => a + (p.ancho || 0), 0);
+      const maxH = partesReales.reduce((mx, p) => Math.max(mx, p.alto || 0), 0);
+      if (sum > 0) ancho = sum;
+      if (maxH > 0) alto = maxH;
+    }
   }
+
+  const principal = partesReales[0] || { producto: '', ancho, alto, vidrio: '' };
 
   // El cierre viene como texto suelto: "CIERRE UN PUNTO CON MANIJA ACODADA"
   let cierre = '';
@@ -108,14 +143,16 @@ function parsearDetalle(detalleRaw) {
   });
 
   return {
-    nombre,          // "v1"
-    ancho,           // 1500 (mm)
-    alto,            // 1200 (mm)
-    producto,        // "CORREDIZA 2 GUIAS LINEA MONACO TOP"
-    vidrio,          // "FLOAT 4MM+CAMARA 12MM+FLOAT 4MM"
-    color,           // "NEGRO"
-    cierre,          // "UN PUNTO CON MANIJA ACODADA"
-    extras,          // ["CON TAPAJUNTAS"]
+    nombre,                          // "v1"
+    ancho,                           // total (mm)
+    alto,                            // total (mm)
+    producto: principal.producto,    // producto de la parte principal
+    vidrio: principal.vidrio,        // vidrio de la parte principal
+    color,                           // "BLANCO"
+    cierre,                          // "UN PUNTO CON MANIJA ACODADA"
+    extras,                          // ["CON TAPAJUNTAS"]
+    esCombinada: partesReales.length > 1,
+    partes: partesReales,            // [{producto, ancho, alto, vidrio}, ...]
     detalleOriginal: limpiar(detalle),
   };
 }
