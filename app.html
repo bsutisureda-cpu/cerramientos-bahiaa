@@ -172,6 +172,10 @@
               <label for="p2-precio">Precio Bruto $ (por unidad) *</label>
               <input type="number" id="p2-precio" min="0" step="0.01" placeholder="0.00" />
             </div>
+            <div class="field">
+              <label for="p2-precio-cajon">Precio del cajón $ (total del ítem)</label>
+              <input type="number" id="p2-precio-cajon" min="0" step="0.01" placeholder="0.00" />
+            </div>
           </div>
           <div class="field field-full">
             <label>Imágenes (asignadas en Configuración según tipo/cierre/vidrio + color)</label>
@@ -300,6 +304,7 @@
 
         <section class="vp-totales" id="vp-totales-box" hidden>
           <div class="vp-totales-caja">
+            <p id="vp-cajones-fila" hidden><span>Incluye cajones</span> <span id="vp-cajones-out"></span></p>
             <p><span>Subtotal</span> <span id="vp-total-bruto-out"></span></p>
             <p id="vp-descuento-fila" hidden><span>Descuento (<span id="vp-descuento-porcentaje-out"></span>%)</span> <span id="vp-descuento-out"></span></p>
             <p><span>IVA <span id="vp-iva-porcentaje-out"></span>%</span> <span id="vp-iva-out"></span></p>

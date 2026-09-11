@@ -191,7 +191,10 @@ function traducir(presupuestoWM, config) {
       vidrio: rVidrio.valor,
       manija: rCierre.valor,
       colorManija: rCierre.valor && rCierre.valor !== 'SIN CIERRE' ? rColor.valor : '',
-      cajon: 'no',
+      // Si la nota del pie trae un cajón para este ítem, queda marcado solo.
+      cajon: it.precioCajon ? 'si' : 'no',
+      precioCajon: it.precioCajon || 0,
+      etiquetaCajon: it.etiquetaCajon || '',
       mosquitero: tieneExtra(it.extras, 'MOSQUITERO') ? 'si' : 'no',
       tapajuntas: tieneExtra(it.extras, 'TAPAJUNTAS') ? 'si' : 'no',
       ancho: it.ancho,
@@ -248,14 +251,19 @@ function agruparIdenticos(items) {
   const porClave = new Map();
 
   for (const it of items) {
+    // El precio del cajón entra en la clave: si dos ventanas iguales tienen
+    // cajones de distinto precio, no se juntan (si no, se perdería uno).
     const clave = JSON.stringify([
       it.tipo, it.linea, it.color, it.vidrio, it.manija, it.colorManija,
       it.cajon, it.mosquitero, it.tapajuntas, it.ancho, it.alto, it.precio,
+      it.precioCajon || 0,
     ]);
 
     const ya = porClave.get(clave);
     if (ya) {
       ya.cantidad = (ya.cantidad || 1) + (it.cantidad || 1);
+      // El cajón es un total por línea, así que se suma al juntar.
+      if (it.precioCajon) ya.precioCajon = (ya.precioCajon || 0) + it.precioCajon;
       // Dejamos constancia de qué códigos de Winmaker se juntaron.
       if (it._codigoWM && ya._codigoWM && !String(ya._codigoWM).includes(it._codigoWM)) {
         ya._codigoWM = `${ya._codigoWM}+${it._codigoWM}`;

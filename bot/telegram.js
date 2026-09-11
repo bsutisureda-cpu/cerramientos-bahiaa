@@ -36,6 +36,10 @@ async function api(metodo, params) {
 
 const decir = (chatId, text, extra) => api('sendMessage', { chat_id: chatId, text, ...extra });
 
+// Montos como los escribimos acá: 1.234.567,89
+const plata = (n) =>
+  Number(n || 0).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
 async function mandarPdf(chatId, pdf, nombre) {
   const form = new FormData();
   form.append('chat_id', String(chatId));
@@ -85,6 +89,26 @@ async function finalizar(chatId, ses) {
   const items = agruparIdenticos(ses.items);
   if (items.length < antes) {
     await decir(chatId, `ℹ️ Junté ${antes} ítems en ${items.length}: había repetidos idénticos.`);
+  }
+
+  // Avisos de los cajones: nunca se descarta un monto sin decirlo.
+  const cajones = (ses.wm && ses.wm.cajones) || {};
+  for (const a of cajones.aproximados || []) {
+    await decir(
+      chatId,
+      `ℹ️ El cajón dice "${a.cajon}" y el ítem se llama "${a.item}". Los asocié por el número: ` +
+        `$ ${plata(a.total)} van en ${a.item}. Si no es así, cambialo en la app.`
+    );
+  }
+  for (const s of cajones.sinAsignar || []) {
+    await decir(
+      chatId,
+      `⚠️ No pude asociar el cajón "${s.cajon}" ($ ${plata(s.total)}): ` +
+        (s.candidatos > 1
+          ? 'hay más de un ítem que podría ser.'
+          : 'no encontré un ítem con ese código.') +
+        ' NO está sumado al presupuesto — cargalo a mano en la app si corresponde.'
+    );
   }
 
   await decir(chatId, '⏳ Armando el presupuesto y generando el PDF...');

@@ -418,6 +418,7 @@
   // ---------------------------------------------------------------------
   function leerFormularioItem() {
     const manija = document.getElementById('p2-manija').value;
+    const precioCajon = parseFloat(document.getElementById('p2-precio-cajon').value) || 0;
     return {
       tipo: document.getElementById('p2-tipo').value,
       color: document.getElementById('p2-color').value,
@@ -425,13 +426,16 @@
       manija,
       colorManija: manija === 'SIN CIERRE' ? '' : document.getElementById('p2-color-manija').value,
       vidrio: document.getElementById('p2-vidrio').value,
-      cajon: document.getElementById('p2-cajon').value,
+      // Si se cargó un precio de cajón, la ventana lleva cajón sí o sí.
+      cajon: precioCajon ? 'si' : document.getElementById('p2-cajon').value,
       mosquitero: document.getElementById('p2-mosquitero').value,
       tapajuntas: document.getElementById('p2-tapajuntas').value,
       ancho: parseFloat(document.getElementById('p2-ancho').value),
       alto: parseFloat(document.getElementById('p2-alto').value),
       cantidad: parseInt(document.getElementById('p2-cantidad').value, 10),
       precio: parseFloat(document.getElementById('p2-precio').value),
+      precioCajon,
+      etiquetaCajon: state.etiquetaCajonEdicion || '',
     };
   }
 
@@ -485,6 +489,8 @@
     document.getElementById('p2-alto').value = '';
     document.getElementById('p2-cantidad').value = '1';
     document.getElementById('p2-precio').value = '';
+    document.getElementById('p2-precio-cajon').value = '';
+    state.etiquetaCajonEdicion = '';
     document.getElementById('p2-cajon').value = 'no';
     document.getElementById('p2-mosquitero').value = 'no';
     document.getElementById('p2-tapajuntas').value = 'no';
@@ -641,13 +647,22 @@
     }
     const partes = [`${item.ancho}cm x ${item.alto}cm`, `Cant: ${item.cantidad}`];
     if (item.linea) partes.push(`Línea: ${item.linea}`);
-    partes.push(`Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}`);
+    partes.push(
+      `Cajón: ${item.cajon === 'si' ? 'Sí' : 'No'}` +
+        (item.precioCajon ? ` ($ ${formatMoney(item.precioCajon)})` : '')
+    );
     partes.push(`Mosquitero: ${item.mosquitero === 'si' ? 'Sí' : 'No'}`);
     if (item.tapajuntas === 'si') partes.push('Con tapajuntas');
     if (item.manija) partes.push(`Cierre: ${item.manija}${item.colorManija ? ' (' + item.colorManija + ')' : ''}`);
     if (item.vidrio) partes.push(`Vidrio: ${item.vidrio}`);
     if (item.precio) {
-      partes.push(`Precio: $ ${formatMoney(item.precio)} c/u (Subtotal: $ ${formatMoney(item.precio * item.cantidad)})`);
+      const ventana = item.precio * item.cantidad;
+      const sub = `Precio: $ ${formatMoney(item.precio)} c/u (Subtotal: $ ${formatMoney(ventana)})`;
+      partes.push(
+        item.precioCajon
+          ? `${sub} + cajón = $ ${formatMoney(ventana + item.precioCajon)}`
+          : sub
+      );
     }
     return partes.join(' · ');
   }
@@ -749,6 +764,9 @@
       document.getElementById('p2-alto').value = item.alto;
       document.getElementById('p2-cantidad').value = item.cantidad;
       document.getElementById('p2-precio').value = item.precio || '';
+      document.getElementById('p2-precio-cajon').value = item.precioCajon || '';
+      // La etiqueta del cajón viene del Excel; se conserva al editar.
+      state.etiquetaCajonEdicion = item.etiquetaCajon || '';
       actualizarPreviewImagenes();
     }
 
@@ -855,7 +873,15 @@
   }
 
   function calcularTotalBrutoItems() {
-    return state.items.reduce((acum, item) => acum + (item.precio || 0) * (item.cantidad || 1), 0);
+    return state.items.reduce(
+      (acum, item) =>
+        acum + (item.precio || 0) * (item.cantidad || 1) + (item.precioCajon || 0),
+      0
+    );
+  }
+
+  function calcularTotalCajones() {
+    return state.items.reduce((acum, item) => acum + (item.precioCajon || 0), 0);
   }
 
   function actualizarTotales(totalBruto, ivaPorcentaje, descuentoPorcentaje) {
@@ -868,6 +894,14 @@
     const total = baseConDescuento + iva;
 
     document.getElementById('vp-total-bruto-out').textContent = `$ ${formatMoney(totalBruto)}`;
+
+    // Resumen de cuánto de ese subtotal son cajones.
+    const cajones = calcularTotalCajones();
+    const cajonesFila = document.getElementById('vp-cajones-fila');
+    cajonesFila.hidden = !cajones;
+    if (cajones) {
+      document.getElementById('vp-cajones-out').textContent = `$ ${formatMoney(cajones)}`;
+    }
 
     const descuentoFila = document.getElementById('vp-descuento-fila');
     descuentoFila.hidden = !descuento;
@@ -894,13 +928,23 @@
   }
 
   // Columna de precio: unitario x cantidad y subtotal, alineados a la derecha.
-  function itemPrecioHTML(precio, cantidad) {
-    if (!precio) return '';
+  // Si el ítem lleva cajón, se muestra en su propia línea y abajo la suma.
+  // El precio del cajón es el total de esa ventana (no se multiplica por cantidad).
+  function itemPrecioHTML(precio, cantidad, item) {
+    const cajon = (item && item.precioCajon) || 0;
+    if (!precio && !cajon) return '';
     const cant = Math.max(1, cantidad || 1);
+    const ventana = (precio || 0) * cant;
+    const etiqueta = (item && item.etiquetaCajon) || 'Cajón';
     return `
       <div class="vp-item-precio">
         ${cant > 1 ? `<span class="vp-precio-unit">${cant} × $ ${formatMoney(precio)}</span>` : ''}
-        <span class="vp-precio-sub">$ ${formatMoney(precio * cant)}</span>
+        <span class="vp-precio-sub">$ ${formatMoney(ventana)}</span>
+        ${cajon ? `
+          <span class="vp-precio-extra">+ ${etiqueta}</span>
+          <span class="vp-precio-extra-monto">$ ${formatMoney(cajon)}</span>
+          <span class="vp-precio-total">$ ${formatMoney(ventana + cajon)}</span>
+        ` : ''}
       </div>`;
   }
 
@@ -956,7 +1000,7 @@
       <div class="vp-item-row">
         <img src="${imgAbertura}" alt="${item.tipo}" />
         <dl class="vp-specs">${specsItem(item)}</dl>
-        ${itemPrecioHTML(item.precio, item.cantidad)}
+        ${itemPrecioHTML(item.precio, item.cantidad, item)}
       </div>
       ${
         imgManija || imgVidrio
@@ -1345,7 +1389,8 @@
 
   function calcularTotalRegistro(registro) {
     const totalBruto = (registro.items || []).reduce(
-      (acum, item) => acum + (item.precio || 0) * (item.cantidad || 1),
+      (acum, item) =>
+        acum + (item.precio || 0) * (item.cantidad || 1) + (item.precioCajon || 0),
       0
     );
     const ivaPorcentaje = registro.panel1.ivaPorcentaje || 21;

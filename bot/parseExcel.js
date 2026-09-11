@@ -26,6 +26,10 @@ function aNumero(txt) {
   if (ultimaComa > ultimoPunto) {
     // formato 1.234,56 -> el decimal es la coma
     normal = s.replace(/\./g, '').replace(',', '.');
+  } else if (ultimaComa === -1 && /^\d{1,3}(\.\d{3})+$/.test(s)) {
+    // Sólo puntos separando grupos de 3 -> son miles, formato argentino.
+    // Pasa en la nota del pie: "$ 840.000" es 840000, no 840.
+    normal = s.replace(/\./g, '');
   } else {
     // formato 1,234.56 -> el decimal es el punto
     normal = s.replace(/,/g, '');
@@ -56,7 +60,11 @@ function parsearDetalle(detalleRaw) {
   let nombre = '';
   let ancho = 0;
   let alto = 0;
-  const enc = detalle.match(/Tipo\s+([^\s(]+)\s*\((\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*mm\)/i);
+  // El nombre puede traer palabras extra antes del paréntesis:
+  // "Tipo v1 cocina (1570 x 2200 mm)" -> nombre "v1", 1570 x 2200.
+  const enc = detalle.match(
+    /Tipo\s+([^\s(]+)[^(]*\(\s*(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*mm\s*\)/i
+  );
   if (enc) {
     nombre = limpiar(enc[1]);
     ancho = aNumero(enc[2]);
@@ -95,6 +103,111 @@ function parsearDetalle(detalleRaw) {
     extras,          // ["CON TAPAJUNTAS"]
     detalleOriginal: limpiar(detalle),
   };
+}
+
+// Winmaker no pone los cajones en la tabla de ítems: los deja escritos en la
+// nota del pie, así:
+//   "CAJONES COMPACTOS ROLLER CON CORTINA PARA: V1: ( 1 UNIDAD) $ 840.000 + IVA .
+//    V5: (3 UNIDAD) $ 1.303.450 + IVA . TOTAL CAJONES: $ 3.088.200 + IVA"
+// Los sacamos de ahí para poder mostrarlos dentro de cada ventana.
+// El precio es el TOTAL de esa línea (no el unitario): así lo escribe Winmaker.
+// Se escribe de dos formas distintas según quién arme el presupuesto:
+//   A) "CAJONES COMPACTOS ROLLER CON CORTINA PARA: V1: ( 1 UNIDAD) $ 840.000 + IVA
+//       ... TOTAL CAJONES: $ 3.088.200 + IVA"
+//   B) "CAJON V1 $550.000 + IVA . CAJON V2 $350.000 + IVA"
+// Se soportan las dos.
+function parsearCajones(texto) {
+  const vacio = { porCodigo: {}, etiqueta: '', total: 0 };
+  const t = limpiar(texto);
+  if (!/CAJON/i.test(t)) return vacio;
+
+  const porCodigo = {};
+  const agregar = (cod, unidades, monto) => {
+    const codigo = String(cod).replace(/\s+/g, '').toUpperCase();
+    const total = aNumero(monto);
+    if (!codigo || !total) return;
+    // Si el mismo código aparece dos veces, se suman.
+    const ya = porCodigo[codigo];
+    porCodigo[codigo] = {
+      unidades: (ya ? ya.unidades : 0) + (parseInt(unidades, 10) || 1),
+      total: (ya ? ya.total : 0) + total,
+    };
+  };
+
+  // --- Forma A: listado "CAJONES ... PARA:" con "( N UNIDAD )" ---
+  const desdeListado = t.search(/CAJONES[^.]*PARA\s*:/i);
+  let etiqueta = 'Cajón';
+  let totalDeclarado = 0;
+  if (desdeListado !== -1) {
+    const resto = t.slice(desdeListado);
+    const mTotal = resto.match(/TOTAL\s+CAJONES\s*:\s*\$\s*([\d.,]+)/i);
+    const listado = mTotal ? resto.slice(0, resto.indexOf(mTotal[0])) : resto;
+    if (mTotal) totalDeclarado = aNumero(mTotal[1]);
+
+    const mEtiqueta = listado.match(/^(CAJONES[^:]*?)\s*PARA\s*:/i);
+    if (mEtiqueta) etiqueta = limpiar(mEtiqueta[1]);
+
+    const reA = /\b([A-Za-z]{1,3}\s?\d+[A-Za-z]?)\s*:\s*\(\s*(\d+)\s*UNIDAD(?:ES)?\s*\)\s*\$\s*([\d.,]+)/gi;
+    let m;
+    while ((m = reA.exec(listado)) !== null) agregar(m[1], m[2], m[3]);
+  }
+
+  // --- Forma B: "CAJON V1 $550.000" (la palabra CAJON antes del código) ---
+  // Sólo se usa si la forma A no encontró nada, para no duplicar.
+  if (!Object.keys(porCodigo).length) {
+    const reB = /\bCAJON(?:ES)?\s+([A-Za-z]{1,3}\s?\d+[A-Za-z]?)\s*:?\s*\$\s*([\d.,]+)/gi;
+    let m;
+    while ((m = reB.exec(t)) !== null) agregar(m[1], 1, m[2]);
+  }
+
+  const sumaFilas = Object.values(porCodigo).reduce((a, c) => a + c.total, 0);
+  return { porCodigo, etiqueta, total: totalDeclarado || sumaFilas };
+}
+
+// Deja sólo los dígitos del código: "VA1" y "V1" comparten el "1".
+function numeroDeCodigo(cod) {
+  const m = String(cod).match(/\d+/);
+  return m ? m[0] : '';
+}
+
+// Pega cada cajón a su ventana. Primero por código exacto; si no aparece,
+// prueba por el número (VA1 <-> V1) pero SÓLO si no hay ambigüedad.
+// Lo que no se pueda asociar se devuelve para avisarle al usuario: nunca
+// se descarta plata en silencio.
+function asignarCajones(items, cajones) {
+  const aproximados = [];
+  const sinAsignar = [];
+  const tomados = new Set();
+
+  const aplicar = (item, dato) => {
+    item.precioCajon = dato.total;
+    item.etiquetaCajon = cajones.etiqueta;
+    tomados.add(item);
+  };
+
+  const pendientes = [];
+  for (const [cod, dato] of Object.entries(cajones.porCodigo)) {
+    const exacto = items.find(
+      (i) => String(i.codigo).toUpperCase() === cod && !tomados.has(i)
+    );
+    if (exacto) aplicar(exacto, dato);
+    else pendientes.push([cod, dato]);
+  }
+
+  for (const [cod, dato] of pendientes) {
+    const num = numeroDeCodigo(cod);
+    const candidatos = num
+      ? items.filter((i) => !tomados.has(i) && numeroDeCodigo(i.codigo) === num)
+      : [];
+    if (candidatos.length === 1) {
+      aplicar(candidatos[0], dato);
+      aproximados.push({ cajon: cod, item: candidatos[0].codigo, total: dato.total });
+    } else {
+      sinAsignar.push({ cajon: cod, total: dato.total, candidatos: candidatos.length });
+    }
+  }
+
+  return { aproximados, sinAsignar };
 }
 
 // Recibe las filas de la hoja (array de arrays) y devuelve el presupuesto crudo.
@@ -151,7 +264,11 @@ function parsearFilas(filas) {
 
   if (!items.length) throw new Error('El Excel no tiene ítems para presupuestar.');
 
-  return { ...encabezado, items, total };
+  // Los cajones viven en la nota del pie: se los pegamos a la ventana que corresponde.
+  const cajones = parsearCajones(encabezado.mensajeFinal);
+  const { aproximados, sinAsignar } = asignarCajones(items, cajones);
+
+  return { ...encabezado, items, total, cajones: { ...cajones, aproximados, sinAsignar } };
 }
 
 // Lee el .xlsx (el archivo que llega por Telegram) y lo pasa por parsearFilas.
@@ -185,4 +302,7 @@ async function leerArchivo(buffer) {
   return parsearFilas(filas);
 }
 
-module.exports = { parsearFilas, parsearDetalle, leerArchivo, aNumero, limpiar };
+module.exports = {
+  parsearFilas, parsearDetalle, parsearCajones, asignarCajones,
+  leerArchivo, aNumero, limpiar,
+};
