@@ -38,6 +38,18 @@ function aNumero(txt) {
   return isNaN(n) ? 0 : n;
 }
 
+// Convierte "1.50 x 1.20 mts" (o "0.30 x 1.20 mts", o "300 x 700 mm") a mm.
+// Si no trae unidad, se asume metros (así lo escribe Winmaker en "MEDIDAS").
+function medidasAmm(texto) {
+  const m = String(texto == null ? '' : texto).match(/([\d.,]+)\s*x\s*([\d.,]+)\s*(mm|mts|mt|m)?/i);
+  if (!m) return null;
+  const unidad = (m[3] || '').toLowerCase();
+  const factor = unidad === 'mm' ? 1 : 1000; // metros -> mm por defecto
+  const ancho = Math.round(aNumero(m[1]) * factor);
+  const alto = Math.round(aNumero(m[2]) * factor);
+  return { ancho, alto };
+}
+
 // Busca un campo tipo "COLOR: NEGRO" dentro de los segmentos del detalle.
 function buscarCampo(segmentos, etiqueta) {
   const re = new RegExp('^' + etiqueta + '\\s*:\\s*(.+)$', 'i');
@@ -56,27 +68,74 @@ function parsearDetalle(detalleRaw) {
   const detalle = String(detalleRaw == null ? '' : detalleRaw);
   const segmentos = detalle.split(SEP).map(limpiar).filter(Boolean);
 
-  // Encabezado: "Tipo v1 (1500 x 1200 mm):"
+  // Encabezado: "Tipo v1 (1500 x 1200 mm):" — de acá sacamos el nombre y, como
+  // respaldo, las medidas (pero la fuente principal es el campo MEDIDAS).
   let nombre = '';
   let ancho = 0;
   let alto = 0;
-  // El nombre puede traer palabras extra antes del paréntesis:
-  // "Tipo v1 cocina (1570 x 2200 mm)" -> nombre "v1", 1570 x 2200.
+  // El nombre puede traer palabras extra antes del paréntesis
+  // ("Tipo v1 cocina (1570 x 2200 mm)" -> nombre "v1"), y la medida puede venir
+  // en mm o en metros ("Tipo V5 ab (0.30 x 1.00 mts)").
   const enc = detalle.match(
-    /Tipo\s+([^\s(]+)[^(]*\(\s*(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*mm\s*\)/i
+    /Tipo\s+([^\s(]+)[^(]*\(\s*([\d.,]+)\s*x\s*([\d.,]+)\s*(mm|mts|mt|m)?\s*\)/i
   );
   if (enc) {
     nombre = limpiar(enc[1]);
-    ancho = aNumero(enc[2]);
-    alto = aNumero(enc[3]);
+    const u = (enc[4] || '').toLowerCase();
+    const factor = (u === 'mts' || u === 'mt' || u === 'm') ? 1000 : 1; // sin unidad => mm
+    ancho = Math.round(aNumero(enc[2]) * factor);
+    alto = Math.round(aNumero(enc[3]) * factor);
   }
 
   // "Interiores:VIDRIO: ..." -> normalizamos para poder buscar VIDRIO
   const segsNorm = segmentos.map((s) => s.replace(/^Interiores\s*:\s*/i, ''));
 
-  const producto = buscarCampo(segsNorm, 'PRODUCTO');
-  const vidrio = buscarCampo(segsNorm, 'VIDRIO');
+  // Recorremos los segmentos EN ORDEN para armar las partes. Cada "PRODUCTO:"
+  // abre una parte; sus "MEDIDAS:" y "VIDRIO:" son los que vienen hasta el
+  // próximo "PRODUCTO:". Así soportamos aberturas combinadas (varios productos).
+  const partes = [];
+  let actual = null;
+  for (const s of segsNorm) {
+    const mProd = s.match(/^PRODUCTO\s*:\s*(.+)$/i);
+    if (mProd) {
+      actual = { producto: limpiar(mProd[1]), ancho: 0, alto: 0, vidrio: '' };
+      partes.push(actual);
+      continue;
+    }
+    if (!actual) continue;
+    const mMed = s.match(/^MEDIDAS\s*:\s*(.+)$/i);
+    if (mMed) {
+      const m = medidasAmm(mMed[1]);
+      if (m) { actual.ancho = m.ancho; actual.alto = m.alto; }
+      continue;
+    }
+    const mVid = s.match(/^VIDRIO\s*:\s*(.+)$/i);
+    if (mVid) { actual.vidrio = limpiar(mVid[1]); continue; }
+  }
+
+  // "MARCO UNIFICADO" no es una abertura: es el marco total de la combinación.
+  // Nos quedamos con su medida como total y lo sacamos de las partes reales.
+  const esMarco = (p) => /MARCO\s+UNIFICADO/i.test(p.producto);
+  const marco = partes.find(esMarco);
+  const partesReales = partes.filter((p) => !esMarco(p));
+
   const color = buscarCampo(segsNorm, 'COLOR');
+
+  // Medida total: la del marco unificado; si no, la del encabezado; si no, la
+  // suma de anchos y el alto máximo de las partes.
+  if (marco && marco.ancho > 0) { ancho = marco.ancho; alto = marco.alto; }
+  else {
+    const med = medidasAmm(buscarCampo(segsNorm, 'MEDIDAS'));
+    if (med && med.ancho > 0 && partesReales.length <= 1) { ancho = med.ancho; alto = med.alto; }
+    else if (partesReales.length) {
+      const sum = partesReales.reduce((a, p) => a + (p.ancho || 0), 0);
+      const maxH = partesReales.reduce((mx, p) => Math.max(mx, p.alto || 0), 0);
+      if (sum > 0) ancho = sum;
+      if (maxH > 0) alto = maxH;
+    }
+  }
+
+  const principal = partesReales[0] || { producto: '', ancho, alto, vidrio: '' };
 
   // El cierre viene como texto suelto: "CIERRE UN PUNTO CON MANIJA ACODADA"
   let cierre = '';
@@ -93,14 +152,16 @@ function parsearDetalle(detalleRaw) {
   });
 
   return {
-    nombre,          // "v1"
-    ancho,           // 1500 (mm)
-    alto,            // 1200 (mm)
-    producto,        // "CORREDIZA 2 GUIAS LINEA MONACO TOP"
-    vidrio,          // "FLOAT 4MM+CAMARA 12MM+FLOAT 4MM"
-    color,           // "NEGRO"
-    cierre,          // "UN PUNTO CON MANIJA ACODADA"
-    extras,          // ["CON TAPAJUNTAS"]
+    nombre,                          // "v1"
+    ancho,                           // total (mm)
+    alto,                            // total (mm)
+    producto: principal.producto,    // producto de la parte principal
+    vidrio: principal.vidrio,        // vidrio de la parte principal
+    color,                           // "BLANCO"
+    cierre,                          // "UN PUNTO CON MANIJA ACODADA"
+    extras,                          // ["CON TAPAJUNTAS"]
+    esCombinada: partesReales.length > 1,
+    partes: partesReales,            // [{producto, ancho, alto, vidrio}, ...]
     detalleOriginal: limpiar(detalle),
   };
 }

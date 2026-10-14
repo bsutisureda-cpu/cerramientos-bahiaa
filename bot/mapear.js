@@ -14,6 +14,7 @@ function normalizar(txt) {
     .replace(/[̀-ͯ]/g, '') // saca acentos
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, ' ')     // '+' , '/', '.' , etc -> espacio
+    .replace(/\bOCILOBATIENTE\b/g, 'OSCILOBATIENTE') // typo sistemático de Winmaker
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -159,6 +160,34 @@ function tieneExtra(extras, palabra) {
   return (extras || []).some((e) => normalizar(e).includes(normalizar(palabra)));
 }
 
+// --- Aberturas combinadas (varios PRODUCTO en el mismo ítem) ----------------
+function esPanoFijo(producto) {
+  return /PANO FIJO/.test(normalizar(producto));
+}
+
+// Clasifica la abertura "principal" de una combinación (la que no es paño fijo).
+// Tolera el error de tipeo de Winmaker "OCILOBATIENTE" (sin la S).
+function claseCombinada(producto) {
+  const n = normalizar(producto);
+  if (/OS?CILOBATIENTE/.test(n)) return 'oscilobatiente';
+  if (/\bABRIR\b/.test(n)) return 'ventana de abrir';
+  return null;
+}
+
+// A qué tipo de la app va cada clase de combinación. Se puede sobrescribir
+// desde config.equivalencias.combinadas. Los nombres tienen que coincidir con
+// los tipos de abertura creados en la app (con sus imágenes).
+const COMBINADAS_DEFAULT = {
+  oscilobatiente: 'Patagonica oscilobatiente',
+  // La de ventana de abrir es la Patagónica que ya está cargada (con sus fotos).
+  'ventana de abrir': 'Patagonica',
+};
+
+function combinadas(config) {
+  const c = (config && config.equivalencias && config.equivalencias.combinadas) || {};
+  return { ...COMBINADAS_DEFAULT, ...c };
+}
+
 // ---------------------------------------------------------------------------
 // Traduce un presupuesto entero.
 // Devuelve { items, dudas }:
@@ -177,12 +206,35 @@ function traducir(presupuestoWM, config) {
   const items = [];
   const dudas = [];
 
+  const combosTabla = combinadas(config);
+
   (presupuestoWM.items || []).forEach((it, i) => {
-    const linea = detectarLinea(it.producto, lineas);
-    const rTipo = detectarTipo(it.producto, linea, tiposAbertura, tablas.productos);
-    const rVidrio = detectarVidrio(it.vidrio, tiposVidrio, tablas.vidrios);
+    // En una combinación tomamos la abertura "principal" (la que no es paño
+    // fijo) para la línea, el vidrio y para decidir a qué Patagónica va.
+    let prodPrincipal = it.producto;
+    let vidrioPrincipal = it.vidrio;
+    if (it.esCombinada && it.partes && it.partes.length) {
+      const opening = it.partes.find((p) => !esPanoFijo(p.producto)) || it.partes[0];
+      prodPrincipal = opening.producto;
+      vidrioPrincipal = opening.vidrio || it.vidrio;
+    }
+
+    const linea = detectarLinea(prodPrincipal, lineas);
+    const rVidrio = detectarVidrio(vidrioPrincipal, tiposVidrio, tablas.vidrios);
     const rColor = detectarColor(it.color, colores, tablas.colores);
     const rCierre = detectarCierre(it.cierre, tiposManija, tablas.cierres);
+
+    // Tipo: si es combinada, va a la Patagónica que corresponda; si no, lo normal.
+    let rTipo;
+    if (it.esCombinada) {
+      const clase = claseCombinada(prodPrincipal);
+      const destino = clase ? combosTabla[clase] : null;
+      rTipo = (destino && tiposAbertura.includes(destino))
+        ? { tipo: destino, opciones: null }
+        : { tipo: null, opciones: tiposAbertura };
+    } else {
+      rTipo = detectarTipo(prodPrincipal, linea, tiposAbertura, tablas.productos);
+    }
 
     const item = {
       tipo: rTipo.tipo,
@@ -205,9 +257,12 @@ function traducir(presupuestoWM, config) {
     };
 
     if (!rTipo.tipo) {
+      const detalle = it.esCombinada
+        ? `combinación (${it.partes.map((p) => p.producto.split(' LINEA ')[0].split(' MONACO')[0].trim()).join(' + ')})`
+        : `"${it.producto}"`;
       dudas.push({
         indice: i, campo: 'tipo', codigo: it.codigo,
-        pregunta: `Ítem ${it.codigo} (${it.ancho}x${it.alto} mm): "${it.producto}" — ¿qué tipo es?`,
+        pregunta: `Ítem ${it.codigo} (${it.ancho}x${it.alto} mm): ${detalle} — ¿qué tipo es?`,
         opciones: rTipo.opciones || tiposAbertura,
       });
     }
