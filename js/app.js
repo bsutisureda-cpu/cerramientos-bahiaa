@@ -849,7 +849,6 @@
     document.getElementById('vp-mensaje-final').textContent = mensajeFinal;
     document.getElementById('vp-mensaje-final-box').hidden = !mensajeFinal;
 
-    document.getElementById('vp-numero').textContent = datos.numero ? `N.º ${datos.numero}` : '';
     document.getElementById('vp-fecha').textContent = formatFechaLegible(datos.fecha);
     document.getElementById('vp-validez').textContent = datos.validez ? `${datos.validez} días` : '-';
 
